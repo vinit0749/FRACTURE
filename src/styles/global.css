@@ -1,0 +1,797 @@
+/* ================= BASE RESET ================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: linear-gradient(180deg, #08111f 0%, #0f172a 40%, #111827 100%);
+  color: #ffffff;
+  line-height: 1.5;
+  min-height: 100vh;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================= DESIGN SYSTEM ================= */
+
+:root {
+  /* COLORS */
+  --bg-main: #08111f;
+  --bg-secondary: #0f172a;
+
+  --surface: #162033;
+  --surface-hover: #22314a;
+
+  --border: #22314a;
+
+  --text: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-light: #60a5fa;
+  --wishlist: #ff5a7a;
+  --wishlist-glow: rgba(255, 90, 122, 0.35);
+
+  /* SPACING */
+
+  --space-0: 4px;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+  --space-6: 64px;
+  --space-7: 80px;
+
+  /* RADIUS */
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+
+  /* SHADOW */
+
+  --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.35);
+
+  --shadow-hover: 0 22px 55px rgba(0, 0, 0, 0.45);
+
+  /* TYPOGRAPHY */
+
+  --heading-weight: 800;
+  --title-weight: 700;
+  --body-weight: 400;
+
+  --text-lg: 1.5rem;
+  --text-md: 1rem;
+  --text-sm: 0.9rem;
+  --text-xs: 0.75rem;
+}
+
+/* ================= CONTAINER ================= */
+
+.container {
+  width: min(1400px, calc(100% - 120px));
+  margin-inline: auto;
+}
+
+/* ================= HEADER ================= */
+
+.site-header {
+  padding: var(--space-2) 0;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  min-height: 70px;
+}
+
+/* ================= LOGO ================= */
+
+.logo h1 {
+  margin: 0;
+
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+
+  background: linear-gradient(90deg, #00d4ff, #3b82f6, #60a5fa);
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo p {
+  margin: 4px 0 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.75rem;
+}
+
+.logo-link {
+  text-decoration: none;
+}
+
+/* ================= NAV ================= */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* ================= NAV ================= */
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px;
+
+  height: 46px;
+
+  border-radius: 14px;
+
+  background: rgba(22, 32, 51, 0.85);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(12px);
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 36px;
+
+  padding: 0 16px;
+
+  border-radius: 10px;
+
+  text-decoration: none;
+
+  color: var(--text-secondary);
+
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s ease;
+}
+
+.nav-link:hover {
+  color: white;
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.nav-link.active {
+  color: white;
+
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);
+}
+
+/* ================= SEARCH ================= */
+
+.search-section {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+}
+
+.header-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding-left: 8px;
+
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#search-input {
+  width: 340px;
+
+  padding: 12px 52px 12px 16px;
+
+  font-size: 0.95rem;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 14px;
+
+  background: rgba(22, 32, 51, 0.9);
+
+  backdrop-filter: blur(12px);
+
+  color: white;
+
+  outline: none;
+
+  transition: 0.25s;
+}
+
+#search-input::placeholder {
+  color: var(--text-muted);
+}
+
+#search-input:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+#search-input:focus {
+  background: rgba(22, 32, 51, 1);
+
+  border-color: var(--accent);
+
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, 0.18),
+    0 8px 24px rgba(59, 130, 246, 0.12);
+}
+
+.search-button {
+  position: absolute;
+
+  right: 10px;
+
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: var(--text-muted);
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.search-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.search-button:hover {
+  background: rgba(59, 130, 246, 0.15);
+
+  color: var(--accent-light);
+}
+
+/* ================= HEADER ICON ================= */
+
+.header-icon {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-decoration: none;
+
+  border-radius: 14px;
+
+  color: var(--text-secondary);
+
+  background: rgba(22, 32, 51, 0.85);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+.header-icon:hover {
+  color: white;
+
+  background: rgba(59, 130, 246, 0.16);
+
+  border-color: rgba(59, 130, 246, 0.45);
+
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.18);
+
+  transform: translateY(-2px);
+}
+
+/* ================= CINEMATIC GAME CARD ================= */
+
+.cinematic-card {
+  position: relative;
+
+  width: 240px;
+
+  height: 360px;
+
+  border-radius: 20px;
+
+  overflow: hidden;
+
+  background: #0b0b16;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+
+  transition:
+    transform 0.3s ease,
+    opacity 0.25s ease,
+    box-shadow 0.3s ease;
+}
+
+.cinematic-card.removing {
+  opacity: 0;
+  transform: scale(0.92);
+  pointer-events: none;
+}
+
+.cinematic-card:hover {
+  transform: translateY(-10px) scale(1.02);
+
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(59, 130, 246, 0.18);
+}
+
+/* ================= CARD ACTION BUTTONS ================= */
+
+.card-actions {
+  position: absolute;
+
+  top: 14px;
+  left: 14px;
+
+  z-index: 5;
+
+  display: flex;
+  gap: 10px;
+}
+
+.card-action-btn {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  background: rgba(8, 17, 31, 0.92);
+
+  backdrop-filter: blur(18px);
+
+  color: white;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  transition:
+    transform 0.18s ease,
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    color 0.25s ease;
+}
+
+.card-action-btn:hover {
+  transform: translateY(-2px) scale(1.08);
+
+  background: rgba(59, 130, 246, 0.22);
+
+  border-color: rgba(96, 165, 250, 0.7);
+
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.3);
+}
+
+.card-action-btn:active {
+  transform: scale(0.9);
+}
+
+.card-action-btn svg {
+  width: 18px;
+  height: 18px;
+
+  stroke-width: 2;
+
+  transition:
+    transform 0.25s ease,
+    stroke 0.25s ease,
+    fill 0.25s ease;
+}
+
+.wishlist-card-btn {
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.2s ease;
+}
+
+.wishlist-card-btn.active {
+  color: #fff;
+
+  background: linear-gradient(135deg, #ff5a7a, #ff2d55);
+
+  border-color: #ff6b86;
+
+  box-shadow:
+    0 8px 20px rgba(255, 45, 85, 0.3),
+    0 0 18px rgba(255, 90, 122, 0.22);
+
+  transform: scale(1.05);
+}
+
+.wishlist-card-btn.active:hover {
+  background: linear-gradient(135deg, #ff6b86, #ff416d);
+
+  box-shadow:
+    0 10px 24px rgba(255, 45, 85, 0.4),
+    0 0 24px rgba(255, 90, 122, 0.28);
+
+  transform: translateY(-2px) scale(1.08);
+}
+
+.wishlist-card-btn.active svg {
+  stroke: currentColor;
+  animation: wishlistPop 0.35s ease;
+}
+
+.library-card-btn {
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.2s ease;
+}
+
+.library-card-btn.active {
+  color: #fff;
+
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+
+  border-color: #60a5fa;
+
+  box-shadow:
+    0 8px 20px rgba(59, 130, 246, 0.3),
+    0 0 18px rgba(96, 165, 250, 0.22);
+
+  transform: scale(1.05);
+}
+
+.library-card-btn.active:hover {
+  background: linear-gradient(135deg, #4b91ff, #3478f6);
+
+  box-shadow:
+    0 10px 24px rgba(59, 130, 246, 0.4),
+    0 0 24px rgba(96, 165, 250, 0.28);
+
+  transform: translateY(-2px) scale(1.08);
+}
+
+.library-card-btn.active svg {
+  stroke: currentColor;
+  animation: libraryPop 0.35s ease;
+}
+
+@keyframes wishlistPop {
+  0% {
+    transform: scale(0.6);
+  }
+
+  60% {
+    transform: scale(1.25);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes libraryPop {
+  0% {
+    transform: scale(0.6);
+  }
+
+  60% {
+    transform: scale(1.25);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Wishlist */
+
+.wishlist-header-icon.active {
+  color: #ff6b81;
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow:
+    0 0 20px rgba(239, 68, 68, 0.25),
+    inset 0 0 12px rgba(239, 68, 68, 0.08);
+}
+
+.wishlist-header-icon.active svg {
+  fill: #ff6b81;
+  stroke: #ff6b81;
+  animation: heartPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes heartPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* Library */
+
+.library-header-icon.active {
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow:
+    0 0 20px rgba(59, 130, 246, 0.25),
+    inset 0 0 12px rgba(59, 130, 246, 0.08);
+}
+
+.library-header-icon.active svg {
+  fill: #60a5fa;
+  stroke: #60a5fa;
+  animation: bookmarkPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes bookmarkPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* IMAGE */
+
+.cinematic-card .card-image {
+  position: absolute;
+
+  inset: 0;
+}
+
+.cinematic-card img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  transform: scale(1.05);
+
+  transition: 0.4s;
+}
+
+.cinematic-card:hover img {
+  transform: scale(1.12);
+}
+
+/* OVERLAY */
+
+.image-gradient {
+  position: absolute;
+
+  inset: 0;
+
+  background: linear-gradient(
+    to top,
+    rgba(5, 5, 12, 0.95),
+    rgba(5, 5, 12, 0.6) 35%,
+    rgba(5, 5, 12, 0.2) 60%,
+    transparent
+  );
+
+  z-index: 1;
+}
+
+.image-overlay-content {
+  position: absolute;
+
+  bottom: 50px;
+
+  left: 14px;
+
+  right: 14px;
+
+  z-index: 2;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.game-title {
+  font-size: 1.15rem;
+
+  font-weight: 800;
+
+  line-height: 1.2;
+
+  display: -webkit-box;
+
+  -webkit-line-clamp: 2;
+
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+}
+
+.rating-row {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  color: #a3a3b2;
+
+  font-size: 0.85rem;
+}
+
+.rating-row .stars {
+  color: #ffc72c;
+}
+
+/* GENRE */
+
+.genre-pills {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 6px;
+}
+
+.genre-pill {
+  font-size: 0.7rem;
+
+  padding: 4px 10px;
+
+  border-radius: 999px;
+
+  background: rgba(59, 130, 246, 0.15);
+
+  border: 1px solid rgba(59, 130, 246, 0.25);
+
+  color: white;
+}
+
+/* META */
+
+.meta-badge {
+  width: 36px;
+
+  height: 36px;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  border-radius: 10px;
+
+  font-weight: 800;
+
+  border: 1px solid currentColor;
+
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* BOTTOM */
+
+.card-bottom {
+  position: absolute;
+
+  bottom: 10px;
+
+  left: 14px;
+
+  right: 14px;
+
+  z-index: 2;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+}
+
+.release {
+  font-size: 0.75rem;
+
+  color: #a3a3b2;
+}
+
+/* ================= SIMILAR GAMES ================= */
+
+.similar-games-grid {
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
+  gap: 16px;
+}
+
+/* ================= FOOTER ================= */
+
+.footer {
+  padding: var(--space-4) var(--space-3);
+
+  text-align: center;
+
+  color: var(--text-muted);
+
+  border-top: 1px solid var(--border);
+
+  background: rgba(10, 15, 25, 0.4);
+
+  backdrop-filter: blur(10px);
+}
+
+.footer p {
+  margin: 6px 0;
+}
+
+.footer p:first-child {
+  color: var(--text-secondary);
+
+  font-weight: 500;
+}

@@ -1,16 +1,54 @@
-# React + Vite
+# FRACTURE React
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React rebuild of **FRACTURE**, a game discovery application that helps users explore, search, and discover video games.
 
-Currently, two official plugins are available:
+This version is being rebuilt from the original Vanilla JavaScript project into a modern React application with improved structure, reusable components, and scalable architecture.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚧 Current Status
 
-## React Compiler
+FRACTURE React is currently under active development.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Completed:
 
-## Expanding the ESLint configuration
+- React + Vite setup
+- Component-based project structure
+- RAWG API integration setup
+- Hero featured game section
+- Dynamic featured game selection
+- Screenshot background rotation
+- UI design system migration
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+In Progress:
+
+- Game cards migration
+- Explore page layout
+- Pagination
+- Game details page
+- Wishlist system
+- Library system
+
+## 🛠️ Tech Stack
+
+- React
+- Vite
+- JavaScript
+- CSS
+- RAWG Video Games Database API
+
+## 🎮 Features Planned
+
+- Browse games
+- Search games
+- Filter by genre and platform
+- View detailed game information
+- Save games to wishlist
+- Create personal game library
+- Explore top-rated and new releases
+
+## 📁 Project Goal
+
+The goal of FRACTURE React is to transform the original Vanilla JavaScript application into a production-style React project with cleaner architecture, reusable components, and a better user experience.
+
+---
+
+Built by **Vinit Gohil**

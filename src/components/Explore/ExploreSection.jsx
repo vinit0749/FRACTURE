@@ -1,34 +1,18 @@
-import { useEffect, useState } from "react";
-import { fetchGenres, fetchPlatforms } from "../../api/rawg";
+import useFilters from "../../hooks/useFilters";
 
 import ExploreToolbar from "./ExploreToolbar";
 import GameGrid from "./GameGrid";
 import Pagination from "../Pagination/Pagination";
 
 function ExploreSection(props) {
-  const [genres, setGenres] = useState([]);
-  const [platforms, setPlatforms] = useState([]);
-
-  useEffect(() => {
-    async function loadFilters() {
-      try {
-        const genreData = await fetchGenres();
-        const platformData = await fetchPlatforms();
-
-        setGenres(genreData.results);
-        setPlatforms(platformData.results);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    loadFilters();
-  }, []);
+  const { genres, platforms } = useFilters();
 
   return (
     <section className="games-section">
       <div className="section-header">
-        <h2>Explore Games</h2>
+        <h2>{props.title || "Explore Games"}</h2>
+
+        {props.subtitle && <p className="section-subtitle">{props.subtitle}</p>}
 
         <ExploreToolbar {...props} genres={genres} platforms={platforms} />
       </div>

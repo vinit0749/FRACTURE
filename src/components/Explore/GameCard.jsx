@@ -1,5 +1,13 @@
 import { Link } from "react-router-dom";
 import { Heart, Bookmark } from "lucide-react";
+import { useState } from "react";
+
+import {
+  toggleWishlist,
+  isWishlisted,
+  toggleLibrary,
+  isInLibrary,
+} from "../../utils/storage";
 
 function getStars(rating = 0) {
   const fullStars = Math.floor(rating);
@@ -40,10 +48,37 @@ function getMetacriticColor(score) {
   if (!score) return "#737389";
   if (score >= 90) return "#2EE59D";
   if (score >= 75) return "#FFC72C";
+
   return "#ff7b4d";
 }
 
-function GameCard({ game }) {
+function GameCard({ game, onWishlistChange, onLibraryChange }) {
+  const [wishlisted, setWishlisted] = useState(isWishlisted(game.id));
+
+  const [library, setLibrary] = useState(isInLibrary(game.id));
+
+  function handleWishlist(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const status = toggleWishlist(game);
+
+    setWishlisted(status);
+
+    onWishlistChange?.();
+  }
+
+  function handleLibrary(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const status = toggleLibrary(game);
+
+    setLibrary(status);
+
+    onLibraryChange?.();
+  }
+
   const metaColor = getMetacriticColor(game.metacritic);
 
   return (
@@ -51,27 +86,25 @@ function GameCard({ game }) {
       <div className="card-image">
         <div className="card-actions">
           <button
-            className="card-action-btn wishlist-card-btn"
+            className={`card-action-btn wishlist-card-btn ${
+              wishlisted ? "active" : ""
+            }`}
             type="button"
             aria-label="Wishlist"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
+            onClick={handleWishlist}
           >
-            <Heart size={18} />
+            <Heart size={18} fill={wishlisted ? "currentColor" : "none"} />
           </button>
 
           <button
-            className="card-action-btn library-card-btn"
+            className={`card-action-btn library-card-btn ${
+              library ? "active" : ""
+            }`}
             type="button"
             aria-label="Library"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
+            onClick={handleLibrary}
           >
-            <Bookmark size={18} />
+            <Bookmark size={18} fill={library ? "currentColor" : "none"} />
           </button>
         </div>
 
@@ -88,6 +121,7 @@ function GameCard({ game }) {
 
           <div className="rating-row">
             <span className="stars">{getStars(game.rating)}</span>
+
             <span>{game.rating?.toFixed(1)}</span>
           </div>
 

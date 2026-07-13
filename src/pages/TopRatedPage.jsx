@@ -1,47 +1,24 @@
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useRef, useState } from "react";
 
 import Header from "../components/Header";
-import Hero from "../components/Hero";
 import ExploreSection from "../components/Explore/ExploreSection";
 import Footer from "../components/Footer";
 
-import useHero from "../hooks/useHero";
-
-function HomePage() {
-  const { featuredGame, screenshots } = useHero();
-
+function TopRatedPage() {
   const exploreRef = useRef(null);
-  const [searchParams] = useSearchParams();
 
   const [page, setPage] = useState(1);
   const [totalPages] = useState(100);
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [searchSource, setSearchSource] = useState("");
-  const [sort, setSort] = useState("-added");
+
+  const [sort] = useState("-rating");
+
   const [genre, setGenre] = useState("");
   const [platform, setPlatform] = useState("");
-  const [section, setSection] = useState("explore");
 
-  useEffect(() => {
-    const query = searchParams.get("search")?.trim() || "";
-
-    setSearchInput(query);
-    setSearch(query);
-    setSearchSource(query ? "header" : "");
-    setPage(1);
-
-    if (query) {
-      setTimeout(() => {
-        exploreRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 100);
-    }
-  }, [searchParams]);
+  const section = "top-rated";
 
   function changePage(newPage) {
     setPage(newPage);
@@ -54,40 +31,29 @@ function HomePage() {
     }, 100);
   }
 
-  function updateSearchInput(value, source) {
+  function updateSearchInput(value) {
     setSearchInput(value);
 
-    // When the search is cleared, immediately restore the default game list
     if (value.trim() === "") {
       setSearch("");
-      setSearchSource(source);
       setPage(1);
     }
   }
 
-  function performSearch(source) {
+  function performSearch() {
     setSearch(searchInput.trim());
-    setSearchSource(source);
     setPage(1);
   }
 
   function resetFilters() {
     setSearchInput("");
     setSearch("");
-    setSearchSource("");
 
-    setSort("-added");
     setGenre("");
     setPlatform("");
 
     setPage(1);
   }
-
-  const showHero =
-    section === "explore" &&
-    page === 1 &&
-    search === "" &&
-    (searchSource === "" || searchSource === "header");
 
   return (
     <>
@@ -98,12 +64,10 @@ function HomePage() {
       />
 
       <div className="container">
-        <div className={`hero-wrapper ${showHero ? "visible" : "hidden"}`}>
-          <Hero hero={featuredGame} screenshots={screenshots} />
-        </div>
-
         <div ref={exploreRef}>
           <ExploreSection
+            title="Top Rated Games"
+            subtitle="Discover the highest-rated games across every platform."
             page={page}
             setPage={changePage}
             totalPages={totalPages}
@@ -113,13 +77,11 @@ function HomePage() {
             updateSearchInput={updateSearchInput}
             performSearch={performSearch}
             sort={sort}
-            setSort={setSort}
             genre={genre}
             setGenre={setGenre}
             platform={platform}
             setPlatform={setPlatform}
             section={section}
-            setSection={setSection}
             resetFilters={resetFilters}
           />
         </div>
@@ -130,4 +92,4 @@ function HomePage() {
   );
 }
 
-export default HomePage;
+export default TopRatedPage;

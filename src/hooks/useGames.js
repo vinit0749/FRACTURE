@@ -29,6 +29,9 @@ function getSearchScore(game, search) {
   return score;
 }
 
+// cache already loaded pages
+const gamesCache = new Map();
+
 export default function useGames({
   page,
   search,
@@ -42,17 +45,45 @@ export default function useGames({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function loadGames() {
       setLoading(true);
 
       try {
+        const cacheKey = JSON.stringify({
+          page,
+          search,
+          sort,
+          genre,
+          platform,
+          section,
+        });
+
+        // use cached result if available
+        if (gamesCache.has(cacheKey)) {
+          const cached = gamesCache.get(cacheKey);
+
+          setGames(cached.results);
+
+          if (setTotalPages) {
+            setTotalPages(cached.totalPages);
+          }
+
+          setLoading(false);
+
+          return;
+        }
+
         const params = new URLSearchParams();
 
         params.append("page", page);
+
         params.append("page_size", search ? 40 : 20);
 
         if (search) {
           params.append("search", search.trim().toLowerCase());
+
           params.append("search_exact", false);
         }
 
@@ -66,6 +97,7 @@ export default function useGames({
           ordering = "-added";
 
           const today = new Date();
+
           const oneYearAgo = new Date();
 
           oneYearAgo.setFullYear(today.getFullYear() - 1);
@@ -86,11 +118,19 @@ export default function useGames({
           params.append("platforms", platform);
         }
 
-        const data = await fetchGames(`&${params.toString()}`);
+        const data = await fetchGames(
+          `&${params.toString()}`,
+          controller.signal,
+        );
 
-        // update pagination count
-        if (setTotalPages && data.count) {
-          setTotalPages(Math.ceil(data.count / 20));
+        let totalPages = 1;
+
+        if (data.count) {
+          totalPages = Math.ceil(data.count / 20);
+
+          if (setTotalPages) {
+            setTotalPages(totalPages);
+          }
         }
 
         let results = data.results || [];
@@ -103,16 +143,28 @@ export default function useGames({
           results = rankSearchResults(results, search);
         }
 
+        gamesCache.set(cacheKey, {
+          results,
+          totalPages,
+        });
+
         setGames(results);
       } catch (error) {
-        console.error("Failed loading games:", error);
-        setGames([]);
+        if (error.name !== "AbortError") {
+          console.error("Failed loading games:", error);
+
+          setGames([]);
+        }
       } finally {
         setLoading(false);
       }
     }
 
     loadGames();
+
+    return () => {
+      controller.abort();
+    };
   }, [page, search, sort, genre, platform, section, setTotalPages]);
 
   return {

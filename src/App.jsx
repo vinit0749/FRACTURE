@@ -1,24 +1,21 @@
-import Header from "./components/Header";
-import Hero from "./components/Hero";
-import GamesSection from "./components/GamesSection";
-import Footer from "./components/Footer";
+import { Routes, Route } from "react-router-dom";
 
-import useHero from "./hooks/useHero";
+import HomePage from "./pages/HomePage";
+import GameDetailsPage from "./pages/GameDetailsPage";
+import WishlistPage from "./pages/WishlistPage";
+import LibraryPage from "./pages/LibraryPage";
 
 function App() {
-  const { featuredGame, screenshots } = useHero();
-
   return (
-    <>
-      <Header />
+    <Routes>
+      <Route path="/" element={<HomePage />} />
 
-      <div className="container">
-        <Hero hero={featuredGame} screenshots={screenshots} />
-        <GamesSection />
-      </div>
+      <Route path="/game/:id" element={<GameDetailsPage />} />
 
-      <Footer />
-    </>
+      <Route path="/wishlist" element={<WishlistPage />} />
+
+      <Route path="/library" element={<LibraryPage />} />
+    </Routes>
   );
 }
 

@@ -437,6 +437,15 @@ body {
     fill 0.25s ease;
 }
 
+.game-card,
+.game-card:link,
+.game-card:visited,
+.game-card:hover,
+.game-card:active {
+  color: inherit;
+  text-decoration: none;
+}
+
 .wishlist-card-btn {
   transition:
     background 0.25s ease,

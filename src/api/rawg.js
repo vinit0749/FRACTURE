@@ -33,3 +33,25 @@ export async function fetchGameScreenshots(id) {
 
   return response.json();
 }
+
+export async function fetchGenres() {
+  const response = await fetch(`${BASE_URL}/genres?key=${API_KEY}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch genres");
+  }
+
+  return response.json();
+}
+
+export async function fetchPlatforms() {
+  const response = await fetch(
+    `${BASE_URL}/platforms/lists/parents?key=${API_KEY}`,
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch platforms");
+  }
+
+  return response.json();
+}

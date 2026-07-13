@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   fetchGames,
@@ -6,20 +6,25 @@ import {
   fetchGameScreenshots,
 } from "../api/rawg";
 
+let heroCache = null;
+let heroLoading = false;
+
 export default function useHero() {
-  const [featuredGame, setFeaturedGame] = useState(null);
-  const loaded = useRef(false);
-  const [screenshots, setScreenshots] = useState([]);
+  const [featuredGame, setFeaturedGame] = useState(
+    heroCache?.featuredGame || null,
+  );
+
+  const [screenshots, setScreenshots] = useState(heroCache?.screenshots || []);
 
   useEffect(() => {
-    if (loaded.current) return;
-
-    loaded.current = true;
+    if (heroCache || heroLoading) return;
 
     loadFeaturedGame();
   }, []);
 
   async function loadFeaturedGame() {
+    heroLoading = true;
+
     try {
       const pools = [];
 
@@ -51,15 +56,20 @@ export default function useHero() {
 
       const uniqueGames = [...uniqueGamesMap.values()];
 
-      const randomGame =
-        uniqueGames[Math.floor(Math.random() * uniqueGames.length)];
+      // Same random selection behaviour as vanilla
+      uniqueGames.sort(() => Math.random() - 0.5);
 
-      if (!randomGame) return;
+      const randomGame = uniqueGames[0];
 
+      if (!randomGame) {
+        heroLoading = false;
+        return;
+      }
+
+      // Full details request
       const details = await fetchGameDetails(randomGame.id);
 
-      setFeaturedGame(details);
-
+      // Screenshot request
       const screenshotData = await fetchGameScreenshots(details.id);
 
       const uniqueScreenshots = [
@@ -71,9 +81,18 @@ export default function useHero() {
         ).values(),
       ];
 
+      // Save cache
+      heroCache = {
+        featuredGame: details,
+        screenshots: uniqueScreenshots,
+      };
+
+      setFeaturedGame(details);
       setScreenshots(uniqueScreenshots);
     } catch (error) {
       console.error("Featured game failed:", error);
+    } finally {
+      heroLoading = false;
     }
   }
 

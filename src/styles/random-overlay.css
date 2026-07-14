@@ -1,0 +1,144 @@
+.random-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: radial-gradient(
+    circle at center,
+    rgba(20, 40, 80, 0.35),
+    rgba(0, 0, 0, 0.92)
+  );
+
+  backdrop-filter: blur(12px);
+
+  animation: overlayFade 0.35s ease forwards;
+}
+
+.random-content {
+  text-align: center;
+  color: white;
+
+  animation: contentPop 0.4s ease forwards;
+}
+
+.dice-animation {
+  font-size: 70px;
+
+  animation: diceRoll 1s infinite ease-in-out;
+
+  filter: drop-shadow(0 0 20px rgba(70, 140, 255, 0.8));
+}
+
+.random-content h2 {
+  margin-top: 25px;
+
+  font-size: 1.8rem;
+
+  letter-spacing: 1px;
+
+  font-weight: 600;
+}
+
+/* Loading dots */
+
+.random-loader {
+  margin-top: 25px;
+
+  display: flex;
+
+  justify-content: center;
+
+  gap: 8px;
+}
+
+.random-loader span {
+  width: 8px;
+  height: 8px;
+
+  background: #4da3ff;
+
+  border-radius: 50%;
+
+  animation: loadingDots 1.2s infinite;
+}
+
+.random-loader span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.random-loader span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Animations */
+
+@keyframes overlayFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes contentPop {
+  from {
+    opacity: 0;
+
+    transform: scale(0.8) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes diceRoll {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.15);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes loadingDots {
+  0%,
+  100% {
+    transform: translateY(0);
+
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: translateY(-8px);
+
+    opacity: 1;
+  }
+}
+
+.random-overlay-hide {
+  animation: overlayFadeOut 0.3s ease forwards;
+}
+
+@keyframes overlayFadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}

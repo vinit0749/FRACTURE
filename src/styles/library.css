@@ -1,7 +1,12 @@
+/* ================= LIBRARY PAGE ================= */
+
 .library-page {
   padding: var(--space-3) 0 var(--space-6);
+
   min-height: 70vh;
 }
+
+/* ================= DIVIDER ================= */
 
 .library-divider {
   height: 1px;
@@ -11,9 +16,13 @@
   background: var(--border);
 }
 
+/* ================= HEADER ================= */
+
 .library-header {
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
 
   gap: var(--space-4);
@@ -27,13 +36,19 @@
   color: var(--text);
 
   font-size: 2.2rem;
+
   font-weight: var(--heading-weight);
+
   letter-spacing: 0.5px;
 }
 
+/* ================= HEADER INFO ================= */
+
 .library-info {
   display: flex;
+
   align-items: center;
+
   gap: var(--space-2);
 }
 
@@ -41,6 +56,7 @@
   padding: 8px 14px;
 
   border: 1px solid var(--border);
+
   border-radius: 999px;
 
   background: var(--surface);
@@ -48,38 +64,58 @@
   color: var(--text-secondary);
 
   font-size: 0.9rem;
+
   font-weight: 600;
 }
+
+/* ================= BUTTON ================= */
 
 .secondary-btn {
   padding: 10px 18px;
 
   border: 1px solid var(--border);
+
   border-radius: var(--radius-sm);
 
   background: transparent;
+
   color: var(--text);
 
   font-size: 0.9rem;
+
   font-weight: 600;
 
   cursor: pointer;
 
-  transition: all 0.25s ease;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .library-info .secondary-btn {
   background: rgba(59, 130, 246, 0.08);
+
   border-color: rgba(59, 130, 246, 0.25);
+
   color: #60a5fa;
 }
 
 .library-info .secondary-btn:hover {
   background: rgba(59, 130, 246, 0.15);
+
   border-color: #3b82f6;
+
   color: #93c5fd;
+
+  transform: translateY(-2px);
+
   box-shadow: 0 10px 25px rgba(59, 130, 246, 0.18);
 }
+
+/* ================= LIBRARY GRID ================= */
 
 #library-grid {
   display: grid;
@@ -93,26 +129,38 @@
   margin-top: 0;
 }
 
+#library-grid .cinematic-card {
+  width: 100%;
+}
+
+/* ================= EMPTY STATE ================= */
+
 .library-empty {
   display: flex;
+
   flex-direction: column;
+
   justify-content: center;
+
   align-items: center;
 
   min-height: calc(100vh - 280px);
 
   text-align: center;
+
   animation: fadeIn 0.35s ease;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
+
     transform: translateY(12px);
   }
 
   to {
     opacity: 1;
+
     transform: translateY(0);
   }
 }
@@ -123,6 +171,7 @@
   color: var(--text-muted);
 
   font-size: 4.5rem;
+
   font-weight: 300;
 
   opacity: 0.7;
@@ -134,6 +183,7 @@
   color: var(--text);
 
   font-size: 2rem;
+
   font-weight: var(--heading-weight);
 }
 
@@ -145,45 +195,46 @@
   color: var(--text-muted);
 
   font-size: 1rem;
+
   line-height: 1.7;
 }
 
-#library-grid .cinematic-card {
-  width: 100%;
-}
-
-/* ================= CLEAR library MODAL ================= */
+/* ================= CLEAR LIBRARY MODAL ================= */
 
 .modal-overlay {
   position: fixed;
+
   inset: 0;
 
   display: flex;
+
   justify-content: center;
+
   align-items: center;
 
   background: rgba(5, 10, 20, 0.72);
+
   backdrop-filter: blur(10px);
 
   z-index: 9999;
 
   opacity: 0;
+
   visibility: hidden;
+
+  pointer-events: none;
 
   transition:
     opacity 0.25s ease,
     visibility 0.25s ease;
 }
 
-.modal-overlay.hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
 .modal-overlay:not(.hidden) {
   opacity: 1;
+
   visibility: visible;
+
+  pointer-events: auto;
 }
 
 .modal-card {
@@ -202,6 +253,7 @@
   text-align: center;
 
   opacity: 0;
+
   transform: scale(0.9) translateY(10px);
 
   transition:
@@ -211,21 +263,28 @@
 
 .modal-overlay:not(.hidden) .modal-card {
   opacity: 1;
+
   transform: scale(1) translateY(0);
 }
 
+/* ================= MODAL CONTENT ================= */
+
 .modal-overlay.hidden .modal-card {
   opacity: 0;
+
   transform: scale(0.9) translateY(10px);
 }
 
 .modal-icon {
   font-size: 3rem;
+
   margin-bottom: 16px;
 }
 
 .modal-card h2 {
   margin: 0 0 12px;
+
+  color: var(--text);
 
   font-size: 1.7rem;
 }
@@ -238,8 +297,11 @@
   line-height: 1.6;
 }
 
+/* ================= MODAL ACTIONS ================= */
+
 .modal-actions {
   display: flex;
+
   gap: 14px;
 
   margin-top: 28px;
@@ -249,7 +311,11 @@
   flex: 1;
 }
 
+/* ================= DANGER BUTTON ================= */
+
 .danger-btn {
+  padding: 12px 18px;
+
   border: none;
 
   border-radius: var(--radius-sm);
@@ -262,18 +328,21 @@
 
   cursor: pointer;
 
-  transition: 0.25s;
-
-  padding: 12px 18px;
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .danger-btn:hover {
   background: #dc2626;
 
   transform: translateY(-2px);
+
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.25);
 }
 
-/* ================= library STATS ================= */
+/* ================= LIBRARY STATS ================= */
 
 .library-stats {
   display: grid;
@@ -300,7 +369,10 @@
 
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
 
-  transition: all 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .stat-card:hover {
@@ -341,11 +413,43 @@
   font-size: 0.9rem;
 }
 
-/* ================= LIBRARY BOOKMARK PULSE ================= */
+/* ================= LIBRARY HEADER ICON ================= */
+
+.library-header-icon.active svg {
+  animation: bookmarkPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes bookmarkPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* ---------- Tablet ---------- */
+
+@media (max-width: 1100px) {
+  .library-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #library-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
+/* ---------- Small Tablet ---------- */
 
 @media (max-width: 768px) {
   .library-header {
     flex-direction: column;
+
     align-items: flex-start;
 
     gap: var(--space-3);
@@ -353,6 +457,80 @@
 
   .library-info {
     width: 100%;
+
     justify-content: space-between;
+  }
+
+  .library-heading h1 {
+    font-size: 1.9rem;
+  }
+
+  .library-stats {
+    grid-template-columns: 1fr;
+  }
+
+  #library-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+
+    gap: 18px;
+  }
+
+  .modal-card {
+    padding: 24px;
+  }
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 600px) {
+  .library-page {
+    padding-bottom: var(--space-5);
+  }
+
+  .library-heading h1 {
+    font-size: 1.7rem;
+  }
+
+  .library-info {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  #library-count,
+  .library-info .secondary-btn {
+    width: 100%;
+
+    text-align: center;
+  }
+
+  #library-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .library-empty {
+    min-height: calc(100vh - 240px);
+
+    padding: 0 var(--space-2);
+  }
+
+  .library-empty .empty-icon {
+    font-size: 3.5rem;
+  }
+
+  .library-empty h2 {
+    font-size: 1.6rem;
+  }
+
+  .library-empty p {
+    font-size: 0.9rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .stat-card {
+    padding: 14px;
   }
 }

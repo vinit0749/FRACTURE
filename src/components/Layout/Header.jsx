@@ -1,9 +1,13 @@
-import { Search, Heart, Bookmark } from "lucide-react";
+import { Search, Heart, Bookmark, Dices } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+
+import { useRandomGameContext } from "../../context/RandomGameContext";
 
 function Header({ searchInput, updateSearchInput }) {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const { getRandomGame } = useRandomGameContext();
 
   function search() {
     const query = searchInput.trim();
@@ -17,7 +21,13 @@ function Header({ searchInput, updateSearchInput }) {
     <header className="site-header">
       <div className="container header-container">
         <div className="logo">
-          <Link to="/" className="logo-link">
+          <Link
+            to="/"
+            className="logo-link"
+            onClick={() => {
+              window.dispatchEvent(new Event("resetHome"));
+            }}
+          >
             <h1>FRACTURE</h1>
           </Link>
 
@@ -60,7 +70,7 @@ function Header({ searchInput, updateSearchInput }) {
               type="text"
               placeholder="Search games or genres..."
               value={searchInput}
-              onChange={(e) => updateSearchInput(e.target.value)}
+              onChange={(e) => updateSearchInput(e.target.value, "header")}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   search();
@@ -78,6 +88,16 @@ function Header({ searchInput, updateSearchInput }) {
           </div>
 
           <div className="header-icons">
+            <button
+              className="header-icon random-header-icon"
+              aria-label="Surprise Me"
+              onClick={getRandomGame}
+            >
+              <Dices size={22} />
+
+              <span className="tooltip">Surprise Me</span>
+            </button>
+
             <Link
               to="/wishlist"
               className={`header-icon wishlist-header-icon ${

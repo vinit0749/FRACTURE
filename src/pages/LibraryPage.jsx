@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Header from "../components/Layout/Header";
+
 import GameCard from "../components/Explore/GameCard";
 
 import { getLibrary, saveLibrary } from "../utils/storage";
@@ -182,8 +182,6 @@ function LibraryPage() {
           </div>
         </div>
       )}
-
-      <Footer />
     </>
   );
 }

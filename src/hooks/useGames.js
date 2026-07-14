@@ -123,15 +123,9 @@ export default function useGames({
           controller.signal,
         );
 
-        let totalPages = 1;
+        const totalPages = 100;
 
-        if (data.count) {
-          totalPages = Math.ceil(data.count / 20);
-
-          if (setTotalPages) {
-            setTotalPages(totalPages);
-          }
-        }
+        setTotalPages?.(100);
 
         let results = data.results || [];
 

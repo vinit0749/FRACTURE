@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import Header from "../components/Header";
-import Hero from "../components/Hero";
+import Header from "../components/Layout/Header";
+import Hero from "../components/Hero/Hero";
 import ExploreSection from "../components/Explore/ExploreSection";
-import Footer from "../components/Footer";
+import Footer from "../components/Layout/Footer";
 
 import useHero from "../hooks/useHero";
 
@@ -15,7 +15,7 @@ function HomePage() {
   const [searchParams] = useSearchParams();
 
   const [page, setPage] = useState(1);
-  const [totalPages] = useState(100);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -42,6 +42,27 @@ function HomePage() {
       }, 100);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    function resetHome() {
+      setPage(1);
+
+      setSearchInput("");
+      setSearch("");
+      setSearchSource("");
+
+      setSort("-added");
+      setGenre("");
+      setPlatform("");
+      setSection("explore");
+    }
+
+    window.addEventListener("resetHome", resetHome);
+
+    return () => {
+      window.removeEventListener("resetHome", resetHome);
+    };
+  }, []);
 
   function changePage(newPage) {
     setPage(newPage);
@@ -74,7 +95,6 @@ function HomePage() {
   function resetFilters() {
     setSearchInput("");
     setSearch("");
-    setSearchSource("");
 
     setSort("-added");
     setGenre("");
@@ -107,6 +127,7 @@ function HomePage() {
             page={page}
             setPage={changePage}
             totalPages={totalPages}
+            setTotalPages={setTotalPages}
             search={search}
             setSearch={setSearch}
             searchInput={searchInput}

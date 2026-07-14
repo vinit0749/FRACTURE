@@ -1,14 +1,13 @@
 import { useRef, useState } from "react";
 
-import Header from "../components/Header";
+import Header from "../components/Layout/Header";
 import ExploreSection from "../components/Explore/ExploreSection";
-import Footer from "../components/Footer";
 
 function NewReleasesPage() {
   const exploreRef = useRef(null);
 
   const [page, setPage] = useState(1);
-  const [totalPages] = useState(100);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -71,6 +70,7 @@ function NewReleasesPage() {
             page={page}
             setPage={changePage}
             totalPages={totalPages}
+            setTotalPages={setTotalPages}
             search={search}
             setSearch={setSearch}
             searchInput={searchInput}
@@ -86,8 +86,6 @@ function NewReleasesPage() {
           />
         </div>
       </div>
-
-      <Footer />
     </>
   );
 }

@@ -1,11 +1,22 @@
 import useFilters from "../../hooks/useFilters";
+import useGames from "../../hooks/useGames";
 
 import ExploreToolbar from "./ExploreToolbar";
 import GameGrid from "./GameGrid";
-import Pagination from "../Pagination/Pagination";
+import Pagination from "../Pagination";
 
 function ExploreSection(props) {
   const { genres, platforms } = useFilters();
+
+  const { games, loading } = useGames({
+    page: props.page,
+    search: props.search,
+    sort: props.sort,
+    genre: props.genre,
+    platform: props.platform,
+    section: props.section,
+    setTotalPages: props.setTotalPages,
+  });
 
   return (
     <section className="games-section">
@@ -17,7 +28,7 @@ function ExploreSection(props) {
         <ExploreToolbar {...props} genres={genres} platforms={platforms} />
       </div>
 
-      <GameGrid {...props} />
+      <GameGrid games={games} loading={loading} />
 
       <Pagination
         page={props.page}

@@ -30,6 +30,7 @@ function Pagination({ page, totalPages, search, setPage }) {
         1
       </button>,
     );
+    ``;
 
     if (startPage > 2) {
       pages.push(

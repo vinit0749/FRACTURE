@@ -1,7 +1,12 @@
+/* ================= PAGE ================= */
+
 .wishlist-page {
   padding: var(--space-3) 0 var(--space-6);
+
   min-height: 70vh;
 }
+
+/* ================= HEADER ================= */
 
 .wishlist-divider {
   height: 1px;
@@ -13,7 +18,9 @@
 
 .wishlist-header {
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
 
   gap: var(--space-4);
@@ -27,45 +34,61 @@
   color: var(--text);
 
   font-size: 2.2rem;
+
   font-weight: var(--heading-weight);
+
   letter-spacing: 0.5px;
 }
 
+/* ================= HEADER ACTIONS ================= */
+
 .wishlist-info {
   display: flex;
+
   align-items: center;
+
   gap: var(--space-2);
 }
 
 #wishlist-count {
   padding: 8px 14px;
 
-  border: 1px solid var(--border);
   border-radius: 999px;
+
+  border: 1px solid var(--border);
 
   background: var(--surface);
 
   color: var(--text-secondary);
 
   font-size: 0.9rem;
+
   font-weight: 600;
 }
+
+/* ================= BUTTONS ================= */
 
 .secondary-btn {
   padding: 10px 18px;
 
-  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 
+  border: 1px solid var(--border);
+
   background: transparent;
+
   color: var(--text);
 
   font-size: 0.9rem;
+
   font-weight: 600;
 
   cursor: pointer;
 
-  transition: all 0.25s ease;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s ease;
 }
 
 .wishlist-info .secondary-btn {
@@ -88,6 +111,8 @@
   box-shadow: 0 10px 25px rgba(239, 68, 68, 0.18);
 }
 
+/* ================= GRID ================= */
+
 #wishlist-grid {
   display: grid;
 
@@ -96,32 +121,28 @@
   gap: 24px;
 
   align-items: start;
-
-  margin-top: 0;
 }
+
+#wishlist-grid .cinematic-card {
+  width: 100%;
+}
+
+/* ================= EMPTY STATE ================= */
 
 .wishlist-empty {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
   min-height: calc(100vh - 280px);
 
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
   text-align: center;
+
   animation: fadeIn 0.35s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .wishlist-empty .empty-icon {
@@ -130,6 +151,7 @@
   color: var(--text-muted);
 
   font-size: 4.5rem;
+
   font-weight: 300;
 
   opacity: 0.7;
@@ -141,6 +163,7 @@
   color: var(--text);
 
   font-size: 2rem;
+
   font-weight: var(--heading-weight);
 }
 
@@ -152,38 +175,34 @@
   color: var(--text-muted);
 
   font-size: 1rem;
-  line-height: 1.7;
-}
 
-#wishlist-grid .cinematic-card {
-  width: 100%;
+  line-height: 1.7;
 }
 
 /* ================= CLEAR WISHLIST MODAL ================= */
 
 .modal-overlay {
   position: fixed;
+
   inset: 0;
 
   display: flex;
+
   justify-content: center;
+
   align-items: center;
 
+  padding: 20px;
+
   background: rgba(5, 10, 20, 0.72);
+
   backdrop-filter: blur(10px);
 
   z-index: 9999;
-
-  opacity: 1;
-  visibility: visible;
-
-  transition:
-    opacity 0.25s ease,
-    visibility 0.25s ease;
 }
 
 .modal-card {
-  width: min(420px, calc(100% - 32px));
+  width: min(420px, 100%);
 
   padding: 32px;
 
@@ -196,22 +215,18 @@
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
 
   text-align: center;
-
-  opacity: 0;
-  transform: scale(0.9) translateY(10px);
-
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
 }
 
 .modal-icon {
-  font-size: 3rem;
   margin-bottom: 16px;
+
+  font-size: 3rem;
 }
 
 .modal-card h2 {
   margin: 0 0 12px;
+
+  color: var(--text);
 
   font-size: 1.7rem;
 }
@@ -226,6 +241,7 @@
 
 .modal-actions {
   display: flex;
+
   gap: 14px;
 
   margin-top: 28px;
@@ -235,7 +251,11 @@
   flex: 1;
 }
 
+/* ================= DANGER BUTTON ================= */
+
 .danger-btn {
+  padding: 12px 18px;
+
   border: none;
 
   border-radius: var(--radius-sm);
@@ -248,9 +268,9 @@
 
   cursor: pointer;
 
-  transition: 0.25s;
-
-  padding: 12px 18px;
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease;
 }
 
 .danger-btn:hover {
@@ -286,7 +306,10 @@
 
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
 
-  transition: all 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .stat-card:hover {
@@ -312,7 +335,7 @@
 .stat-value {
   margin-top: 6px;
 
-  color: white;
+  color: var(--text);
 
   font-size: 1.35rem;
 
@@ -327,15 +350,22 @@
   font-size: 0.9rem;
 }
 
-/* ================= WISHLIST HEART PULSE ================= */
+/* ================= RESPONSIVE ================= */
 
-.header-icon.active svg {
-  animation: heartPulse 2.5s ease-in-out infinite;
+/* Tablet */
+
+@media (max-width: 1000px) {
+  .wishlist-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
+
+/* Mobile */
 
 @media (max-width: 768px) {
   .wishlist-header {
     flex-direction: column;
+
     align-items: flex-start;
 
     gap: var(--space-3);
@@ -343,6 +373,44 @@
 
   .wishlist-info {
     width: 100%;
+
     justify-content: space-between;
+  }
+
+  .wishlist-heading h1 {
+    font-size: 1.8rem;
+  }
+}
+
+/* Small Mobile */
+
+@media (max-width: 500px) {
+  .wishlist-page {
+    padding-bottom: var(--space-5);
+  }
+
+  .wishlist-info {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  #wishlist-count,
+  .wishlist-info .secondary-btn {
+    width: 100%;
+
+    text-align: center;
+  }
+
+  .wishlist-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-card {
+    padding: 24px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
   }
 }

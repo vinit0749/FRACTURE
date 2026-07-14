@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function formatDate(date) {
   if (!date) return "Unknown";
@@ -19,6 +20,8 @@ function getMetacriticColor(score) {
 
 function Hero({ hero, screenshots = [] }) {
   const imageRef = useRef(null);
+
+  const navigate = useNavigate();
 
   const [currentImage, setCurrentImage] = useState(null);
 
@@ -145,7 +148,15 @@ function Hero({ hero, screenshots = [] }) {
           {hero?.genres?.map((g) => g.name).join(" • ") || "Unknown"}
         </div>
 
-        <button className="hero-btn" id="hero-details-btn" data-id={hero?.id}>
+        <button
+          className="hero-btn"
+          id="hero-details-btn"
+          onClick={() => {
+            if (hero?.id) {
+              navigate(`/game/${hero.id}`);
+            }
+          }}
+        >
           View Details
         </button>
       </div>

@@ -1,10 +1,7 @@
-import useGames from "../../hooks/useGames";
 import GameCard from "./GameCard";
 import SkeletonCard from "./SkeletonCard";
 
-function GameGrid(props) {
-  const { games, loading } = useGames(props);
-
+function GameGrid({ games = [], loading }) {
   if (loading) {
     return (
       <main id="game-grid" className="game-grid">

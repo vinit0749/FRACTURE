@@ -1,13 +1,23 @@
 import { Search, Heart, Bookmark, Dices } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
 
 import { useRandomGameContext } from "../../context/RandomGameContext";
+import useGameAutocomplete from "../../hooks/useGameAutocomplete";
+import SearchAutocomplete from "../Common/SearchAutocomplete";
 
 function Header({ searchInput, updateSearchInput }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const searchRef = useRef(null);
+
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+
   const { getRandomGame } = useRandomGameContext();
+
+  const { suggestions } = useGameAutocomplete(searchInput);
 
   function search() {
     const query = searchInput.trim();
@@ -15,7 +25,68 @@ function Header({ searchInput, updateSearchInput }) {
     if (!query) return;
 
     navigate(`/?search=${encodeURIComponent(query)}`);
+
+    setShowAutocomplete(false);
+    setActiveIndex(-1);
   }
+
+  function handleKeyboardNavigation(e) {
+    if (!showAutocomplete || suggestions.length === 0) {
+      return;
+    }
+
+    // Arrow Down
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+
+      setActiveIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+    }
+
+    // Arrow Up
+    else if (e.key === "ArrowUp") {
+      e.preventDefault();
+
+      setActiveIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+    }
+
+    // Enter select suggestion
+    else if (e.key === "Enter") {
+      e.preventDefault();
+
+      if (activeIndex >= 0) {
+        const selectedGame = suggestions[activeIndex];
+
+        navigate(`/game/${selectedGame.id}`);
+
+        setShowAutocomplete(false);
+        setActiveIndex(-1);
+      } else {
+        search();
+      }
+    }
+
+    // Escape close
+    else if (e.key === "Escape") {
+      setShowAutocomplete(false);
+      setActiveIndex(-1);
+    }
+  }
+
+  // close autocomplete when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowAutocomplete(false);
+        setActiveIndex(-1);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <header className="site-header">
@@ -64,18 +135,29 @@ function Header({ searchInput, updateSearchInput }) {
             </Link>
           </nav>
 
-          <div className="search-section">
+          <div className="search-section" ref={searchRef}>
             <input
               id="search-input"
               type="text"
               placeholder="Search games or genres..."
               value={searchInput}
-              onChange={(e) => updateSearchInput(e.target.value, "header")}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  search();
+              onFocus={() => {
+                if (searchInput.trim().length >= 2) {
+                  setShowAutocomplete(true);
                 }
               }}
+              onChange={(e) => {
+                updateSearchInput(e.target.value, "header");
+
+                setActiveIndex(-1);
+
+                if (e.target.value.trim().length >= 2) {
+                  setShowAutocomplete(true);
+                } else {
+                  setShowAutocomplete(false);
+                }
+              }}
+              onKeyDown={handleKeyboardNavigation}
             />
 
             <button
@@ -85,6 +167,16 @@ function Header({ searchInput, updateSearchInput }) {
             >
               <Search size={20} />
             </button>
+
+            <SearchAutocomplete
+              suggestions={suggestions}
+              visible={showAutocomplete && suggestions.length > 0}
+              activeIndex={activeIndex}
+              onSelect={() => {
+                setShowAutocomplete(false);
+                setActiveIndex(-1);
+              }}
+            />
           </div>
 
           <div className="header-icons">

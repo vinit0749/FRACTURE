@@ -1,58 +1,89 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Header from "../components/Layout/Header";
-
 import GameCard from "../components/Explore/GameCard";
+import CollectionRow from "../components/Library/CollectionRow";
 
 import { getLibrary, saveLibrary } from "../utils/storage";
 
 import "../styles/library.css";
 
 function LibraryPage() {
-  const [library, setLibrary] = useState(getLibrary());
+  const [library, setLibrary] = useState([]);
 
   const [searchInput, setSearchInput] = useState("");
+
   const [showClearModal, setShowClearModal] = useState(false);
+
+  const [activeFilter, setActiveFilter] = useState("all");
 
   function updateSearchInput(value) {
     setSearchInput(value);
   }
 
+  function loadLibrary() {
+    setLibrary(getLibrary());
+  }
+
+  useEffect(() => {
+    loadLibrary();
+
+    function handleStorageUpdate() {
+      loadLibrary();
+    }
+
+    window.addEventListener("storage", handleStorageUpdate);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageUpdate);
+    };
+  }, []);
+
   function clearLibrary() {
     saveLibrary([]);
+
     setLibrary([]);
   }
 
   /* ===============================
-      STATS
+      COLLECTION STATS
   =============================== */
 
-  const averageRating =
-    library.length > 0
-      ? (
-          library.reduce((sum, game) => sum + (game.rating || 0), 0) /
-          library.length
-        ).toFixed(1)
-      : "0.0";
+  const ownedGames = library.length;
 
-  const genreCount = {};
+  const currentlyPlaying = library.filter(
+    (game) => game.status === "playing",
+  ).length;
 
-  library.forEach((game) => {
-    game.genres?.forEach((genre) => {
-      genreCount[genre.name] = (genreCount[genre.name] || 0) + 1;
-    });
-  });
+  const completedGames = library.filter(
+    (game) => game.status === "completed",
+  ).length;
 
-  const topGenre =
-    Object.entries(genreCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "Unknown";
+  const backlogGames = library.filter(
+    (game) => !game.status || game.status === "backlog",
+  ).length;
 
-  const platforms = new Set();
+  /* ===============================
+      FILTERS
+  =============================== */
 
-  library.forEach((game) => {
-    game.parent_platforms?.forEach((platform) => {
-      platforms.add(platform.platform.name);
-    });
+  const filteredLibrary = library.filter((game) => {
+    if (activeFilter === "all") return true;
+
+    if (activeFilter === "playing") {
+      return game.status === "playing";
+    }
+
+    if (activeFilter === "completed") {
+      return game.status === "completed";
+    }
+
+    if (activeFilter === "backlog") {
+      return !game.status || game.status === "backlog";
+    }
+
+    return true;
   });
 
   return (
@@ -61,82 +92,151 @@ function LibraryPage() {
 
       <main className="library-page">
         <div className="container">
-          {/* ================= HEADER ================= */}
+          {/* HEADER */}
 
           <section className="library-header">
             <div className="library-heading">
-              <h1>My Library</h1>
+              <h1>My Collection</h1>
             </div>
 
             <div className="library-info">
               <span id="library-count">
-                {library.length === 1
-                  ? "Game Saved : 1"
-                  : `Games Saved : ${library.length}`}
+                {ownedGames === 1
+                  ? "1 Game Owned"
+                  : `${ownedGames} Games Owned`}
               </span>
 
-              <button
-                className="secondary-btn"
-                onClick={() => setShowClearModal(true)}
-              >
-                Clear Library
-              </button>
+              {library.length > 0 && (
+                <button
+                  className="secondary-btn"
+                  onClick={() => setShowClearModal(true)}
+                >
+                  Clear Collection
+                </button>
+              )}
             </div>
           </section>
 
           <div className="library-divider" />
 
-          {/* ================= STATS ================= */}
+          {/* COLLECTION STATS */}
 
           {library.length > 0 && (
             <section className="library-stats">
-              <div className="stat-card">
-                <div className="stat-label">Games Saved</div>
-                <div className="stat-value">{library.length}</div>
-                <div className="stat-sub">In your collection</div>
+              <div className="collection-card">
+                <div className="collection-label">Games Owned</div>
+
+                <div className="collection-value">{ownedGames}</div>
+
+                <div className="collection-sub">Total collection</div>
               </div>
 
-              <div className="stat-card">
-                <div className="stat-label">Average Rating</div>
-                <div className="stat-value">⭐ {averageRating}</div>
-                <div className="stat-sub">Community rating</div>
+              <div className="collection-card">
+                <div className="collection-label">Currently Playing</div>
+
+                <div className="collection-value">{currentlyPlaying}</div>
+
+                <div className="collection-sub">Active games</div>
               </div>
 
-              <div className="stat-card">
-                <div className="stat-label">Top Genre</div>
-                <div className="stat-value">{topGenre}</div>
-                <div className="stat-sub">Most saved genre</div>
+              <div className="collection-card">
+                <div className="collection-label">Completed</div>
+
+                <div className="collection-value">{completedGames}</div>
+
+                <div className="collection-sub">Finished games</div>
               </div>
 
-              <div className="stat-card">
-                <div className="stat-label">Platforms</div>
-                <div className="stat-value">{platforms.size}</div>
-                <div className="stat-sub">Unique platforms</div>
+              <div className="collection-card">
+                <div className="collection-label">Backlog</div>
+
+                <div className="collection-value">{backlogGames}</div>
+
+                <div className="collection-sub">Waiting to play</div>
               </div>
             </section>
           )}
 
-          {/* ================= GRID ================= */}
+          {/* COLLECTION ROWS / VIEW ALL */}
 
           {library.length > 0 ? (
-            <div id="library-grid" className="game-grid">
-              {library.map((game) => (
-                <GameCard
-                  key={game.id}
-                  game={game}
-                  onLibraryChange={() => setLibrary(getLibrary())}
+            activeFilter === "all" ? (
+              <>
+                <CollectionRow
+                  title="Currently Playing"
+                  games={library.filter((game) => game.status === "playing")}
+                  onLibraryChange={loadLibrary}
+                  onViewAll={() => setActiveFilter("playing")}
                 />
-              ))}
-            </div>
+
+                <CollectionRow
+                  title="Completed"
+                  games={library.filter((game) => game.status === "completed")}
+                  onLibraryChange={loadLibrary}
+                  onViewAll={() => setActiveFilter("completed")}
+                />
+
+                <CollectionRow
+                  title="Backlog"
+                  games={library.filter(
+                    (game) => !game.status || game.status === "backlog",
+                  )}
+                  onLibraryChange={loadLibrary}
+                  onViewAll={() => setActiveFilter("backlog")}
+                />
+              </>
+            ) : (
+              <>
+                <div className="library-view-header">
+                  <button
+                    className="secondary-btn"
+                    onClick={() => setActiveFilter("all")}
+                  >
+                    ← Back to Collection
+                  </button>
+
+                  <h2>
+                    {activeFilter === "playing"
+                      ? "Currently Playing"
+                      : activeFilter === "completed"
+                        ? "Completed Games"
+                        : "Backlog"}
+                  </h2>
+                </div>
+
+                <div id="library-grid" className="game-grid">
+                  {library
+                    .filter((game) => {
+                      if (activeFilter === "playing") {
+                        return game.status === "playing";
+                      }
+
+                      if (activeFilter === "completed") {
+                        return game.status === "completed";
+                      }
+
+                      return !game.status || game.status === "backlog";
+                    })
+                    .map((game) => (
+                      <GameCard
+                        key={game.id}
+                        game={game}
+                        onLibraryChange={loadLibrary}
+                        showLibraryStatus
+                      />
+                    ))}
+                </div>
+              </>
+            )
           ) : (
             <div className="library-empty">
               <div className="empty-icon">📚</div>
 
-              <h2>Your Library is Empty</h2>
+              <h2>Your Collection is Empty</h2>
 
               <p>
-                Build your personal game collection and keep track of titles you
-                own or plan to play.
+                Add games to your library and build your personal gaming
+                archive.
               </p>
 
               <Link to="/" className="hero-btn">
@@ -147,18 +247,18 @@ function LibraryPage() {
         </div>
       </main>
 
-      {/* ================= CLEAR MODAL ================= */}
+      {/* CLEAR MODAL */}
 
       {showClearModal && (
         <div className="modal-overlay" onClick={() => setShowClearModal(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">📚</div>
 
-            <h2>Clear Library?</h2>
+            <h2>Clear Collection?</h2>
 
             <p>
-              This will remove every game from your library. This action cannot
-              be undone.
+              This will remove every game from your collection. This action
+              cannot be undone.
             </p>
 
             <div className="modal-actions">
@@ -176,7 +276,7 @@ function LibraryPage() {
                   setShowClearModal(false);
                 }}
               >
-                Clear Library
+                Clear Collection
               </button>
             </div>
           </div>

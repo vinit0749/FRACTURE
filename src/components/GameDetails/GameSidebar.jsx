@@ -5,6 +5,7 @@ import { Bookmark, Heart } from "lucide-react";
 
 import { SiEpicgames } from "react-icons/si";
 import { FiExternalLink } from "react-icons/fi";
+import { useToast } from "../../hooks/useToast";
 
 import {
   isWishlisted,
@@ -46,6 +47,8 @@ function GameSidebar({ game }) {
     game ? isInLibrary(game.id) : false,
   );
 
+  const { showToast } = useToast();
+
   if (!game) return null;
 
   const metaColor = getMetaColor(game.metacritic);
@@ -60,18 +63,36 @@ function GameSidebar({ game }) {
     released: game.released,
     genres: game.genres,
     parent_platforms: game.parent_platforms,
+
+    addedAt: Date.now(),
+
+    status: "Backlog",
   };
 
   function handleWishlist() {
-    toggleWishlist(gameData);
+    const status = toggleWishlist(gameData);
 
-    setSaved(isWishlisted(game.id));
+    setSaved(status);
+
+    showToast({
+      type: status ? "success" : "info",
+      icon: status ? "❤️" : "💔",
+      title: status ? "Added to Wishlist" : "Removed from Wishlist",
+      description: game.name,
+    });
   }
 
   function handleLibrary() {
     const status = toggleLibrary(gameData);
 
     setInLibrary(status);
+
+    showToast({
+      type: status ? "success" : "info",
+      icon: status ? "📚" : "🗑️",
+      title: status ? "Added to Collection" : "Removed from Collection",
+      description: game.name,
+    });
   }
 
   return (
@@ -188,7 +209,9 @@ function GameSidebar({ game }) {
         >
           <Bookmark />
 
-          <span>{inLibrary ? "Remove from Library" : "Add to Library"}</span>
+          <span>
+            {inLibrary ? "Remove from Collection" : "Add to Collection"}
+          </span>
         </button>
 
         <button

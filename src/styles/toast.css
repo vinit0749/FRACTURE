@@ -1,0 +1,271 @@
+/* ======================================
+   TOAST CONTAINER
+====================================== */
+
+.toast-container {
+  position: fixed;
+
+  right: 24px;
+  bottom: 24px;
+
+  width: min(390px, calc(100vw - 32px));
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  z-index: 5000;
+
+  pointer-events: none;
+}
+
+/* ======================================
+   TOAST CARD
+====================================== */
+
+.toast {
+  position: relative;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  padding: 16px;
+
+  overflow: hidden;
+
+  border-radius: 20px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(30, 41, 59, 0.95),
+    rgba(15, 23, 42, 0.96)
+  );
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(18px);
+
+  color: white;
+
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  pointer-events: auto;
+
+  animation: toast-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  transform-origin: bottom right;
+}
+
+/* ======================================
+   ENTRY ANIMATION
+====================================== */
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* ======================================
+   CONTENT
+====================================== */
+
+.toast-main {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  flex: 1;
+}
+
+/* ======================================
+   ICON
+====================================== */
+
+.toast-icon-wrapper {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.toast-icon {
+  font-size: 1.35rem;
+}
+
+/* ======================================
+   TEXT
+====================================== */
+
+.toast-text {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.toast-title {
+  font-size: 0.95rem;
+
+  font-weight: 700;
+
+  letter-spacing: -0.01em;
+}
+
+.toast-description {
+  font-size: 0.82rem;
+
+  color: #94a3b8;
+
+  line-height: 1.4;
+}
+
+/* ======================================
+   CLOSE BUTTON
+====================================== */
+
+.toast-close {
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #94a3b8;
+
+  font-size: 1.25rem;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.toast-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+
+  color: white;
+
+  transform: scale(1.1);
+}
+
+/* ======================================
+   PROGRESS BAR
+====================================== */
+
+.toast-progress {
+  position: absolute;
+
+  left: 0;
+
+  bottom: 0;
+
+  height: 3px;
+
+  width: 100%;
+
+  animation: toast-progress linear forwards;
+
+  transform-origin: left;
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* ======================================
+   TYPES
+====================================== */
+
+.toast-success {
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.45),
+    0 0 30px rgba(34, 197, 94, 0.12);
+}
+
+.toast-success .toast-progress {
+  background: #22c55e;
+}
+
+.toast-error {
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.45),
+    0 0 30px rgba(239, 68, 68, 0.14);
+}
+
+.toast-error .toast-progress {
+  background: #ef4444;
+}
+
+.toast-info {
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.45),
+    0 0 30px rgba(59, 130, 246, 0.14);
+}
+
+.toast-info .toast-progress {
+  background: #3b82f6;
+}
+
+/* ======================================
+   MOBILE
+====================================== */
+
+@media (max-width: 600px) {
+  .toast-container {
+    right: 16px;
+
+    left: 16px;
+
+    bottom: 16px;
+
+    width: auto;
+  }
+
+  .toast {
+    border-radius: 16px;
+  }
+}

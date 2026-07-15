@@ -1,31 +1,32 @@
 import { Link } from "react-router-dom";
-import { Heart, Bookmark } from "lucide-react";
-import { useState } from "react";
+import { Heart, Bookmark, Play } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+import { useToast } from "../../hooks/useToast";
 
 import {
   toggleWishlist,
   isWishlisted,
   toggleLibrary,
   isInLibrary,
+  updateLibraryStatus,
 } from "../../utils/storage";
 
 function getStars(rating = 0) {
-  const fullStars = Math.floor(rating);
-  const decimal = rating - fullStars;
+  const value = Math.min(Math.max(rating, 0), 5);
 
-  let stars = "★".repeat(fullStars);
+  const full = Math.floor(value);
+  const decimal = value - full;
 
-  if (decimal >= 0.75) {
-    stars += "★";
-  } else if (decimal >= 0.25) {
-    stars += "⯨";
+  let result = "★".repeat(full);
+
+  if (decimal >= 0.75 && result.length < 5) {
+    result += "★";
+  } else if (decimal >= 0.25 && result.length < 5) {
+    result += "⯨";
   }
 
-  while (stars.length < 5) {
-    stars += "☆";
-  }
-
-  return stars;
+  return (result + "☆☆☆☆☆").slice(0, 5);
 }
 
 function formatDate(date) {
@@ -39,31 +40,88 @@ function formatDate(date) {
 }
 
 function getImage(game) {
-  return (
-    game.background_image || "https://via.placeholder.com/600x400?text=No+Image"
-  );
+  return game.background_image || "https://placehold.co/600x400?text=No+Image";
 }
 
 function getMetacriticColor(score) {
   if (!score) return "#737389";
+
   if (score >= 90) return "#2EE59D";
+
   if (score >= 75) return "#FFC72C";
 
   return "#ff7b4d";
 }
 
-function GameCard({ game, onWishlistChange, onLibraryChange }) {
+function getLibraryStatus(status) {
+  if (!status || status === "backlog") return "Backlog";
+
+  if (status === "playing") return "Playing";
+
+  if (status === "completed") return "Completed";
+
+  return "Backlog";
+}
+
+function GameCard({
+  game,
+  onWishlistChange,
+  onLibraryChange,
+  showLibraryStatus = false,
+}) {
   const [wishlisted, setWishlisted] = useState(isWishlisted(game.id));
 
   const [library, setLibrary] = useState(isInLibrary(game.id));
+
+  const [status, setStatus] = useState(game.status || "backlog");
+
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+
+  const badgeRef = useRef(null);
+
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    setWishlisted(isWishlisted(game.id));
+
+    setLibrary(isInLibrary(game.id));
+
+    const storedGame = JSON.parse(
+      localStorage.getItem("fracture_library") || "[]",
+    ).find((item) => item.id === game.id);
+
+    setStatus(storedGame?.status || "backlog");
+  }, [game.id]);
+
+  useEffect(() => {
+    function closeMenu(e) {
+      if (badgeRef.current && !badgeRef.current.contains(e.target)) {
+        setShowStatusMenu(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeMenu);
+
+    return () => {
+      document.removeEventListener("mousedown", closeMenu);
+    };
+  }, []);
 
   function handleWishlist(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    const status = toggleWishlist(game);
+    const active = toggleWishlist(game);
 
-    setWishlisted(status);
+    setWishlisted(active);
+
+    showToast({
+      type: active ? "success" : "info",
+      icon: active ? "❤️" : "💔",
+      title: active ? "Added to Wishlist" : "Removed from Wishlist",
+      description: game.name,
+      duration: 2500,
+    });
 
     onWishlistChange?.();
   }
@@ -72,9 +130,31 @@ function GameCard({ game, onWishlistChange, onLibraryChange }) {
     e.preventDefault();
     e.stopPropagation();
 
-    const status = toggleLibrary(game);
+    const active = toggleLibrary(game);
 
-    setLibrary(status);
+    setLibrary(active);
+
+    if (active) {
+      setStatus("backlog");
+    }
+
+    showToast({
+      type: active ? "success" : "info",
+      icon: active ? "📚" : "🗑️",
+      title: active ? "Added to Collection" : "Removed from Collection",
+      description: game.name,
+      duration: 2500,
+    });
+
+    onLibraryChange?.();
+  }
+
+  function changeStatus(newStatus) {
+    updateLibraryStatus(game.id, newStatus);
+
+    setStatus(newStatus);
+
+    setShowStatusMenu(false);
 
     onLibraryChange?.();
   }
@@ -90,7 +170,6 @@ function GameCard({ game, onWishlistChange, onLibraryChange }) {
               wishlisted ? "active" : ""
             }`}
             type="button"
-            aria-label="Wishlist"
             onClick={handleWishlist}
           >
             <Heart size={18} fill={wishlisted ? "currentColor" : "none"} />
@@ -101,20 +180,85 @@ function GameCard({ game, onWishlistChange, onLibraryChange }) {
               library ? "active" : ""
             }`}
             type="button"
-            aria-label="Library"
             onClick={handleLibrary}
           >
             <Bookmark size={18} fill={library ? "currentColor" : "none"} />
           </button>
         </div>
 
+        {showLibraryStatus && library && (
+          <div className="library-status-wrapper" ref={badgeRef}>
+            <button
+              type="button"
+              className={`library-badge ${status}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                setShowStatusMenu((prev) => !prev);
+              }}
+            >
+              {getLibraryStatus(status)}
+            </button>
+
+            {showStatusMenu && (
+              <div className="library-dropdown">
+                <button
+                  type="button"
+                  className={`library-option ${
+                    status === "backlog" ? "active" : ""
+                  }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    changeStatus("backlog");
+                  }}
+                >
+                  Backlog
+                </button>
+
+                <button
+                  type="button"
+                  className={`library-option ${
+                    status === "playing" ? "active" : ""
+                  }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    changeStatus("playing");
+                  }}
+                >
+                  Playing
+                </button>
+
+                <button
+                  type="button"
+                  className={`library-option ${
+                    status === "completed" ? "active" : ""
+                  }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    changeStatus("completed");
+                  }}
+                >
+                  Completed
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <img src={getImage(game)} alt={game.name} loading="lazy" />
 
         <div className="image-gradient" />
 
-        <button className="play-btn" type="button">
-          ▶
-        </button>
+        <div className="play-btn">
+          <Play size={22} />
+        </div>
 
         <div className="image-overlay-content">
           <h3 className="game-title">{game.name}</h3>
@@ -122,7 +266,7 @@ function GameCard({ game, onWishlistChange, onLibraryChange }) {
           <div className="rating-row">
             <span className="stars">{getStars(game.rating)}</span>
 
-            <span>{game.rating?.toFixed(1)}</span>
+            <span>{game.rating?.toFixed(1) ?? "0.0"}</span>
           </div>
 
           <div className="genre-pills">
@@ -142,7 +286,7 @@ function GameCard({ game, onWishlistChange, onLibraryChange }) {
           className="meta-badge"
           style={{
             color: metaColor,
-            borderColor: `${metaColor}33`,
+            borderColor: `${metaColor}55`,
           }}
         >
           {game.metacritic ?? "N/A"}

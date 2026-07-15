@@ -9,6 +9,7 @@ import NewReleasesPage from "./pages/NewReleasesPage";
 
 import RandomOverlay from "./components/Common/RandomOverlay";
 import { useRandomGameContext } from "./context/RandomGameContext";
+import ToastContainer from "./components/Common/ToastContainer";
 
 function App() {
   const { showRandomOverlay, randomStatus } = useRandomGameContext();
@@ -38,6 +39,7 @@ function App() {
       </Routes>
 
       <RandomOverlay visible={showRandomOverlay} status={randomStatus} />
+      <ToastContainer />
     </>
   );
 }

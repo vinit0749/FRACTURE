@@ -31,17 +31,46 @@ export function toggleWishlist(game) {
   }
 
   wishlist.push(game);
+
   saveWishlist(wishlist);
 
   return true;
 }
 
 /* ===============================
-   LIBRARY
+   LIBRARY / COLLECTION
 ================================ */
 
+const DEFAULT_STATUS = "backlog";
+
+function normalizeStatus(status) {
+  const value = status?.toLowerCase();
+
+  if (value === "playing" || value === "completed" || value === "backlog") {
+    return value;
+  }
+
+  return DEFAULT_STATUS;
+}
+
+function migrateLibraryData(games) {
+  return games.map((game) => ({
+    ...game,
+
+    addedAt: game.addedAt || Date.now(),
+
+    status: normalizeStatus(game.status),
+  }));
+}
+
 export function getLibrary() {
-  return JSON.parse(localStorage.getItem(LIBRARY_KEY)) || [];
+  const library = JSON.parse(localStorage.getItem(LIBRARY_KEY)) || [];
+
+  const migratedLibrary = migrateLibraryData(library);
+
+  localStorage.setItem(LIBRARY_KEY, JSON.stringify(migratedLibrary));
+
+  return migratedLibrary;
 }
 
 export function saveLibrary(games) {
@@ -65,8 +94,57 @@ export function toggleLibrary(game) {
     return false;
   }
 
-  library.push(game);
+  library.push({
+    ...game,
+
+    addedAt: Date.now(),
+
+    status: DEFAULT_STATUS,
+  });
+
   saveLibrary(library);
 
   return true;
+}
+
+/* ===============================
+   UPDATE COLLECTION STATUS
+================================ */
+
+export function updateLibraryStatus(id, status) {
+  const library = getLibrary();
+
+  const updatedLibrary = library.map((game) => {
+    if (game.id !== id) {
+      return game;
+    }
+
+    return {
+      ...game,
+
+      status: normalizeStatus(status),
+    };
+  });
+
+  saveLibrary(updatedLibrary);
+
+  return updatedLibrary;
+}
+
+/* ===============================
+   STATUS COUNTS
+================================ */
+
+export function getLibraryStatusCount() {
+  const library = getLibrary();
+
+  return {
+    total: library.length,
+
+    playing: library.filter((game) => game.status === "playing").length,
+
+    completed: library.filter((game) => game.status === "completed").length,
+
+    backlog: library.filter((game) => game.status === "backlog").length,
+  };
 }

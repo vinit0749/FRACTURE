@@ -7,9 +7,11 @@ import ExploreSection from "../components/Explore/ExploreSection";
 import Footer from "../components/Layout/Footer";
 
 import useHero from "../hooks/useHero";
+import { useToast } from "../hooks/useToast";
 
 function HomePage() {
   const { featuredGame, screenshots } = useHero();
+  const { showToast } = useToast();
 
   const exploreRef = useRef(null);
   const [searchParams] = useSearchParams();
@@ -78,7 +80,6 @@ function HomePage() {
   function updateSearchInput(value, source) {
     setSearchInput(value);
 
-    // When the search is cleared, immediately restore the default game list
     if (value.trim() === "") {
       setSearch("");
       setSearchSource(source);

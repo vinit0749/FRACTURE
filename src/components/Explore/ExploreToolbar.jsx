@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Search, ChevronDown } from "lucide-react";
+import useGameAutocomplete from "../../hooks/useGameAutocomplete";
+import SearchAutocomplete from "../Common/SearchAutocomplete";
 
 function ExploreToolbar({
   genres = [],
@@ -20,6 +22,10 @@ function ExploreToolbar({
 }) {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const toolbarRef = useRef(null);
+
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+
+  const { suggestions } = useGameAutocomplete(searchInput);
 
   const toggleDropdown = (dropdown) => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);

@@ -3,10 +3,14 @@ import { useNavigate } from "react-router-dom";
 
 import { fetchGames } from "../api/rawg";
 
+import { useToast } from "../hooks/useToast";
+
 const RandomGameContext = createContext();
 
 export function RandomGameProvider({ children }) {
   const navigate = useNavigate();
+
+  const { showToast } = useToast();
 
   const [showRandomOverlay, setShowRandomOverlay] = useState(false);
   const [randomStatus, setRandomStatus] = useState("searching");
@@ -22,6 +26,14 @@ export function RandomGameProvider({ children }) {
 
       if (!data?.results?.length) {
         setShowRandomOverlay(false);
+
+        showToast({
+          type: "error",
+          icon: "⚠️",
+          title: "Randomizer Failed",
+          description: "Couldn't find a game. Try again.",
+        });
+
         return;
       }
 
@@ -29,6 +41,12 @@ export function RandomGameProvider({ children }) {
         data.results[Math.floor(Math.random() * data.results.length)];
 
       setRandomStatus("found");
+      showToast({
+        type: "success",
+        icon: "🎲",
+        title: "Random Game Found",
+        description: randomGame.name,
+      });
 
       setTimeout(() => {
         setShowRandomOverlay(false);
@@ -41,6 +59,13 @@ export function RandomGameProvider({ children }) {
       console.error("Random game error:", error);
 
       setShowRandomOverlay(false);
+
+      showToast({
+        type: "error",
+        icon: "❌",
+        title: "Randomizer Error",
+        description: "Something went wrong.",
+      });
     }
   }
 

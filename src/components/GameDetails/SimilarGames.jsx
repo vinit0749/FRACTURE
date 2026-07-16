@@ -1,3 +1,4 @@
+import Carousel from "../Common/Carousel";
 import GameCard from "../Explore/GameCard";
 
 function SimilarGames({ games }) {
@@ -15,11 +16,12 @@ function SimilarGames({ games }) {
     <section className="similar-games-section">
       <div className="section-label">YOU MAY ALSO LIKE</div>
 
-      <div className="similar-games-grid">
-        {games.map((game) => (
-          <GameCard key={game.id} game={game} />
-        ))}
-      </div>
+      <Carousel
+        items={games}
+        itemWidth={230}
+        scrollAmount={520}
+        renderItem={(game) => <GameCard game={game} />}
+      />
     </section>
   );
 }

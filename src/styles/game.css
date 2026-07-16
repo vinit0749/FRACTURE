@@ -1222,20 +1222,10 @@
   aspect-ratio: 16 / 9;
 }
 
-/* ================= SIMILAR ================= */
+/* ================= SIMILAR GAMES ================= */
 
-.similar-skeleton-grid {
-  display: grid;
-
-  grid-template-columns: repeat(3, 1fr);
-
-  gap: var(--space-3);
-}
-
-.similar-card {
-  height: 260px;
-
-  border-radius: var(--radius-md);
+.similar-games-section {
+  margin-top: var(--space-4);
 }
 
 /* ================= SIDEBAR ================= */

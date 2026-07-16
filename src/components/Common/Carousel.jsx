@@ -1,7 +1,14 @@
 import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-function Carousel({ title, items, renderItem, onViewAll }) {
+function Carousel({
+  title,
+  items,
+  renderItem,
+  onViewAll,
+  scrollAmount = 500,
+  itemWidth = 230,
+}) {
   const carouselRef = useRef(null);
 
   if (!items || items.length === 0) {
@@ -10,14 +17,14 @@ function Carousel({ title, items, renderItem, onViewAll }) {
 
   function scrollLeft() {
     carouselRef.current?.scrollBy({
-      left: -500,
+      left: -scrollAmount,
       behavior: "smooth",
     });
   }
 
   function scrollRight() {
     carouselRef.current?.scrollBy({
-      left: 500,
+      left: scrollAmount,
       behavior: "smooth",
     });
   }
@@ -43,6 +50,7 @@ function Carousel({ title, items, renderItem, onViewAll }) {
 
       <div className="carousel-container">
         <button
+          type="button"
           className="carousel-arrow carousel-arrow-left"
           onClick={scrollLeft}
           aria-label="Scroll left"
@@ -52,13 +60,18 @@ function Carousel({ title, items, renderItem, onViewAll }) {
 
         <div className="carousel-track" ref={carouselRef}>
           {items.map((item) => (
-            <div key={item.id} className="carousel-item">
+            <div
+              key={item.id}
+              className="carousel-item"
+              style={{ flex: `0 0 ${itemWidth}px` }}
+            >
               {renderItem(item)}
             </div>
           ))}
         </div>
 
         <button
+          type="button"
           className="carousel-arrow carousel-arrow-right"
           onClick={scrollRight}
           aria-label="Scroll right"

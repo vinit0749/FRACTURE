@@ -1,0 +1,453 @@
+/* =====================================================
+   FRACTURE HERO
+===================================================== */
+
+.hero {
+  position: relative;
+
+  height: 620px;
+
+  overflow: hidden;
+
+  border-radius: 30px;
+
+  margin-bottom: 3.5rem;
+
+  background: #050914;
+
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+
+  isolation: isolate;
+}
+
+/* =====================================================
+   BACKGROUND
+===================================================== */
+
+.hero-backdrop {
+  position: absolute;
+
+  inset: 0;
+
+  overflow: hidden;
+}
+
+.hero-image {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+
+  height: 100%;
+
+  object-fit: cover;
+
+  z-index: 1;
+
+  filter: brightness(0.78) contrast(1.05) saturate(1.15);
+
+  animation:
+    heroZoom 18s ease infinite alternate,
+    heroFade 0.8s ease;
+
+  transition:
+    transform 1s ease,
+    opacity 0.8s ease;
+}
+
+/* cinematic blurred background */
+
+.hero-blur {
+  position: absolute;
+
+  inset: -60px;
+
+  background-size: cover;
+
+  background-position: center;
+
+  filter: blur(45px) brightness(0.55);
+
+  transform: scale(1.25);
+
+  opacity: 0.22;
+
+  z-index: 0;
+}
+
+/* =====================================================
+   CINEMATIC OVERLAYS
+===================================================== */
+
+.hero-gradient {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 2;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(3, 7, 15, 0.96) 0%,
+      rgba(3, 7, 15, 0.78) 35%,
+      rgba(3, 7, 15, 0.35) 65%,
+      rgba(3, 7, 15, 0.15) 100%
+    ),
+    linear-gradient(0deg, rgba(3, 7, 15, 0.85), transparent 55%);
+}
+
+/* subtle cinematic light */
+
+.hero-gradient::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background: radial-gradient(
+    circle at 70% 50%,
+    rgba(59, 130, 246, 0.18),
+    transparent 45%
+  );
+
+  pointer-events: none;
+}
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.hero-content {
+  position: relative;
+
+  z-index: 5;
+
+  max-width: 620px;
+
+  padding: 105px 65px;
+}
+
+/* badge */
+
+.hero-tag {
+  display: inline-flex;
+
+  align-items: center;
+
+  padding: 7px 16px;
+
+  border-radius: 999px;
+
+  font-size: 0.72rem;
+
+  font-weight: 800;
+
+  letter-spacing: 1.2px;
+
+  color: #dbeafe;
+
+  background: rgba(59, 130, 246, 0.18);
+
+  border: 1px solid rgba(147, 197, 253, 0.3);
+
+  backdrop-filter: blur(12px);
+
+  animation: fadeUp 0.7s ease;
+}
+
+/* TITLE */
+
+.hero h1 {
+  margin: 22px 0 16px;
+
+  max-width: 560px;
+
+  font-size: 3.35rem;
+
+  line-height: 1.04;
+
+  letter-spacing: -2px;
+
+  font-weight: 900;
+
+  color: white;
+
+  text-shadow: 0 10px 35px rgba(0, 0, 0, 0.45);
+
+  animation: fadeUp 0.8s ease;
+}
+
+/* DESCRIPTION */
+
+.hero p {
+  max-width: 520px;
+
+  color: #cbd5e1;
+
+  font-size: 1.05rem;
+
+  line-height: 1.7;
+
+  margin-bottom: 30px;
+
+  animation: fadeUp 0.9s ease;
+}
+
+/* =====================================================
+   META
+===================================================== */
+
+.hero-meta {
+  display: flex;
+
+  gap: 12px;
+
+  margin-bottom: 26px;
+
+  animation: fadeUp 1s ease;
+}
+
+.meta-card {
+  min-width: 95px;
+
+  padding: 13px 17px;
+
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.07);
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  backdrop-filter: blur(14px);
+
+  transition: 0.25s ease;
+}
+
+.meta-card:hover {
+  transform: translateY(-4px);
+
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.meta-card strong {
+  display: block;
+
+  color: white;
+
+  font-size: 1.3rem;
+
+  font-weight: 900;
+}
+
+.meta-card span {
+  display: block;
+
+  margin-top: 5px;
+
+  font-size: 0.7rem;
+
+  letter-spacing: 0.8px;
+
+  color: #94a3b8;
+
+  text-transform: uppercase;
+}
+
+/* =====================================================
+   GENRES
+===================================================== */
+
+.hero-genres {
+  display: flex;
+
+  gap: 8px;
+
+  margin-bottom: 32px;
+}
+
+.hero-genres span {
+  padding: 7px 15px;
+
+  border-radius: 999px;
+
+  font-size: 0.8rem;
+
+  color: #e2e8f0;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(10px);
+}
+
+/* =====================================================
+   BUTTON
+===================================================== */
+
+.hero-btn {
+  padding: 15px 38px;
+
+  border-radius: 999px;
+
+  border: none;
+
+  cursor: pointer;
+
+  font-weight: 800;
+
+  color: white;
+
+  font-size: 0.95rem;
+
+  background: linear-gradient(135deg, #60a5fa, #2563eb);
+
+  box-shadow: 0 15px 35px rgba(37, 99, 235, 0.35);
+
+  transition: 0.3s ease;
+}
+
+.hero-btn:hover {
+  transform: translateY(-4px) scale(1.03);
+
+  box-shadow: 0 20px 45px rgba(37, 99, 235, 0.5);
+}
+
+/* =====================================================
+   ARROWS
+===================================================== */
+
+.hero-arrow {
+  position: absolute;
+
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  z-index: 10;
+
+  width: 52px;
+
+  height: 52px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 50%;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  background: rgba(0, 0, 0, 0.35);
+
+  color: white;
+
+  backdrop-filter: blur(15px);
+
+  cursor: pointer;
+
+  transition: 0.25s ease;
+}
+
+.hero-arrow:hover {
+  background: rgba(255, 255, 255, 0.18);
+
+  transform: translateY(-50%) scale(1.1);
+}
+
+.hero-arrow-left {
+  left: 25px;
+}
+
+.hero-arrow-right {
+  right: 25px;
+}
+
+/* =====================================================
+   PROGRESS
+===================================================== */
+
+.hero-progress {
+  position: absolute;
+
+  bottom: 25px;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  z-index: 10;
+
+  display: flex;
+
+  gap: 8px;
+}
+
+.hero-progress-item {
+  width: 55px;
+
+  height: 5px;
+
+  overflow: hidden;
+
+  border: none;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.hero-progress-fill {
+  height: 100%;
+
+  display: block;
+
+  background: white;
+
+  box-shadow: 0 0 12px white;
+}
+
+/* =====================================================
+   ANIMATION
+===================================================== */
+
+@keyframes heroZoom {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.07);
+  }
+}
+
+@keyframes heroFade {
+  from {
+    opacity: 0.4;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}

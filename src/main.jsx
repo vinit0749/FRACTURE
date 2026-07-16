@@ -10,6 +10,8 @@ import "./styles/toast.css";
 import "./styles/autocomplete.css";
 import "./styles/game.css";
 import "./styles/explore.css";
+import "./styles/hero.css";
+import "./styles/carousel.css";
 import "./styles/wishlist.css";
 import "./styles/library.css";
 import "./index.css";

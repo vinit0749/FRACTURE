@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import {
   fetchGames,
   fetchGameDetails,
@@ -9,30 +8,78 @@ import {
 let heroCache = null;
 let heroPromise = null;
 
+function getHeroMetadata(game) {
+  const today = new Date();
+
+  const releaseDate = game.released ? new Date(game.released) : null;
+
+  const monthsOld = releaseDate
+    ? (today - releaseDate) / (1000 * 60 * 60 * 24 * 30)
+    : 999;
+
+  if (game.metacritic >= 90) {
+    return {
+      heroType: "CRITIC'S CHOICE",
+      badge: `${game.metacritic} METASCORE`,
+      reason:
+        "One of the highest rated experiences recognized by critics worldwide.",
+      category: "TOP RATED",
+      score: game.metacritic,
+    };
+  }
+
+  if (monthsOld <= 12) {
+    return {
+      heroType: "NEW RELEASE",
+      badge: "LATEST ADVENTURE",
+      reason: "A fresh gaming experience waiting to be discovered.",
+      category: "NEW",
+      score: game.rating,
+    };
+  }
+
+  if (game.rating >= 4 && !game.metacritic) {
+    return {
+      heroType: "HIDDEN GEM",
+      badge: "PLAYER FAVORITE",
+      reason: "An underrated experience loved by the community.",
+      category: "DISCOVERY",
+      score: game.rating,
+    };
+  }
+
+  return {
+    heroType: "TRENDING NOW",
+    badge: "FEATURED DISCOVERY",
+    reason: "A popular game that players are discovering right now.",
+    category: "TRENDING",
+    score: game.rating,
+  };
+}
+
 export default function useHero() {
   const [featuredGame, setFeaturedGame] = useState(
     heroCache?.featuredGame || null,
   );
 
-  const [screenshots, setScreenshots] = useState(heroCache?.screenshots || []);
+  const [heroImages, setHeroImages] = useState(heroCache?.heroImages || []);
+
+  const [heroMeta, setHeroMeta] = useState(heroCache?.heroMeta || null);
 
   useEffect(() => {
-    if (heroCache) {
-      return;
-    }
+    if (heroCache) return;
 
     loadFeaturedGame().then((data) => {
-      if (data) {
-        setFeaturedGame(data.featuredGame);
-        setScreenshots(data.screenshots);
-      }
+      if (!data) return;
+
+      setFeaturedGame(data.featuredGame);
+      setHeroImages(data.heroImages);
+      setHeroMeta(data.heroMeta);
     });
   }, []);
 
   async function loadFeaturedGame() {
-    if (heroPromise) {
-      return heroPromise;
-    }
+    if (heroPromise) return heroPromise;
 
     heroPromise = (async () => {
       try {
@@ -44,9 +91,7 @@ export default function useHero() {
           "&genres=action&page_size=40",
         ];
 
-        const responses = await Promise.all(
-          queries.map((query) => fetchGames(query)),
-        );
+        const responses = await Promise.all(queries.map(fetchGames));
 
         const games = responses.flatMap((data) => data.results || []);
 
@@ -60,32 +105,39 @@ export default function useHero() {
 
         uniqueGames.sort(() => Math.random() - 0.5);
 
-        const randomGame = uniqueGames[0];
+        const selected = uniqueGames[0];
 
-        if (!randomGame) return null;
+        if (!selected) return null;
 
-        const details = await fetchGameDetails(randomGame.id);
+        const details = await fetchGameDetails(selected.id);
 
         const screenshotData = await fetchGameScreenshots(details.id);
 
-        const uniqueScreenshots = [
-          ...new Map(
+        const screenshots = [
+          ...new Set(
             (screenshotData.results || [])
-              .map((s) => s.image)
-              .filter(Boolean)
-              .map((img) => [img, img]),
-          ).values(),
+              .map((shot) => shot.image)
+              .filter(Boolean),
+          ),
         ];
+
+        const heroImages = [details.background_image, ...screenshots].filter(
+          Boolean,
+        );
+
+        const uniqueHeroImages = [...new Set(heroImages)];
+
+        const heroMeta = getHeroMetadata(details);
 
         heroCache = {
           featuredGame: details,
-          screenshots: uniqueScreenshots,
+          heroImages: uniqueHeroImages,
+          heroMeta,
         };
 
         return heroCache;
-      } catch (error) {
-        console.error("Featured game failed:", error);
-
+      } catch (err) {
+        console.error(err);
         return null;
       } finally {
         heroPromise = null;
@@ -97,6 +149,7 @@ export default function useHero() {
 
   return {
     featuredGame,
-    screenshots,
+    heroImages,
+    heroMeta,
   };
 }

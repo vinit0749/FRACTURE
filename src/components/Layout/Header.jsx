@@ -117,6 +117,15 @@ function Header({ searchInput, updateSearchInput }) {
             </Link>
 
             <Link
+              to="/trending"
+              className={`nav-link ${
+                location.pathname === "/trending" ? "active" : ""
+              }`}
+            >
+              Trending
+            </Link>
+
+            <Link
               to="/top-rated"
               className={`nav-link ${
                 location.pathname === "/top-rated" ? "active" : ""

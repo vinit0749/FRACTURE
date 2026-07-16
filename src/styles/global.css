@@ -1057,17 +1057,6 @@ select {
 
   color: #60a5fa;
 }
-/* ==================================================
-   SIMILAR GAMES GRID
-================================================== */
-
-.similar-games-grid {
-  display: grid;
-
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-
-  gap: 16px;
-}
 
 /* ==================================================
    FOOTER

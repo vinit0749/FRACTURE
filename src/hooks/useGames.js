@@ -29,7 +29,6 @@ function getSearchScore(game, search) {
   return score;
 }
 
-// cache already loaded pages
 const gamesCache = new Map();
 
 export default function useGames({
@@ -45,8 +44,6 @@ export default function useGames({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const controller = new AbortController();
-
     async function loadGames() {
       setLoading(true);
 
@@ -60,15 +57,12 @@ export default function useGames({
           section,
         });
 
-        // use cached result if available
         if (gamesCache.has(cacheKey)) {
           const cached = gamesCache.get(cacheKey);
 
           setGames(cached.results);
 
-          if (setTotalPages) {
-            setTotalPages(cached.totalPages);
-          }
+          setTotalPages?.(cached.totalPages);
 
           setLoading(false);
 
@@ -83,7 +77,6 @@ export default function useGames({
 
         if (search) {
           params.append("search", search.trim().toLowerCase());
-
           params.append("search_exact", false);
         }
 
@@ -93,7 +86,7 @@ export default function useGames({
           ordering = "-rating";
         }
 
-        if (section === "new-releases") {
+        if (section === "trending" || section === "new-releases") {
           ordering = "-added";
 
           const today = new Date();
@@ -118,10 +111,7 @@ export default function useGames({
           params.append("platforms", platform);
         }
 
-        const data = await fetchGames(
-          `&${params.toString()}`,
-          controller.signal,
-        );
+        const data = await fetchGames(`&${params.toString()}`);
 
         const totalPages = 100;
 
@@ -144,21 +134,15 @@ export default function useGames({
 
         setGames(results);
       } catch (error) {
-        if (error.name !== "AbortError") {
-          console.error("Failed loading games:", error);
+        console.error("Failed loading games:", error);
 
-          setGames([]);
-        }
+        setGames([]);
       } finally {
         setLoading(false);
       }
     }
 
     loadGames();
-
-    return () => {
-      controller.abort();
-    };
   }, [page, search, sort, genre, platform, section, setTotalPages]);
 
   return {

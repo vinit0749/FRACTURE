@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 import Header from "../components/Layout/Header";
 import Hero from "../components/Hero/Hero";
+import HomeCarousels from "../components/Home/HomeCarousels";
 import ExploreSection from "../components/Explore/ExploreSection";
 import Footer from "../components/Layout/Footer";
 
@@ -10,7 +11,7 @@ import useHero from "../hooks/useHero";
 import { useToast } from "../hooks/useToast";
 
 function HomePage() {
-  const { featuredGame, screenshots } = useHero();
+  const { featuredGame, heroImages, heroMeta } = useHero();
   const { showToast } = useToast();
 
   const exploreRef = useRef(null);
@@ -102,12 +103,22 @@ function HomePage() {
     setPlatform("");
 
     setPage(1);
+
+    setTimeout(() => {
+      exploreRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
   }
 
-  const showHero =
+  const showHomeContent =
     section === "explore" &&
     page === 1 &&
     search === "" &&
+    sort === "-added" &&
+    genre === "" &&
+    platform === "" &&
     (searchSource === "" || searchSource === "header");
 
   return (
@@ -119,9 +130,19 @@ function HomePage() {
       />
 
       <div className="container">
-        <div className={`hero-wrapper ${showHero ? "visible" : "hidden"}`}>
-          <Hero hero={featuredGame} screenshots={screenshots} />
-        </div>
+        {showHomeContent && (
+          <>
+            <div className="hero-wrapper">
+              <Hero
+                hero={featuredGame}
+                heroImages={heroImages}
+                heroMeta={heroMeta}
+              />
+            </div>
+
+            <HomeCarousels />
+          </>
+        )}
 
         <div ref={exploreRef}>
           <ExploreSection

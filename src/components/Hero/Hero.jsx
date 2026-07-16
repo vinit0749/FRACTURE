@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+import useHeroCarousel from "../../hooks/useHeroCarousel";
 
 function formatDate(date) {
   if (!date) return "Unknown";
@@ -12,154 +14,143 @@ function formatDate(date) {
 }
 
 function getMetacriticColor(score) {
-  if (!score) return "#999";
+  if (!score) return "#94a3b8";
+
   if (score >= 75) return "#6dc849";
+
   if (score >= 50) return "#fdca52";
+
   return "#fc4b37";
 }
 
-function Hero({ hero, screenshots = [] }) {
-  const imageRef = useRef(null);
-
+function Hero({ hero, heroImages = [], heroMeta }) {
   const navigate = useNavigate();
 
-  const [currentImage, setCurrentImage] = useState(null);
+  const {
+    currentImage,
+    currentIndex,
+    totalImages,
+    progress,
+    next,
+    previous,
+    goTo,
+  } = useHeroCarousel(heroImages);
 
-  const isLoading = !hero || !currentImage;
-
-  // Load base hero image
-  useEffect(() => {
-    if (!hero) return;
-
-    setCurrentImage(hero.background_image);
-  }, [hero]);
-
-  // Screenshot rotation
-  useEffect(() => {
-    if (!screenshots.length) return;
-
-    if (screenshots.length === 1) {
-      setCurrentImage(screenshots[0]);
-      return;
-    }
-
-    let screenshotIndex = 0;
-    let timeoutId = null;
-
-    const intervalId = setInterval(() => {
-      const img = imageRef.current;
-
-      if (!img) return;
-
-      // Fade out current image
-      img.classList.remove("fade-in");
-      img.classList.add("fade-out");
-
-      timeoutId = setTimeout(() => {
-        screenshotIndex = (screenshotIndex + 1) % screenshots.length;
-
-        const nextImage = screenshots[screenshotIndex];
-
-        // Preload next screenshot
-        const preload = new Image();
-
-        preload.src = nextImage;
-
-        preload.onload = () => {
-          setCurrentImage(nextImage);
-
-          // Force browser refresh animation state
-          void img.offsetWidth;
-
-          img.classList.remove("fade-out");
-
-          requestAnimationFrame(() => {
-            img.classList.add("fade-in");
-          });
-        };
-      }, 500);
-    }, 5000);
-
-    return () => {
-      clearInterval(intervalId);
-
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [screenshots]);
+  if (!hero || !currentImage) {
+    return null;
+  }
 
   return (
-    <section className="hero" id="hero">
+    <section className="hero">
       <div className="hero-backdrop">
         <div
-          id="hero-blur"
           className="hero-blur"
           style={{
-            backgroundImage: currentImage ? `url(${currentImage})` : "none",
+            backgroundImage: `url(${currentImage})`,
           }}
         />
 
         <img
-          ref={imageRef}
-          id="hero-image"
-          className={`hero-image ${isLoading ? "" : "fade-in"}`}
-          src={
-            currentImage ||
-            "https://placehold.co/1600x900/111827/FFFFFF?text=Loading"
-          }
-          alt={hero?.name || "Featured Game"}
+          key={currentImage}
+          src={currentImage}
+          alt={hero.name}
+          className="hero-image"
         />
 
-        <div className="hero-gradient"></div>
+        <div className="hero-gradient" />
       </div>
 
+      {totalImages > 1 && (
+        <>
+          <button className="hero-arrow hero-arrow-left" onClick={previous}>
+            <ChevronLeft size={26} />
+          </button>
+
+          <button className="hero-arrow hero-arrow-right" onClick={next}>
+            <ChevronRight size={26} />
+          </button>
+        </>
+      )}
+
       <div className="hero-content">
-        <span className="hero-tag">FRACTURE'S PICK</span>
+        <span className="hero-tag">
+          ✦ {heroMeta?.badge || "FEATURED DISCOVERY"}
+        </span>
 
-        <h2 id="hero-title">
-          {hero?.name || "Discovering your next adventure..."}
-        </h2>
+        <h1>{hero.name}</h1>
 
-        <p id="hero-description">
-          {hero?.description_raw
-            ? hero.description_raw.split(". ").slice(0, 2).join(". ") + "."
-            : "Discover one of the highest-rated games on Fracture."}
+        <p>
+          {heroMeta?.reason ||
+            hero.description_raw?.split(". ").slice(0, 2).join(". ")}
         </p>
 
-        <div className="hero-stats">
-          <span id="hero-rating">
-            {hero ? `⭐ ${hero.rating.toFixed(1)}` : "⭐ --"}
-          </span>
+        <div className="hero-meta">
+          <div className="meta-card">
+            <strong>{hero.rating?.toFixed(1) || "N/A"}</strong>
 
-          <span
-            id="hero-metacritic"
-            style={{
-              color: getMetacriticColor(hero?.metacritic),
-            }}
-          >
-            Metacritic {hero?.metacritic ?? "N/A"}
-          </span>
+            <span>Rating</span>
+          </div>
 
-          <span id="hero-release">Released {formatDate(hero?.released)}</span>
+          {hero.metacritic && (
+            <div className="meta-card">
+              <strong
+                style={{
+                  color: getMetacriticColor(hero.metacritic),
+                }}
+              >
+                {hero.metacritic}
+              </strong>
+
+              <span>Metacritic</span>
+            </div>
+          )}
+
+          <div className="meta-card">
+            <strong>{formatDate(hero.released)}</strong>
+
+            <span>Release</span>
+          </div>
         </div>
 
         <div className="hero-genres">
-          {hero?.genres?.map((g) => g.name).join(" • ") || "Unknown"}
+          {hero.genres?.slice(0, 4).map((genre) => (
+            <span key={genre.id}>{genre.name}</span>
+          ))}
         </div>
 
         <button
           className="hero-btn"
-          id="hero-details-btn"
-          onClick={() => {
-            if (hero?.id) {
-              navigate(`/game/${hero.id}`);
-            }
-          }}
+          onClick={() => navigate(`/game/${hero.id}`)}
         >
           View Details
         </button>
       </div>
+
+      {totalImages > 1 && (
+        <div className="hero-progress">
+          {Array.from({
+            length: totalImages,
+          }).map((_, index) => (
+            <button
+              key={index}
+              className="hero-progress-item"
+              onClick={() => goTo(index)}
+            >
+              <span
+                className="hero-progress-fill"
+                style={{
+                  width:
+                    index < currentIndex
+                      ? "100%"
+                      : index === currentIndex
+                        ? `${progress}%`
+                        : "0%",
+                }}
+              />
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

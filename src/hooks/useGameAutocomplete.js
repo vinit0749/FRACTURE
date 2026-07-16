@@ -26,15 +26,13 @@ export default function useGameAutocomplete(query) {
       return;
     }
 
-    const controller = new AbortController();
-
     clearTimeout(debounceTimer.current);
 
     debounceTimer.current = setTimeout(async () => {
       try {
         setLoading(true);
 
-        const data = await fetchSearchSuggestions(search, controller.signal);
+        const data = await fetchSearchSuggestions(search);
 
         const results = data.results || [];
 
@@ -57,7 +55,6 @@ export default function useGameAutocomplete(query) {
 
     return () => {
       clearTimeout(debounceTimer.current);
-      controller.abort();
     };
   }, [query]);
 

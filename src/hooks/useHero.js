@@ -20,7 +20,7 @@ function getHeroMetadata(game) {
   if (game.metacritic >= 90) {
     return {
       heroType: "CRITIC'S CHOICE",
-      badge: `${game.metacritic} METASCORE`,
+      badge: "CRITIC'S CHOICE",
       reason:
         "One of the highest rated experiences recognized by critics worldwide.",
       category: "TOP RATED",

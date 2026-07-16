@@ -498,34 +498,3 @@
 
   padding: 0 4px;
 }
-
-/* =====================================================
-   LOADING / SKELETON
-===================================================== */
-
-#loader {
-  padding: 30px;
-
-  text-align: center;
-
-  color: var(--text-muted);
-}
-
-.skeleton {
-  height: 395px;
-
-  border-radius: var(--radius-md);
-
-  background: linear-gradient(
-    110deg,
-    rgba(27, 41, 64, 0.6) 25%,
-
-    rgba(36, 55, 84, 0.9) 50%,
-
-    rgba(27, 41, 64, 0.6) 75%
-  );
-
-  background-size: 200% 100%;
-
-  animation: shimmer 1.4s ease-in-out infinite;
-}

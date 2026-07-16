@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchGames } from "../api/rawg";
+import { isSafeGame } from "../utils/gameFilter";
 
 function rankSearchResults(games, query) {
   const search = query.toLowerCase().trim();
@@ -86,8 +87,23 @@ export default function useGames({
           ordering = "-rating";
         }
 
-        if (section === "trending" || section === "new-releases") {
+        if (section === "trending") {
           ordering = "-added";
+
+          const today = new Date();
+
+          const oneYearAgo = new Date();
+
+          oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+          params.append(
+            "dates",
+            `${oneYearAgo.toISOString().split("T")[0]},${today.toISOString().split("T")[0]}`,
+          );
+        }
+
+        if (section === "new-releases") {
+          ordering = "-released";
 
           const today = new Date();
 
@@ -118,6 +134,7 @@ export default function useGames({
         setTotalPages?.(100);
 
         let results = data.results || [];
+        results = results.filter(isSafeGame);
 
         if (section === "new-releases") {
           results = results.filter((game) => game.background_image);

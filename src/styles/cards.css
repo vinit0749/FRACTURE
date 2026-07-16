@@ -1,0 +1,505 @@
+/* ==================================================
+   CINEMATIC GAME CARD
+================================================== */
+
+.cinematic-card {
+  position: relative;
+
+  display: block;
+
+  width: 100%;
+
+  height: 360px;
+
+  overflow: hidden;
+
+  border-radius: var(--radius-lg);
+
+  background: #090d18;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  box-shadow: var(--shadow-card);
+
+  color: inherit;
+
+  text-decoration: none;
+
+  isolation: isolate;
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease,
+    opacity 0.25s ease;
+}
+
+.cinematic-card:hover {
+  transform: translateY(-10px) scale(1.025);
+
+  border-color: rgba(96, 165, 250, 0.35);
+
+  box-shadow:
+    var(--shadow-hover),
+    0 0 35px rgba(59, 130, 246, 0.18);
+}
+
+.cinematic-card.removing {
+  opacity: 0;
+
+  transform: scale(0.92);
+
+  pointer-events: none;
+}
+
+/* ==================================================
+   CARD ACTION BUTTONS
+================================================== */
+
+.card-actions {
+  position: absolute;
+
+  top: 14px;
+
+  left: 14px;
+
+  z-index: 10;
+
+  display: flex;
+
+  gap: 10px;
+}
+
+.card-action-btn {
+  width: 40px;
+
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  background: rgba(8, 17, 31, 0.75);
+
+  backdrop-filter: blur(16px);
+
+  color: white;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.card-action-btn:hover {
+  transform: translateY(-3px) scale(1.08);
+
+  background: rgba(59, 130, 246, 0.25);
+
+  border-color: rgba(96, 165, 250, 0.7);
+}
+
+.card-action-btn:active {
+  transform: scale(0.9);
+}
+
+.card-action-btn svg {
+  width: 19px;
+
+  height: 19px;
+}
+
+/* ==================================================
+   WISHLIST / LIBRARY STATES
+================================================== */
+
+.wishlist-card-btn.active {
+  color: white;
+
+  background: linear-gradient(135deg, #ff5a7a, #ff2d55);
+
+  border-color: #ff7b95;
+
+  box-shadow: 0 8px 25px rgba(255, 45, 85, 0.35);
+}
+
+.library-card-btn.active {
+  color: white;
+
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+
+  border-color: #60a5fa;
+
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+}
+
+.wishlist-card-btn.active svg,
+.library-card-btn.active svg {
+  animation: cardPop 0.35s ease;
+}
+
+@keyframes cardPop {
+  0% {
+    transform: scale(0.5);
+  }
+
+  60% {
+    transform: scale(1.25);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+/* ==================================================
+   CARD IMAGE
+================================================== */
+
+.cinematic-card .card-image {
+  position: absolute;
+
+  inset: 0;
+}
+
+.cinematic-card img {
+  width: 100%;
+
+  height: 100%;
+
+  object-fit: cover;
+
+  transform: scale(1.06);
+
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cinematic-card:hover img {
+  transform: scale(1.15);
+}
+
+/* ==================================================
+   CARD OVERLAY
+================================================== */
+
+.image-gradient {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 1;
+
+  background: linear-gradient(
+    to top,
+
+    rgba(4, 7, 15, 0.96) 5%,
+
+    rgba(4, 7, 15, 0.7) 35%,
+
+    rgba(4, 7, 15, 0.25) 65%,
+
+    transparent 100%
+  );
+}
+
+.image-overlay-content {
+  position: absolute;
+
+  left: 16px;
+
+  right: 16px;
+
+  bottom: 58px;
+
+  z-index: 3;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.game-title {
+  margin: 0;
+
+  color: white;
+
+  font-size: 1.15rem;
+
+  font-weight: 800;
+
+  line-height: 1.25;
+
+  display: -webkit-box;
+
+  -webkit-line-clamp: 2;
+
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+}
+
+.rating-row {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  color: var(--text-secondary);
+
+  font-size: 0.85rem;
+}
+
+.rating-row .stars {
+  color: #ffc72c;
+}
+
+/* ==================================================
+   GENRES
+================================================== */
+
+.genre-pills {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 6px;
+}
+
+.genre-pill {
+  padding: 5px 11px;
+
+  border-radius: 999px;
+
+  background: rgba(59, 130, 246, 0.18);
+
+  border: 1px solid rgba(96, 165, 250, 0.3);
+
+  color: white;
+
+  font-size: 0.7rem;
+
+  font-weight: 600;
+}
+
+.meta-badge {
+  width: 38px;
+
+  height: 38px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.06);
+
+  backdrop-filter: blur(10px);
+
+  font-weight: 800;
+
+  font-size: 0.85rem;
+}
+
+/* ==================================================
+   CARD FOOTER
+================================================== */
+
+.card-bottom {
+  position: absolute;
+
+  left: 16px;
+
+  right: 16px;
+
+  bottom: 14px;
+
+  z-index: 5;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+}
+
+.release {
+  color: #cbd5e1;
+
+  font-size: 0.75rem;
+
+  white-space: nowrap;
+}
+
+/* ==================================================
+   LIBRARY STATUS DROPDOWN
+================================================== */
+
+.library-status-wrapper {
+  position: absolute;
+
+  top: 14px;
+  right: 14px;
+
+  z-index: 30;
+}
+
+/* Current Status Badge */
+
+.library-badge {
+  min-width: 78px;
+
+  padding: 6px 12px;
+
+  border-radius: 999px;
+
+  font-size: 0.65rem;
+
+  font-weight: 900;
+
+  letter-spacing: 0.7px;
+
+  text-transform: uppercase;
+
+  text-align: center;
+
+  cursor: pointer;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+
+.library-badge:hover {
+  transform: translateY(-2px);
+
+  filter: brightness(1.15);
+}
+
+/* Status Colors */
+
+.library-badge.playing {
+  background: #2563eb;
+
+  color: white;
+}
+
+.library-badge.completed {
+  background: #16a34a;
+
+  color: white;
+}
+
+.library-badge.backlog {
+  background: #d97706;
+
+  color: white;
+}
+
+/* ==================================================
+   DROPDOWN MENU
+================================================== */
+
+.library-dropdown {
+  position: absolute;
+
+  top: 42px;
+
+  right: 0;
+
+  width: 130px;
+
+  padding: 6px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+  background: rgba(15, 23, 42, 0.96);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  border-radius: 14px;
+
+  backdrop-filter: blur(14px);
+
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+
+  animation: dropdownPop 0.18s ease;
+}
+
+@keyframes dropdownPop {
+  from {
+    opacity: 0;
+
+    transform: translateY(-8px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Dropdown Options */
+
+.library-option {
+  width: 100%;
+
+  padding: 8px 12px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: #cbd5e1;
+
+  text-align: left;
+
+  font-size: 0.75rem;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.library-option:hover {
+  background: rgba(59, 130, 246, 0.18);
+
+  color: white;
+}
+
+/* Active option */
+
+.library-option.active {
+  background: rgba(59, 130, 246, 0.25);
+
+  color: #60a5fa;
+}

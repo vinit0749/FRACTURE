@@ -4,42 +4,61 @@ import { useSearchParams } from "react-router-dom";
 import Header from "../components/Layout/Header";
 import Hero from "../components/Hero/Hero";
 import HomeCarousels from "../components/Home/HomeCarousels";
+import HomeSkeleton from "../components/Home/HomeSkeleton";
 import ExploreSection from "../components/Explore/ExploreSection";
 import Footer from "../components/Layout/Footer";
 
 import useHero from "../hooks/useHero";
-import { useToast } from "../hooks/useToast";
+import useHomeCarousels from "../hooks/useHomeCarousels";
 
 function HomePage() {
-  const { featuredGame, heroImages, heroMeta } = useHero();
-  const { showToast } = useToast();
+  const {
+    featuredGame,
+    heroImages,
+    heroMeta,
+    loading: heroLoading,
+  } = useHero();
+
+  const { loading: carouselLoading } = useHomeCarousels();
 
   const exploreRef = useRef(null);
+
   const [searchParams] = useSearchParams();
 
   const [page, setPage] = useState(1);
+
   const [totalPages, setTotalPages] = useState(1);
 
   const [searchInput, setSearchInput] = useState("");
+
   const [search, setSearch] = useState("");
+
   const [searchSource, setSearchSource] = useState("");
+
   const [sort, setSort] = useState("-added");
+
   const [genre, setGenre] = useState("");
+
   const [platform, setPlatform] = useState("");
+
   const [section, setSection] = useState("explore");
 
   useEffect(() => {
     const query = searchParams.get("search")?.trim() || "";
 
     setSearchInput(query);
+
     setSearch(query);
+
     setSearchSource(query ? "header" : "");
+
     setPage(1);
 
     if (query) {
       setTimeout(() => {
         exploreRef.current?.scrollIntoView({
           behavior: "smooth",
+
           block: "start",
         });
       }, 100);
@@ -51,12 +70,17 @@ function HomePage() {
       setPage(1);
 
       setSearchInput("");
+
       setSearch("");
+
       setSearchSource("");
 
       setSort("-added");
+
       setGenre("");
+
       setPlatform("");
+
       setSection("explore");
     }
 
@@ -73,6 +97,7 @@ function HomePage() {
     setTimeout(() => {
       exploreRef.current?.scrollIntoView({
         behavior: "auto",
+
         block: "start",
       });
     }, 100);
@@ -83,23 +108,30 @@ function HomePage() {
 
     if (value.trim() === "") {
       setSearch("");
+
       setSearchSource(source);
+
       setPage(1);
     }
   }
 
   function performSearch(source) {
     setSearch(searchInput.trim());
+
     setSearchSource(source);
+
     setPage(1);
   }
 
   function resetFilters() {
     setSearchInput("");
+
     setSearch("");
 
     setSort("-added");
+
     setGenre("");
+
     setPlatform("");
 
     setPage(1);
@@ -107,6 +139,7 @@ function HomePage() {
     setTimeout(() => {
       exploreRef.current?.scrollIntoView({
         behavior: "smooth",
+
         block: "start",
       });
     }, 0);
@@ -121,6 +154,8 @@ function HomePage() {
     platform === "" &&
     (searchSource === "" || searchSource === "header");
 
+  const showHomeSkeleton = showHomeContent && (heroLoading || carouselLoading);
+
   return (
     <>
       <Header
@@ -130,7 +165,9 @@ function HomePage() {
       />
 
       <div className="container">
-        {showHomeContent && (
+        {showHomeSkeleton && <HomeSkeleton />}
+
+        {showHomeContent && !showHomeSkeleton && featuredGame && (
           <>
             <div className="hero-wrapper">
               <Hero

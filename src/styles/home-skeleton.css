@@ -1,0 +1,252 @@
+/* =====================================================
+   FRACTURE HOME SKELETON
+===================================================== */
+
+.home-skeleton {
+  width: 100%;
+}
+
+/* =====================================================
+   HERO
+===================================================== */
+
+.home-hero-skeleton {
+  position: relative;
+
+  min-height: 540px;
+
+  margin-top: 2rem;
+  margin-bottom: 4rem;
+
+  overflow: hidden;
+
+  border-radius: 32px;
+
+  background: var(--surface);
+
+  box-shadow:
+    0 50px 120px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.home-hero-skeleton-content {
+  width: 650px;
+
+  min-height: 540px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  padding: clamp(42px, 6vw, 72px) clamp(34px, 5vw, 72px);
+}
+
+/* ---------- Badge ---------- */
+
+.home-hero-skeleton-tag {
+  width: 160px;
+
+  height: 30px;
+
+  border-radius: 999px;
+
+  margin-bottom: 18px;
+}
+
+/* ---------- Title ---------- */
+
+.home-hero-skeleton-title {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 14px;
+
+  margin-bottom: 22px;
+}
+
+.home-hero-skeleton-title span {
+  height: 54px;
+
+  border-radius: 14px;
+}
+
+.home-hero-skeleton-title span:first-child {
+  width: 520px;
+}
+
+.home-hero-skeleton-title span:last-child {
+  width: 360px;
+}
+
+/* ---------- Description ---------- */
+
+.home-hero-skeleton-description {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+
+  margin-bottom: 36px;
+}
+
+.home-hero-skeleton-description span {
+  height: 16px;
+
+  border-radius: 999px;
+}
+
+.home-hero-skeleton-description span:nth-child(1) {
+  width: 560px;
+}
+
+.home-hero-skeleton-description span:nth-child(2) {
+  width: 540px;
+}
+
+.home-hero-skeleton-description span:nth-child(3) {
+  width: 500px;
+}
+
+.home-hero-skeleton-description span:nth-child(4) {
+  width: 410px;
+}
+
+/* ---------- Meta ---------- */
+
+.home-hero-skeleton-meta {
+  display: flex;
+
+  gap: 12px;
+
+  margin-bottom: 34px;
+}
+
+.home-hero-skeleton-meta div {
+  width: 94px;
+
+  height: 62px;
+
+  border-radius: 16px;
+}
+
+/* ---------- Genres ---------- */
+
+.home-hero-skeleton-genres {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  margin-bottom: 36px;
+}
+
+.home-hero-skeleton-genres span:nth-child(1) {
+  width: 88px;
+}
+
+.home-hero-skeleton-genres span:nth-child(2) {
+  width: 110px;
+}
+
+.home-hero-skeleton-genres span:nth-child(3) {
+  width: 96px;
+}
+
+.home-hero-skeleton-genres span:nth-child(4) {
+  width: 120px;
+}
+
+.home-hero-skeleton-genres span {
+  height: 36px;
+
+  border-radius: 999px;
+}
+
+/* ---------- Button ---------- */
+
+.home-hero-skeleton-button {
+  width: 180px;
+
+  height: 52px;
+
+  border-radius: 999px;
+}
+
+/* =====================================================
+   CAROUSEL
+===================================================== */
+
+.home-carousel-skeleton {
+  margin-bottom: 50px;
+}
+
+.home-carousel-skeleton-header {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+
+  margin-bottom: 25px;
+}
+
+.home-carousel-skeleton-header span {
+  border-radius: 10px;
+}
+
+.home-carousel-skeleton-header span:first-child {
+  width: 260px;
+
+  height: 32px;
+}
+
+.home-carousel-skeleton-header span:last-child {
+  width: 420px;
+
+  height: 18px;
+}
+
+.home-carousel-skeleton-row {
+  display: flex;
+
+  gap: 24px;
+
+  overflow: hidden;
+}
+
+.home-carousel-skeleton-card {
+  flex: 0 0 240px;
+
+  height: 360px;
+
+  border-radius: var(--radius-md);
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 850px) {
+  .home-hero-skeleton {
+    min-height: 620px;
+  }
+
+  .home-hero-skeleton-content {
+    min-height: 620px;
+
+    width: auto;
+
+    padding: 42px 28px;
+  }
+
+  .home-carousel-skeleton-card {
+    flex-basis: 180px;
+
+    height: 270px;
+  }
+}

@@ -1,0 +1,52 @@
+/* =====================================================
+   FRACTURE CARD SKELETON
+===================================================== */
+
+.card-skeleton {
+  width: 100%;
+
+  overflow: hidden;
+
+  border-radius: var(--radius-md);
+
+  background: var(--surface);
+
+  border: 1px solid var(--border);
+}
+
+.card-skeleton-image {
+  height: 330px;
+}
+
+.card-skeleton-image,
+.card-skeleton-title,
+.card-skeleton-meta span {
+}
+
+.card-skeleton-content {
+  padding: 16px;
+}
+
+.card-skeleton-title {
+  width: 85%;
+
+  height: 20px;
+
+  border-radius: 8px;
+
+  margin-bottom: 14px;
+}
+
+.card-skeleton-meta {
+  display: flex;
+
+  gap: 10px;
+}
+
+.card-skeleton-meta span {
+  width: 60px;
+
+  height: 14px;
+
+  border-radius: 999px;
+}

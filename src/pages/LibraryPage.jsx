@@ -33,7 +33,7 @@ function LibraryPage() {
       loadLibrary();
     }
 
-    window.addEventListener("storage", handleStorageUpdate);
+    window.addEventListener("libraryUpdated", handleStorageUpdate);
 
     return () => {
       window.removeEventListener("storage", handleStorageUpdate);

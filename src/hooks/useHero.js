@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   fetchGames,
   fetchGameDetails,
@@ -50,9 +51,13 @@ function getHeroMetadata(game) {
 
   return {
     heroType: "TRENDING NOW",
+
     badge: "FEATURED DISCOVERY",
+
     reason: "A popular game that players are discovering right now.",
+
     category: "TRENDING",
+
     score: game.rating,
   };
 }
@@ -66,28 +71,52 @@ export default function useHero() {
 
   const [heroMeta, setHeroMeta] = useState(heroCache?.heroMeta || null);
 
+  const [loading, setLoading] = useState(!heroCache);
+
   useEffect(() => {
-    if (heroCache) return;
+    if (heroCache) {
+      setFeaturedGame(heroCache.featuredGame);
+      setHeroImages(heroCache.heroImages);
+      setHeroMeta(heroCache.heroMeta);
+
+      setLoading(false);
+
+      return;
+    }
 
     loadFeaturedGame().then((data) => {
-      if (!data) return;
+      if (!data) {
+        setLoading(false);
+
+        return;
+      }
 
       setFeaturedGame(data.featuredGame);
+
       setHeroImages(data.heroImages);
+
       setHeroMeta(data.heroMeta);
+
+      setLoading(false);
     });
   }, []);
 
   async function loadFeaturedGame() {
-    if (heroPromise) return heroPromise;
+    if (heroPromise) {
+      return heroPromise;
+    }
 
     heroPromise = (async () => {
       try {
         const queries = [
           "&ordering=-metacritic&page_size=40",
+
           "&ordering=-rating&page_size=40",
+
           "&ordering=-added&page_size=40",
+
           "&tags=indie&page_size=40",
+
           "&genres=action&page_size=40",
         ];
 
@@ -98,7 +127,9 @@ export default function useHero() {
         const uniqueGames = [
           ...new Map(
             games
+
               .filter((game) => game.background_image)
+
               .map((game) => [game.id, game]),
           ).values(),
         ];
@@ -107,7 +138,9 @@ export default function useHero() {
 
         const selected = uniqueGames[0];
 
-        if (!selected) return null;
+        if (!selected) {
+          return null;
+        }
 
         const details = await fetchGameDetails(selected.id);
 
@@ -116,28 +149,29 @@ export default function useHero() {
         const screenshots = [
           ...new Set(
             (screenshotData.results || [])
+
               .map((shot) => shot.image)
+
               .filter(Boolean),
           ),
         ];
 
-        const heroImages = [details.background_image, ...screenshots].filter(
+        const images = [details.background_image, ...screenshots].filter(
           Boolean,
         );
 
-        const uniqueHeroImages = [...new Set(heroImages)];
-
-        const heroMeta = getHeroMetadata(details);
-
         heroCache = {
           featuredGame: details,
-          heroImages: uniqueHeroImages,
-          heroMeta,
+
+          heroImages: [...new Set(images)],
+
+          heroMeta: getHeroMetadata(details),
         };
 
         return heroCache;
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error("Hero loading failed:", error);
+
         return null;
       } finally {
         heroPromise = null;
@@ -149,7 +183,11 @@ export default function useHero() {
 
   return {
     featuredGame,
+
     heroImages,
+
     heroMeta,
+
+    loading,
   };
 }

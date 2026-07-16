@@ -86,12 +86,12 @@ function GameCard({
 
     setLibrary(isInLibrary(game.id));
 
-    const storedGame = JSON.parse(
-      localStorage.getItem("fracture_library") || "[]",
-    ).find((item) => item.id === game.id);
+    const storedGame = JSON.parse(localStorage.getItem("library") || "[]").find(
+      (item) => item.id === game.id,
+    );
 
     setStatus(storedGame?.status || "backlog");
-  }, [game.id]);
+  }, [game.id, game.status]);
 
   useEffect(() => {
     function closeMenu(e) {
@@ -151,6 +151,8 @@ function GameCard({
 
   function changeStatus(newStatus) {
     updateLibraryStatus(game.id, newStatus);
+
+    window.dispatchEvent(new Event("libraryUpdated"));
 
     setStatus(newStatus);
 

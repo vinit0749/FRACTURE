@@ -1,0 +1,29 @@
+/* ==================================================
+   FOOTER
+================================================== */
+
+.footer {
+  padding: var(--space-4) var(--space-3);
+
+  margin-top: var(--space-6);
+
+  text-align: center;
+
+  color: var(--text-muted);
+
+  border-top: 1px solid var(--border);
+
+  background: rgba(10, 15, 25, 0.4);
+
+  backdrop-filter: blur(10px);
+}
+
+.footer p {
+  margin: 6px 0;
+}
+
+.footer p:first-child {
+  color: var(--text-secondary);
+
+  font-weight: 500;
+}

@@ -66,7 +66,7 @@ function GameSidebar({ game }) {
 
     addedAt: Date.now(),
 
-    status: "Backlog",
+    status: "backlog",
   };
 
   function handleWishlist() {

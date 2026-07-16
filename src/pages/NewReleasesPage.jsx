@@ -12,7 +12,7 @@ function NewReleasesPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
 
-  const [sort] = useState("-added");
+  const [sort] = useState("-released");
 
   const [genre, setGenre] = useState("");
   const [platform, setPlatform] = useState("");

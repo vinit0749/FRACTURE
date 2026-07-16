@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchGames } from "../api/rawg";
+import { isSafeGame } from "../utils/gameFilter";
 
 let carouselCache = null;
 let carouselPromise = null;
@@ -47,7 +48,7 @@ export default function useHomeCarousels() {
 
         const topRatedParams = "ordering=-rating&page_size=20";
 
-        const newReleaseParams = `ordering=-added&page_size=20&dates=${formatDate(lastYear)},${formatDate(today)}`;
+        const newReleaseParams = `ordering=-released&page_size=20&dates=${formatDate(lastYear)},${formatDate(today)}&exclude_additions=`;
 
         const [trendingData, topRatedData, newReleaseData] = await Promise.all([
           fetchGames(trendingParams),
@@ -63,7 +64,8 @@ export default function useHomeCarousels() {
           topRated: topRatedData.results || [],
 
           newReleases: (newReleaseData.results || []).filter(
-            (game) => game.background_image,
+            (game) =>
+              game.background_image && game.released && isSafeGame(game),
           ),
         };
 

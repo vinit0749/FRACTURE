@@ -14,13 +14,15 @@
   margin-top: 2rem;
   margin-bottom: 4rem;
 
-  background: #050914;
-
   isolation: isolate;
 
-  box-shadow:
-    0 50px 120px rgba(0, 0, 0, 0.65),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  .hero {
+    background: var(--bg-main);
+
+    box-shadow:
+      0 50px 120px rgba(0, 0, 0, 0.65),
+      inset 0 0 0 1px var(--border-light);
+  }
 }
 
 /* =====================================================
@@ -117,7 +119,7 @@
 
   background: radial-gradient(
     circle at 75% 45%,
-    rgba(59, 130, 246, 0.22),
+    var(--accent-soft),
     transparent 40%
   );
 }
@@ -158,11 +160,11 @@
 
   font-weight: 900;
 
-  color: #dbeafe;
+  color: var(--accent-light);
 
-  background: rgba(59, 130, 246, 0.2);
+  background: var(--accent-soft);
 
-  border: 1px solid rgba(147, 197, 253, 0.35);
+  border: 1px solid var(--accent-medium);
 
   backdrop-filter: blur(15px);
 
@@ -186,7 +188,7 @@
 
   font-weight: 950;
 
-  color: #fff;
+  color: var(--text);
 
   text-shadow: 0 10px 35px rgba(0, 0, 0, 0.55);
 
@@ -208,7 +210,7 @@
 
   overflow: hidden;
 
-  color: #cdd7e6;
+  color: var(--text-secondary);
 
   font-size: 1.02rem;
 
@@ -242,13 +244,9 @@
 
   border-radius: 16px;
 
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.04)
-  );
+  background: var(--glass);
 
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-light);
 
   backdrop-filter: blur(18px);
 
@@ -258,7 +256,7 @@
 .meta-card:hover {
   transform: translateY(-3px);
 
-  border-color: rgba(96, 165, 250, 0.28);
+  border-color: var(--accent-medium);
 
   background: linear-gradient(
     180deg,
@@ -274,7 +272,7 @@
 
   font-weight: 800;
 
-  color: white;
+  color: var(--text);
 }
 
 .meta-card span {
@@ -288,7 +286,7 @@
 
   letter-spacing: 1.2px;
 
-  color: #8fa6bf;
+  color: var(--text-muted);
 }
 
 /* =====================================================
@@ -310,15 +308,11 @@
 
   border-radius: 999px;
 
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.09),
-    rgba(255, 255, 255, 0.04)
-  );
+  background: var(--glass);
 
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-light);
 
-  color: #edf4ff;
+  color: var(--text-secondary);
 
   font-size: 0.77rem;
 
@@ -334,11 +328,11 @@
 .hero-genres span:hover {
   transform: translateY(-2px);
 
-  background: rgba(59, 130, 246, 0.18);
+  background: var(--accent-soft);
 
-  border-color: rgba(96, 165, 250, 0.35);
+  border-color: var(--accent-medium);
 
-  color: white;
+  color: var(--text);
 }
 
 /* =====================================================
@@ -364,9 +358,9 @@
 
   letter-spacing: 0.4px;
 
-  background: linear-gradient(135deg, #4f9cff, #2563eb);
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
 
-  box-shadow: 0 15px 40px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 15px 40px var(--accent-medium);
 
   transition: 0.25s;
 }
@@ -374,7 +368,7 @@
 .hero-btn:hover {
   transform: translateY(-3px);
 
-  box-shadow: 0 22px 55px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 22px 55px var(--accent-strong);
 }
 
 /* =====================================================
@@ -402,7 +396,7 @@
 
   border-radius: 50%;
 
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-light);
 
   background: rgba(0, 0, 0, 0.4);
 

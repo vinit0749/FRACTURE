@@ -1,18 +1,21 @@
-import { Search, Heart, Bookmark, Dices } from "lucide-react";
+import { Search, Heart, Bookmark, Dices, Settings } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 
 import { useRandomGameContext } from "../../context/RandomGameContext";
 import useGameAutocomplete from "../../hooks/useGameAutocomplete";
 import SearchAutocomplete from "../Common/SearchAutocomplete";
+import SettingsMenu from "../Common/SettingsMenu";
 
 function Header({ searchInput, updateSearchInput }) {
   const location = useLocation();
   const navigate = useNavigate();
 
   const searchRef = useRef(null);
+  const settingsRef = useRef(null);
 
   const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const { getRandomGame } = useRandomGameContext();
@@ -72,19 +75,33 @@ function Header({ searchInput, updateSearchInput }) {
     }
   }
 
-  // close autocomplete when clicking outside
+  // Close menus when clicking outside or pressing Escape
   useEffect(() => {
     function handleClickOutside(event) {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowAutocomplete(false);
         setActiveIndex(-1);
       }
+
+      if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+        setShowSettings(false);
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        setShowAutocomplete(false);
+        setActiveIndex(-1);
+        setShowSettings(false);
+      }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
@@ -99,7 +116,7 @@ function Header({ searchInput, updateSearchInput }) {
               window.dispatchEvent(new Event("resetHome"));
             }}
           >
-            <h1>FRACTURE</h1>
+            <span className="fracture-wordmark">FRACTURE</span>
           </Link>
 
           <p>Discover your next favorite game.</p>
@@ -216,6 +233,17 @@ function Header({ searchInput, updateSearchInput }) {
             >
               <Bookmark size={20} />
             </Link>
+            <div className="settings-wrapper" ref={settingsRef}>
+              <button
+                className="header-icon settings-header-icon"
+                aria-label="Settings"
+                onClick={() => setShowSettings((prev) => !prev)}
+              >
+                <Settings size={20} />
+              </button>
+
+              <SettingsMenu open={showSettings} />
+            </div>
           </div>
         </div>
       </div>

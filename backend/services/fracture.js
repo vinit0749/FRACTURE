@@ -6,10 +6,29 @@ const API_KEY = process.env.RAWG_API_KEY;
 
 const BASE_URL = "https://api.rawg.io/api";
 
+// ===================================
+// Cache
+// ===================================
+
+const cache = new Map();
+
+const CACHE_TIME = 1000 * 60 * 10; // 10 minutes
+
 async function fractureFetch(endpoint = "") {
   const url = `${BASE_URL}${endpoint}${
     endpoint.includes("?") ? "&" : "?"
   }key=${API_KEY}`;
+
+  // Return cached response
+  if (cache.has(url)) {
+    const cached = cache.get(url);
+
+    if (Date.now() - cached.time < CACHE_TIME) {
+      return cached.data;
+    }
+
+    cache.delete(url);
+  }
 
   const response = await fetch(url);
 
@@ -17,7 +36,14 @@ async function fractureFetch(endpoint = "") {
     throw new Error(`RAWG error ${response.status}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  cache.set(url, {
+    data,
+    time: Date.now(),
+  });
+
+  return data;
 }
 
 // ================================

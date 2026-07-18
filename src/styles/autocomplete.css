@@ -248,7 +248,7 @@
 }
 
 /* =====================================================
-   MOBILE
+   RESPONSIVE POLISH
 ===================================================== */
 
 @media (max-width: 850px) {
@@ -260,17 +260,75 @@
     width: 100%;
 
     min-width: unset;
+
+    left: 0;
+
+    right: 0;
+  }
+
+  .autocomplete-dropdown {
+    max-height: 360px;
+
+    border-radius: 16px;
   }
 }
 
-@media (max-width: 600px) {
-  .autocomplete-item img {
-    width: 55px;
+/* ===============================
+   MOBILE
+================================ */
 
-    height: 55px;
+@media (max-width: 600px) {
+  .autocomplete-dropdown {
+    padding: 8px;
+
+    border-radius: 14px;
+  }
+
+  .autocomplete-item {
+    gap: 10px;
+
+    padding: 8px;
+  }
+
+  .autocomplete-item img {
+    width: 52px;
+
+    height: 52px;
+
+    border-radius: 10px;
   }
 
   .autocomplete-info h4 {
     font-size: 0.85rem;
+  }
+
+  .autocomplete-meta {
+    gap: 5px;
+
+    font-size: 0.7rem;
+  }
+
+  .autocomplete-meta span {
+    padding: 3px 7px;
+  }
+}
+
+/* ===============================
+   SMALL PHONES
+================================ */
+
+@media (max-width: 400px) {
+  .autocomplete-item img {
+    width: 46px;
+
+    height: 46px;
+  }
+
+  .autocomplete-info h4 {
+    font-size: 0.8rem;
+  }
+
+  .autocomplete-meta span {
+    display: none;
   }
 }

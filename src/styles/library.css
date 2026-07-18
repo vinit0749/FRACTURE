@@ -423,113 +423,6 @@
   }
 }
 
-/* ================= RESPONSIVE ================= */
-
-/* ---------- Tablet ---------- */
-
-@media (max-width: 1100px) {
-  .library-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  #library-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  }
-}
-
-/* ---------- Small Tablet ---------- */
-
-@media (max-width: 768px) {
-  .library-header {
-    flex-direction: column;
-
-    align-items: flex-start;
-
-    gap: var(--space-3);
-  }
-
-  .library-info {
-    width: 100%;
-
-    justify-content: space-between;
-  }
-
-  .library-heading h1 {
-    font-size: 1.9rem;
-  }
-
-  .library-stats {
-    grid-template-columns: 1fr;
-  }
-
-  #library-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-
-    gap: 18px;
-  }
-
-  .modal-card {
-    padding: 24px;
-  }
-}
-
-/* ---------- Mobile ---------- */
-
-@media (max-width: 600px) {
-  .library-page {
-    padding-bottom: var(--space-5);
-  }
-
-  .library-heading h1 {
-    font-size: 1.7rem;
-  }
-
-  .library-info {
-    flex-direction: column;
-
-    align-items: stretch;
-  }
-
-  #library-count,
-  .library-info .secondary-btn {
-    width: 100%;
-
-    text-align: center;
-  }
-
-  #library-grid {
-    grid-template-columns: repeat(2, 1fr);
-
-    gap: 16px;
-  }
-
-  .library-empty {
-    min-height: calc(100vh - 240px);
-
-    padding: 0 var(--space-2);
-  }
-
-  .library-empty .empty-icon {
-    font-size: 3.5rem;
-  }
-
-  .library-empty h2 {
-    font-size: 1.6rem;
-  }
-
-  .library-empty p {
-    font-size: 0.9rem;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-  }
-
-  .collection-card {
-    padding: 14px;
-  }
-}
-
 /* ===============================
    FILTERS
 ================================ */
@@ -822,8 +715,193 @@
   right: 8px;
 }
 
+/* ==================================================
+   RESPONSIVE
+================================================== */
+
+/* ================= 1200px ================= */
+
+@media (max-width: 1200px) {
+  #library-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 24px;
+  }
+
+  .collection-card-wrapper {
+    flex: 0 0 220px;
+    width: 220px;
+  }
+
+  .collection-row-games {
+    gap: 20px;
+  }
+}
+
+/* ================= 992px ================= */
+
+@media (max-width: 992px) {
+  .library-page {
+    padding-bottom: var(--space-5);
+  }
+
+  .library-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .library-info {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .library-heading h1 {
+    font-size: 2rem;
+  }
+
+  #library-grid {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 22px;
+  }
+
+  .collection-row-games {
+    gap: 18px;
+  }
+
+  .collection-card-wrapper {
+    flex: 0 0 210px;
+    width: 210px;
+  }
+}
+
+/* ================= 768px ================= */
+
 @media (max-width: 768px) {
+  .library-heading h1 {
+    font-size: 1.75rem;
+  }
+
+  .library-info {
+    justify-content: space-between;
+  }
+
+  #library-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 18px;
+  }
+
+  .library-empty {
+    padding: 20px;
+  }
+
+  .library-empty .empty-icon {
+    font-size: 3.8rem;
+  }
+
+  .library-empty h2 {
+    font-size: 1.75rem;
+  }
+
+  .modal-card {
+    padding: 26px 22px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .collection-row-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .collection-card-wrapper {
+    flex: 0 0 190px;
+    width: 190px;
+  }
+
+  .collection-row-games {
+    gap: 16px;
+  }
+
   .carousel-arrow {
     display: none;
+  }
+}
+
+/* ================= 576px ================= */
+
+@media (max-width: 576px) {
+  .library-page {
+    padding-bottom: var(--space-4);
+  }
+
+  .library-heading h1 {
+    font-size: 1.55rem;
+  }
+
+  .library-info {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #library-count,
+  .library-info .secondary-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  #library-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .library-empty {
+    min-height: 60vh;
+    padding: 20px;
+  }
+
+  .library-empty .empty-icon {
+    font-size: 3.3rem;
+  }
+
+  .library-empty h2 {
+    font-size: 1.5rem;
+  }
+
+  .library-empty p {
+    font-size: 0.95rem;
+  }
+
+  .modal-card {
+    padding: 22px 18px;
+  }
+
+  .collection-card {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .library-filters {
+    gap: 10px;
+  }
+
+  .library-filters button {
+    flex: 1 1 100%;
+  }
+
+  .collection-row-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .collection-card-wrapper {
+    flex: 0 0 170px;
+    width: 170px;
+  }
+
+  .collection-row-games {
+    gap: 14px;
   }
 }

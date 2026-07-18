@@ -68,30 +68,42 @@
   flex: 0 0 auto;
 }
 
+/* ===============================
+   CAROUSEL ARROWS
+================================ */
+
 .carousel-arrow {
   position: absolute;
+
   top: 50%;
+
   transform: translateY(-50%);
 
   z-index: 10;
 
-  width: 40px;
-  height: 40px;
+  width: 42px;
+
+  height: 42px;
 
   display: flex;
+
   align-items: center;
+
   justify-content: center;
 
   border-radius: 50%;
+
   border: 1px solid rgba(255, 255, 255, 0.12);
 
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.9);
 
-  color: #fff;
+  backdrop-filter: blur(10px);
+
+  color: white;
+
   cursor: pointer;
 
-  opacity: 0;
+  opacity: 0.65;
 
   transition:
     opacity 0.25s ease,
@@ -105,16 +117,21 @@
 
 .carousel-arrow:hover {
   background: var(--accent);
+
   transform: translateY(-50%) scale(1.08);
 }
 
 .carousel-arrow-left {
-  left: 12px;
+  left: 8px;
 }
 
 .carousel-arrow-right {
-  right: 12px;
+  right: 8px;
 }
+
+/* ===============================
+   RESPONSIVE
+================================ */
 
 @media (max-width: 768px) {
   .carousel-arrow {
@@ -123,10 +140,11 @@
 
   .carousel-track {
     gap: 18px;
+
     padding: 16px 6px 18px;
   }
 
   .carousel-item {
-    flex-basis: 210px;
+    flex: 0 0 210px;
   }
 }

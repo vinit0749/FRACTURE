@@ -30,7 +30,7 @@
 
   animation: diceRoll 1s infinite ease-in-out;
 
-  filter: drop-shadow(0 0 20px rgba(70, 140, 255, 0.8));
+  filter: drop-shadow(0 0 20px var(--accent-strong));
 }
 
 .random-content h2 {
@@ -59,7 +59,7 @@
   width: 8px;
   height: 8px;
 
-  background: #4da3ff;
+  background: var(--accent-light);
 
   border-radius: 50%;
 
@@ -140,5 +140,15 @@
 
   to {
     opacity: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .dice-animation {
+    font-size: 55px;
+  }
+
+  .random-content h2 {
+    font-size: 1.4rem;
   }
 }

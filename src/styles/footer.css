@@ -94,24 +94,48 @@
   font-size: 0.82rem;
 }
 
+/* ==================================================
+   RESPONSIVE
+================================================== */
+
 @media (max-width: 600px) {
   .footer {
     margin-top: 70px;
 
-    padding: 50px 20px;
+    padding: 50px 18px;
   }
 
   .footer h3 {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
 
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
   }
 
   .footer-stack {
+    gap: 8px;
+
     font-size: 0.8rem;
   }
 
   .footer-copy {
     font-size: 0.78rem;
+
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 380px) {
+  .footer {
+    padding: 40px 14px;
+  }
+
+  .footer h3 {
+    font-size: 1.25rem;
+  }
+
+  .footer-stack {
+    flex-direction: column;
+
+    gap: 4px;
   }
 }

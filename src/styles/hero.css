@@ -16,13 +16,11 @@
 
   isolation: isolate;
 
-  .hero {
-    background: var(--bg-main);
+  background: var(--bg-main);
 
-    box-shadow:
-      0 50px 120px rgba(0, 0, 0, 0.65),
-      inset 0 0 0 1px var(--border-light);
-  }
+  box-shadow:
+    0 50px 120px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px var(--border-light);
 }
 
 /* =====================================================
@@ -504,33 +502,105 @@
 }
 
 /* =====================================================
-   RESPONSIVE SAFETY
+   RESPONSIVE
 ===================================================== */
 
-@media (max-width: 900px) {
+@media (max-width: 1400px) {
   .hero {
-    min-height: 700px;
+    min-height: 540px;
   }
 
   .hero-content {
-    min-height: 700px;
+    min-height: 540px;
+    width: min(600px, 100%);
+  }
+}
 
-    padding: 50px 30px;
+@media (max-width: 1200px) {
+  .hero {
+    min-height: 500px;
+    border-radius: 28px;
+  }
+
+  .hero-content {
+    min-height: 500px;
+    padding: 48px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.2rem, 4vw, 3rem);
+  }
+
+  .hero p {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .hero {
+    min-height: 620px;
+    border-radius: 24px;
+  }
+
+  .hero-content {
+    width: 100%;
+    min-height: 620px;
+    padding: 42px 32px;
   }
 
   .hero-gradient {
     background: linear-gradient(
       0deg,
-      rgba(3, 7, 18, 0.95),
-      rgba(3, 7, 18, 0.55)
+      rgba(3, 7, 18, 0.96),
+      rgba(3, 7, 18, 0.65)
     );
   }
 
-  .hero h1 {
-    font-size: 2.5rem;
+  .hero p {
+    max-width: 100%;
   }
 
   .hero-arrow {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    border-radius: 16px;
+    margin-top: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-content {
+    padding: 28px 18px 60px;
+  }
+
+  .hero-tag {
+    font-size: 0.65rem;
+    padding: 7px 14px;
+  }
+
+  .hero h1 {
+    font-size: 1.7rem;
+    line-height: 1.05;
+    margin: 14px 0 16px;
+  }
+
+  .hero p {
+    font-size: 0.88rem;
+  }
+
+  .meta-card {
+    min-width: 100%;
+  }
+
+  .hero-btn {
+    padding: 14px 24px;
+    font-size: 0.9rem;
+  }
+
+  .hero-progress-item {
+    width: 40px;
   }
 }

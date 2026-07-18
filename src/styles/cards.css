@@ -503,3 +503,124 @@
 
   color: var(--accent-light);
 }
+
+/*media*/
+
+@media (max-width: 1200px) {
+  .cinematic-card {
+    height: 330px;
+  }
+
+  .game-title {
+    font-size: 1.05rem;
+  }
+
+  .genre-pill {
+    font-size: 0.65rem;
+    padding: 4px 9px;
+  }
+}
+
+@media (max-width: 992px) {
+  .cinematic-card {
+    height: 310px;
+  }
+
+  .card-actions {
+    top: 12px;
+    left: 12px;
+    gap: 8px;
+  }
+
+  .card-action-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .library-status-wrapper {
+    top: 12px;
+    right: 12px;
+  }
+
+  .library-badge {
+    min-width: 70px;
+    font-size: 0.6rem;
+  }
+
+  .image-overlay-content {
+    left: 14px;
+    right: 14px;
+    bottom: 52px;
+  }
+
+  .card-bottom {
+    left: 14px;
+    right: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cinematic-card {
+    height: 290px;
+  }
+
+  .game-title {
+    font-size: 1rem;
+  }
+
+  .rating-row {
+    font-size: 0.8rem;
+  }
+
+  .genre-pills {
+    gap: 5px;
+  }
+
+  .genre-pill {
+    font-size: 0.62rem;
+    padding: 4px 8px;
+  }
+
+  .release {
+    font-size: 0.7rem;
+  }
+
+  .meta-badge {
+    width: 34px;
+    height: 34px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cinematic-card {
+    height: 270px;
+  }
+
+  .card-actions {
+    gap: 6px;
+  }
+
+  .card-action-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .card-action-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .game-title {
+    font-size: 0.95rem;
+  }
+
+  .genre-pill {
+    font-size: 0.6rem;
+    padding: 3px 7px;
+  }
+
+  .library-dropdown {
+    width: 120px;
+  }
+}

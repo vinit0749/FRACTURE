@@ -346,19 +346,30 @@
   font-size: 0.9rem;
 }
 
-/* ================= RESPONSIVE ================= */
+/* ==================================================
+   RESPONSIVE
+================================================== */
 
-/* Tablet */
+/* ================= 1200px ================= */
 
-@media (max-width: 1000px) {
+@media (max-width: 1200px) {
   .wishlist-stats {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  #wishlist-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 22px;
+  }
 }
 
-/* Mobile */
+/* ================= 992px ================= */
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
+  .wishlist-page {
+    padding-bottom: var(--space-5);
+  }
+
   .wishlist-header {
     flex-direction: column;
 
@@ -371,18 +382,73 @@
     width: 100%;
 
     justify-content: space-between;
+
+    flex-wrap: wrap;
+
+    gap: var(--space-2);
   }
 
   .wishlist-heading h1 {
-    font-size: 1.8rem;
+    font-size: 2rem;
+  }
+
+  #wishlist-grid {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+
+    gap: 20px;
   }
 }
 
-/* Small Mobile */
+/* ================= 768px ================= */
 
-@media (max-width: 500px) {
+@media (max-width: 768px) {
+  .wishlist-heading h1 {
+    font-size: 1.75rem;
+  }
+
+  /*
+     Keep stats compact on tablets
+  */
+
+  .wishlist-stats {
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 16px;
+  }
+
+  /*
+     Two-column card layout
+     keeps cinematic cards readable
+  */
+
+  #wishlist-grid {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+
+    gap: 16px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .modal-card {
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    padding: 28px 22px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+}
+
+/* ================= 576px ================= */
+
+@media (max-width: 576px) {
   .wishlist-page {
-    padding-bottom: var(--space-5);
+    padding-bottom: var(--space-4);
   }
 
   .wishlist-info {
@@ -396,17 +462,63 @@
     width: 100%;
 
     text-align: center;
+
+    padding: 14px 18px;
+  }
+
+  .wishlist-heading h1 {
+    font-size: 1.55rem;
+  }
+
+  /*
+     Single column only when phones become narrow
+  */
+
+  #wishlist-grid {
+    grid-template-columns: 1fr;
+
+    gap: 16px;
+  }
+
+  .wishlist-empty {
+    min-height: 60vh;
+
+    padding: 20px;
+  }
+
+  .wishlist-empty .empty-icon {
+    font-size: 3.5rem;
+  }
+
+  .wishlist-empty h2 {
+    font-size: 1.6rem;
+  }
+
+  .wishlist-empty p {
+    font-size: 0.95rem;
+  }
+
+  .modal-card {
+    padding: 22px 18px;
+  }
+}
+
+/* ================= 400px ================= */
+
+@media (max-width: 400px) {
+  .wishlist-heading h1 {
+    font-size: 1.4rem;
   }
 
   .wishlist-stats {
     grid-template-columns: 1fr;
   }
 
-  .modal-card {
-    padding: 24px;
+  .stat-value {
+    font-size: 1.2rem;
   }
 
-  .modal-actions {
-    flex-direction: column;
+  .modal-card {
+    border-radius: 18px;
   }
 }

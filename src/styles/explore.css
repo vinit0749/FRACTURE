@@ -547,3 +547,149 @@
 
   padding: 0 4px;
 }
+
+/* =====================================================
+   RESPONSIVE POLISH
+===================================================== */
+
+/* ---------- Large Tablet ---------- */
+
+@media (max-width: 1100px) {
+  .explore-toolbar {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .explore-search {
+    max-width: 100%;
+  }
+
+  .explore-controls {
+    width: 100%;
+
+    flex-wrap: wrap;
+  }
+
+  .explore-controls select,
+  .reset-btn {
+    flex: 1;
+  }
+
+  #game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
+/* ---------- Tablet ---------- */
+
+@media (max-width: 768px) {
+  .section-header {
+    gap: 16px;
+
+    margin-bottom: 24px;
+  }
+
+  .games-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .explore-toolbar {
+    padding: 14px;
+
+    border-radius: 16px;
+  }
+
+  .explore-controls {
+    flex-direction: column;
+
+    gap: 10px;
+  }
+
+  .explore-controls select,
+  .reset-btn {
+    width: 100%;
+  }
+
+  .dropdown-btn {
+    width: 100%;
+
+    min-width: unset;
+  }
+
+  .custom-dropdown {
+    width: 100%;
+  }
+
+  .dropdown-menu {
+    width: 100%;
+  }
+
+  #game-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 16px;
+  }
+
+  .page-btn {
+    width: 40px;
+
+    height: 40px;
+  }
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 500px) {
+  .games-section {
+    padding-bottom: 10px;
+  }
+
+  .games-section h2 {
+    font-size: 1.35rem;
+  }
+
+  .section-subtitle {
+    margin-top: -8px;
+  }
+
+  .explore-toolbar {
+    padding: 12px;
+  }
+
+  #filter-search-input {
+    height: 44px;
+
+    font-size: 0.9rem;
+  }
+
+  .dropdown-btn,
+  .explore-controls select,
+  .reset-btn {
+    height: 44px;
+
+    font-size: 0.85rem;
+  }
+
+  #game-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #pagination {
+    gap: 6px;
+
+    margin-top: 30px;
+  }
+
+  .page-btn {
+    width: 36px;
+
+    height: 36px;
+
+    font-size: 0.85rem;
+  }
+}

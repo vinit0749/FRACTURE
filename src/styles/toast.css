@@ -13,6 +13,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  isolation: isolate;
 
   z-index: 5000;
 
@@ -74,6 +75,24 @@
   to {
     opacity: 1;
     transform: translateX(0) scale(1);
+  }
+}
+
+/*Exit animation*/
+
+.toast-exit {
+  animation: toast-exit 0.25s ease forwards;
+}
+
+@keyframes toast-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
   }
 }
 
@@ -142,7 +161,7 @@
 .toast-description {
   font-size: 0.82rem;
 
-  color: #94a3b8;
+  color: var(--text-muted);
 
   line-height: 1.4;
 }
@@ -166,7 +185,7 @@
 
   background: transparent;
 
-  color: #94a3b8;
+  color: var(--text-muted);
 
   font-size: 1.25rem;
 
@@ -247,7 +266,7 @@
 }
 
 .toast-info .toast-progress {
-  background: #3b82f6;
+  background: var(--accent);
 }
 
 /* ======================================

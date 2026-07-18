@@ -228,25 +228,51 @@
 }
 
 /* =====================================================
-   MOBILE
+   RESPONSIVE
 ===================================================== */
 
-@media (max-width: 850px) {
+@media (max-width: 992px) {
   .home-hero-skeleton {
     min-height: 620px;
   }
 
   .home-hero-skeleton-content {
     min-height: 620px;
-
-    width: auto;
-
-    padding: 42px 28px;
+    width: 100%;
+    padding: 42px 32px;
   }
+}
 
+@media (max-width: 768px) {
   .home-carousel-skeleton-card {
     flex-basis: 180px;
-
     height: 270px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-hero-skeleton {
+    border-radius: 16px;
+  }
+
+  .home-hero-skeleton-content {
+    padding: 28px 18px 60px;
+  }
+
+  .home-hero-skeleton-title span {
+    height: 34px;
+  }
+
+  .home-hero-skeleton-title span:first-child {
+    width: 90%;
+  }
+
+  .home-hero-skeleton-title span:last-child {
+    width: 65%;
+  }
+
+  .home-hero-skeleton-tag {
+    width: 120px;
+    height: 26px;
   }
 }

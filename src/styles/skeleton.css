@@ -3,6 +3,8 @@
 ===================================================== */
 
 .skeleton-shimmer {
+  overflow: hidden;
+
   background: linear-gradient(
     110deg,
     rgba(30, 41, 59, 0.65) 25%,

@@ -323,6 +323,55 @@
   z-index: 9999;
 }
 
+/* ==========================================
+   FILTER DROPDOWN SCROLLBAR
+========================================== */
+
+.dropdown-menu {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+/* Chrome / Edge */
+
+.dropdown-menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-light), var(--accent));
+
+  border-radius: 999px;
+
+  border: 2px solid transparent;
+  background-clip: padding-box;
+
+  transition: background 0.25s ease;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #7cb8ff, #3b82f6);
+
+  background-clip: padding-box;
+}
+
+.dropdown-menu::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.dropdown-menu:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-light), var(--accent));
+}
+
 .custom-dropdown.active .dropdown-menu {
   opacity: 1;
 

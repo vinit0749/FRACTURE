@@ -364,12 +364,6 @@ select:focus-visible {
   .similar-games-grid {
     grid-template-columns: 1fr;
   }
-
-  .footer {
-    padding: var(--space-3) var(--space-2);
-
-    font-size: 0.85rem;
-  }
 }
 
 /* ===============================

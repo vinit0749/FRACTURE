@@ -3,7 +3,7 @@
 ================================================== */
 
 .site-header {
-  padding: var(--space-2) 0;
+  padding: var(--space-3) 0;
 }
 
 .header-container {
@@ -40,23 +40,17 @@
 .logo-link {
   display: inline-flex;
   align-items: center;
-
   text-decoration: none;
 }
 
-.fracture-wordmark {
-  font-size: 2rem;
+.logo-image {
+  display: block;
 
-  font-weight: 900;
+  height: 48px;
+  width: auto;
 
-  letter-spacing: 3px;
-
-  line-height: 1;
-
-  background: linear-gradient(135deg, #ffffff 20%, #60a5fa 80%);
-
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  object-fit: contain;
+  object-position: left center;
 
   user-select: none;
 
@@ -65,14 +59,10 @@
     filter 0.3s ease;
 }
 
-.logo-link:hover .fracture-wordmark {
-  transform: scale(1.04);
-
-  filter: drop-shadow(0 8px 18px rgba(59, 130, 246, 0.35));
-}
-
-.logo-link:hover .logo-wordmark {
+.logo-link:hover .logo-image {
   transform: scale(1.03);
+
+  filter: drop-shadow(0 10px 24px rgba(59, 130, 246, 0.35));
 }
 
 /* ==================================================

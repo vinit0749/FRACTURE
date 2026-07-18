@@ -1,3 +1,4 @@
+import fractureLogo from "../../assets/fracture-logo.png";
 import { Search, Heart, Bookmark, Dices, Settings } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
@@ -116,7 +117,7 @@ function Header({ searchInput, updateSearchInput }) {
               window.dispatchEvent(new Event("resetHome"));
             }}
           >
-            <span className="fracture-wordmark">FRACTURE</span>
+            <img src={fractureLogo} alt="FRACTURE" className="logo-image" />
           </Link>
 
           <p>Discover your next favorite game.</p>

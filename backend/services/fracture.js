@@ -12,6 +12,9 @@ const BASE_URL = "https://api.rawg.io/api";
 
 const cache = new Map();
 
+// Prevent duplicate simultaneous requests
+const pendingRequests = new Map();
+
 const CACHE_TIME = 1000 * 60 * 10; // 10 minutes
 
 async function fractureFetch(endpoint = "") {
@@ -30,20 +33,36 @@ async function fractureFetch(endpoint = "") {
     cache.delete(url);
   }
 
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`RAWG error ${response.status}`);
+  // Return pending request if already fetching
+  if (pendingRequests.has(url)) {
+    return pendingRequests.get(url);
   }
 
-  const data = await response.json();
+  const request = fetch(url)
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`RAWG error ${response.status}`);
+      }
 
-  cache.set(url, {
-    data,
-    time: Date.now(),
-  });
+      const data = await response.json();
 
-  return data;
+      cache.set(url, {
+        data,
+        time: Date.now(),
+      });
+
+      pendingRequests.delete(url);
+
+      return data;
+    })
+    .catch((error) => {
+      pendingRequests.delete(url);
+      throw error;
+    });
+
+  pendingRequests.set(url, request);
+
+  return request;
 }
 
 // ================================

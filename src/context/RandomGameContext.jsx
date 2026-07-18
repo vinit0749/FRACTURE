@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { fetchGames } from "../api/rawg";
+import { fetchGames } from "../api/fracture";
 
 import { useToast } from "../hooks/useToast";
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchGames } from "../api/rawg";
+import { fetchGames } from "../api/fracture";
 import { isSafeGame } from "../utils/gameFilter";
 
 function rankSearchResults(games, query) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { fetchGenres, fetchPlatforms } from "../api/rawg";
+import { fetchGenres, fetchPlatforms } from "../api/fracture";
 
 let filtersCache = null;
 let filtersPromise = null;

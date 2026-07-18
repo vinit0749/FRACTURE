@@ -5,7 +5,7 @@ import {
   fetchGameScreenshots,
   fetchGameTrailers,
   fetchSimilarGames,
-} from "../api/rawg";
+} from "../api/fracture";
 
 export default function useGameDetails(id) {
   const [game, setGame] = useState(null);

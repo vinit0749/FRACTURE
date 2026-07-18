@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchSearchSuggestions } from "../api/rawg";
+import { fetchSearchSuggestions } from "../api/fracture";
 
 const suggestionCache = new Map();
 

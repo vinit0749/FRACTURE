@@ -4,7 +4,7 @@ import {
   fetchGames,
   fetchGameDetails,
   fetchGameScreenshots,
-} from "../api/rawg";
+} from "../api/fracture";
 
 let heroCache = null;
 let heroPromise = null;

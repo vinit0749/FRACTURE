@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { fetchGames } from "../api/rawg";
+import { fetchGames } from "../api/fracture";
 
 function useRandomGame() {
   const [loadingRandom, setLoadingRandom] = useState(false);

@@ -1,6 +1,4 @@
-const API_KEY = import.meta.env.VITE_RAWG_API_KEY;
-
-const BASE_URL = "https://api.rawg.io/api";
+const BASE_URL = "http://localhost:5000/api";
 
 // ==============================================
 // GLOBAL API CACHE
@@ -13,7 +11,7 @@ const pendingRequests = new Map();
 const CACHE_TIME = 1000 * 60 * 10; // 10 minutes
 
 async function cachedFetch(url) {
-  // Return valid cached data
+  // Cache hit
   if (apiCache.has(url)) {
     const cached = apiCache.get(url);
 
@@ -26,7 +24,7 @@ async function cachedFetch(url) {
     apiCache.delete(url);
   }
 
-  // Return existing request
+  // Duplicate request protection
   if (pendingRequests.has(url)) {
     return pendingRequests.get(url);
   }
@@ -34,7 +32,7 @@ async function cachedFetch(url) {
   const request = fetch(url)
     .then(async (response) => {
       if (!response.ok) {
-        throw new Error(`RAWG error ${response.status}`);
+        throw new Error(`FRACTURE backend error ${response.status}`);
       }
 
       const data = await response.json();
@@ -64,13 +62,11 @@ async function cachedFetch(url) {
 // ==================================================
 
 export async function fetchGames(params = "") {
-  return cachedFetch(
-    `${BASE_URL}/games?key=${API_KEY}${params ? `&${params}` : ""}`,
-  );
+  return cachedFetch(`${BASE_URL}/games${params ? `?${params}` : ""}`);
 }
 
 // ==================================================
-// SEARCH AUTOCOMPLETE SUGGESTIONS
+// SEARCH AUTOCOMPLETE
 // ==================================================
 
 export async function fetchSearchSuggestions(query) {
@@ -79,7 +75,7 @@ export async function fetchSearchSuggestions(query) {
     page_size: 6,
   });
 
-  return cachedFetch(`${BASE_URL}/games?key=${API_KEY}&${params.toString()}`);
+  return cachedFetch(`${BASE_URL}/games?${params.toString()}`);
 }
 
 // ==================================================
@@ -87,15 +83,15 @@ export async function fetchSearchSuggestions(query) {
 // ==================================================
 
 export async function fetchGameDetails(id) {
-  return cachedFetch(`${BASE_URL}/games/${id}?key=${API_KEY}`);
+  return cachedFetch(`${BASE_URL}/games/${id}`);
 }
 
 // ==================================================
-// GAME SCREENSHOTS
+// SCREENSHOTS
 // ==================================================
 
 export async function fetchGameScreenshots(id) {
-  return cachedFetch(`${BASE_URL}/games/${id}/screenshots?key=${API_KEY}`);
+  return cachedFetch(`${BASE_URL}/games/${id}/screenshots`);
 }
 
 // ==================================================
@@ -103,7 +99,7 @@ export async function fetchGameScreenshots(id) {
 // ==================================================
 
 export async function fetchGenres() {
-  return cachedFetch(`${BASE_URL}/genres?key=${API_KEY}`);
+  return cachedFetch(`${BASE_URL}/games/genres`);
 }
 
 // ==================================================
@@ -111,15 +107,15 @@ export async function fetchGenres() {
 // ==================================================
 
 export async function fetchPlatforms() {
-  return cachedFetch(`${BASE_URL}/platforms/lists/parents?key=${API_KEY}`);
+  return cachedFetch(`${BASE_URL}/games/platforms`);
 }
 
 // ==================================================
-// GAME TRAILERS
+// TRAILERS
 // ==================================================
 
 export async function fetchGameTrailers(id) {
-  return cachedFetch(`${BASE_URL}/games/${id}/movies?key=${API_KEY}`);
+  return cachedFetch(`${BASE_URL}/games/${id}/movies`);
 }
 
 // ==================================================
@@ -127,7 +123,5 @@ export async function fetchGameTrailers(id) {
 // ==================================================
 
 export async function fetchSimilarGames(params = "") {
-  return cachedFetch(
-    `${BASE_URL}/games?key=${API_KEY}${params ? `&${params}` : ""}`,
-  );
+  return cachedFetch(`${BASE_URL}/games${params ? `?${params}` : ""}`);
 }

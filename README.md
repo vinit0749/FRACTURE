@@ -1,180 +1,404 @@
-# FRACTURE
+# 🎮 FRACTURE
 
-A modern game discovery platform built with **React** and powered by the **RAWG Video Games Database API**.
+> A cinematic full-stack game discovery platform built with **React, Express, and the RAWG Video Games Database API**.
 
-FRACTURE helps players discover new games through a cinematic browsing experience inspired by modern gaming storefronts like Steam, Epic Games Store, and PlayStation Store.
+FRACTURE is a modern game exploration platform designed to help players discover, search, and organize games through a premium storefront-inspired experience.
+
+Built with a focus on immersive UI, clean architecture, secure API handling, and a smooth discovery workflow inspired by modern gaming platforms.
 
 ---
 
-## 🎮 Features
+## 🌐 Live Demo
+
+🚀 https://fracture-seven.vercel.app/
+
+---
+
+# 📸 Preview
+
+## Homepage
+
+Cinematic hero experience featuring dynamic game discovery and immersive visuals.
+
+![Homepage](screenshots/home.png)
+
+---
+
+## Game Discovery
+
+Explore thousands of games with search, filtering, sorting, and pagination.
+
+![Explore](screenshots/explore.png)
+
+---
+
+## Game Details
+
+Detailed game pages with information, ratings, platforms, screenshots, and media.
+
+![Game Details](screenshots/details.png)
+
+---
+
+## Media Experience
+
+Browse trailers and screenshots for a richer game discovery experience.
+
+![Media](screenshots/media.png)
+
+---
+
+## Wishlist
+
+Save games you want to explore later with persistent local storage.
+
+![Wishlist](screenshots/wishlist.png)
+
+---
+
+## Library
+
+Manage your personal collection with different game statuses.
+
+![Library](screenshots/library.png)
+
+---
+
+## Mobile Experience
+
+Responsive layouts optimized across different screen sizes.
+
+![Mobile](screenshots/mobile.png)
+
+---
+
+# ✨ Features
+
+## 🎮 Discovery Experience
 
 - Cinematic featured game hero
-- Dynamic hero background slideshow
-- Smart game search with autocomplete
-- Intelligent search ranking
+- Dynamic game discovery experience
 - Browse thousands of games
-- Game details pages
-- Screenshot gallery
-- Trailer support
-- Wishlist system
-- Personal game library
-- Library status management
-- Top Rated games
-- New Releases
+- Smart search with autocomplete
+- Search result ranking system
 - Genre filtering
 - Platform filtering
-- Sorting options
-- Pagination
-- Local storage persistence
-- Responsive design
-- Loading skeletons
-- Toast notifications
+- Sorting by popularity, rating, and release date
+- Pagination system
 
 ---
 
-## 🛠 Tech Stack
+## 📖 Game Details
 
-- React
-- Vite
-- JavaScript (ES6+)
-- React Router
-- Context API
-- Custom Hooks
-- CSS
-- RAWG Video Games Database API
-
----
-
-## 📂 Project Structure
-
-```
-src/
-├── api/
-├── assets/
-├── components/
-│   ├── Common/
-│   ├── Explore/
-│   ├── Footer/
-│   ├── Header/
-│   ├── Hero/
-│   ├── Layout/
-│   ├── Search/
-│   ├── Skeletons/
-│   └── UI/
-├── context/
-├── hooks/
-├── pages/
-├── styles/
-├── utils/
-├── App.jsx
-└── main.jsx
-```
-
----
-
-## ✨ Highlights
-
-### Cinematic Hero
-
-- Dynamic featured game selection
-- Automatic screenshot carousel
-- Smooth background transitions
-- Premium glassmorphism UI
-- Responsive cinematic layout
-
-### Game Discovery
-
-- Search games instantly
-- Smart autocomplete suggestions
-- Browse by genre
-- Browse by platform
-- Sort by popularity, rating, and release date
-- Dedicated Top Rated and New Releases pages
-
-### Personal Collection
-
-- Wishlist
-- Library
-- Playing status management
-- Local storage persistence
-
----
-
-## 🚀 Current Status
-
-### ✅ Completed
-
-- React migration
-- Modern component architecture
-- RAWG API integration
-- Hero system
-- Game exploration
-- Search
-- Search autocomplete
-- Smart search ranking
-- Pagination
-- Filters
-- Top Rated page
-- New Releases page
-- Game Details page
+- Dedicated game detail pages
+- Release information
+- Ratings and metadata
+- Supported platforms
 - Screenshot gallery
-- Trailer section
-- Wishlist
-- Library
+- Trailer integration
+- Similar games discovery
+
+---
+
+## ❤️ Personal Collection
+
+- Wishlist system
+- Personal game library
+- Game status management
+- Persistent local storage
+
+---
+
+## ⚡ User Experience
+
+- Responsive design
+- Premium dark gaming aesthetic
+- Glassmorphism-inspired UI
 - Loading skeletons
 - Toast notifications
-- Responsive layout
-
-### 🚧 In Progress
-
-- Similar Games carousel
-- Homepage content carousels
-- Additional UI polish
-- Performance optimizations
+- Error handling
+- Smooth interactions and animations
 
 ---
 
-## 🔮 Future Plans
+# 🏗️ Architecture
 
-- Personalized recommendations
-- Recently viewed games
-- User profile
-- Theme customization
-- Enhanced discovery experience
-- Additional animations and micro-interactions
+FRACTURE uses a separated frontend and backend architecture.
+
+```
+                    User
+                      |
+                      |
+                  Vercel
+                      |
+              React + Vite
+              Frontend App
+                      |
+                      |
+                 Railway
+                      |
+             Express Backend API
+                      |
+                      |
+          RAWG Video Games Database API
+```
+
+### Why this architecture?
+
+The Express backend acts as a secure API layer between the frontend and RAWG.
+
+It handles external API communication while keeping sensitive configuration private.
+
+Benefits:
+
+- API keys remain hidden from the client
+- Centralized API communication
+- Better request management
+- Cleaner frontend architecture
+- Easier future expansion
 
 ---
 
-## ⚡ Getting Started
+# 🛠️ Tech Stack
+
+## Frontend
+
+| Technology   | Purpose                    |
+| ------------ | -------------------------- |
+| React 19     | UI development             |
+| Vite         | Build tooling              |
+| React Router | Client-side routing        |
+| Context API  | Global state management    |
+| Custom Hooks | Reusable application logic |
+| Vanilla CSS  | Custom design system       |
+| Lucide React | Interface icons            |
+
+---
+
+## Backend
+
+| Technology            | Purpose                     |
+| --------------------- | --------------------------- |
+| Node.js               | Runtime environment         |
+| Express.js            | API server                  |
+| REST API              | Client-server communication |
+| CORS                  | Cross-origin handling       |
+| Environment Variables | Secure configuration        |
+
+---
+
+## External Services
+
+| Service  | Purpose            |
+| -------- | ------------------ |
+| RAWG API | Game data provider |
+
+---
+
+## Deployment
+
+| Service | Usage            |
+| ------- | ---------------- |
+| Vercel  | Frontend hosting |
+| Railway | Backend hosting  |
+
+---
+
+# ⚙️ Engineering Highlights
+
+## 🔐 API Security
+
+The RAWG API key is never exposed in the frontend.
+
+All external API communication happens through the Express backend proxy layer.
+
+---
+
+## ⚡ Performance Optimization
+
+Implemented:
+
+- Frontend API caching
+- Backend response caching
+- Duplicate request prevention
+- Optimized API calls
+
+---
+
+## 🧩 Application Design
+
+The project follows a modular architecture using:
+
+- Reusable React components
+- Custom hooks for business logic
+- Context-based global state
+- Dedicated API service layers
+- Separated backend services
+
+---
+
+# 🚀 Getting Started
+
+## Prerequisites
+
+Install:
+
+- Node.js
+- npm
+
+---
+
+## Clone Repository
 
 ```bash
-git clone https://github.com/your-username/fracture-react.git
+git clone https://github.com/vinit0749/FRACTURE.git
 
-cd fracture-react
+cd FRACTURE
+```
 
+---
+
+# 📦 Installation
+
+## Frontend
+
+Install dependencies:
+
+```bash
 npm install
+```
 
+---
+
+## Backend
+
+Navigate to backend:
+
+```bash
+cd backend
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+---
+
+# 🔑 Environment Variables
+
+## Frontend
+
+Create a `.env` file in the project root:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+---
+
+## Backend
+
+Create a `.env` file inside the backend folder:
+
+```env
+RAWG_API_KEY=your_rawg_api_key
+
+ALLOWED_ORIGINS=http://localhost:5173
+```
+
+---
+
+# ▶️ Running Locally
+
+## Start Backend
+
+Inside the backend folder:
+
+```bash
+npm start
+```
+
+Backend runs on:
+
+```
+http://localhost:5000
+```
+
+---
+
+## Start Frontend
+
+Inside the project root:
+
+```bash
 npm run dev
 ```
 
-Create a `.env` file and add your RAWG API key:
+Frontend runs on:
 
-```env
-VITE_RAWG_KEY=your_api_key
+```
+http://localhost:5173
 ```
 
 ---
 
-## 📸 Screenshots
+# 🚢 Deployment
 
-> Screenshots will be added as development progresses.
+FRACTURE is deployed using an independent frontend and backend production architecture.
+
+```
+              User
+                |
+                |
+             Vercel
+                |
+        React Frontend
+                |
+                |
+            Railway
+                |
+        Express Backend
+                |
+                |
+             RAWG API
+```
+
+This allows independent deployment while keeping sensitive configuration secure.
 
 ---
 
-## 📄 License
+# 🔮 Future Improvements
 
-This project is built for educational and portfolio purposes.
+Planned improvements:
+
+- AI-powered game recommendations
+- User authentication
+- Cloud-synced libraries
+- Recently viewed games
+- Personalized discovery system
+- Advanced recommendation algorithms
+- Additional UI animations and interactions
 
 ---
 
-Built with ❤️ by **Vinit Gohil**
+# 🤝 Contributing
+
+This project is currently maintained as a personal portfolio project.
+
+Suggestions and feedback are welcome.
+
+---
+
+# 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+# 👤 Author
+
+**Vinit Gohil**
+
+Built with React, Express, and a focus on creating immersive digital experiences.

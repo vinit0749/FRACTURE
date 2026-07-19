@@ -36,7 +36,7 @@ function LibraryPage() {
     window.addEventListener("libraryUpdated", handleStorageUpdate);
 
     return () => {
-      window.removeEventListener("storage", handleStorageUpdate);
+      window.removeEventListener("libraryUpdated", handleStorageUpdate);
     };
   }, []);
 

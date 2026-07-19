@@ -72,13 +72,14 @@ export default function useHero() {
   const [heroMeta, setHeroMeta] = useState(heroCache?.heroMeta || null);
 
   const [loading, setLoading] = useState(!heroCache);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (heroCache) {
       setFeaturedGame(heroCache.featuredGame);
       setHeroImages(heroCache.heroImages);
       setHeroMeta(heroCache.heroMeta);
-
+      setError("");
       setLoading(false);
 
       return;
@@ -96,7 +97,7 @@ export default function useHero() {
       setHeroImages(data.heroImages);
 
       setHeroMeta(data.heroMeta);
-
+      setError("");
       setLoading(false);
     });
   }, []);
@@ -171,6 +172,7 @@ export default function useHero() {
         return heroCache;
       } catch (error) {
         console.error("Hero loading failed:", error);
+        setError("We couldn't load the hero experience. Please try again.");
 
         return null;
       } finally {
@@ -181,13 +183,20 @@ export default function useHero() {
     return heroPromise;
   }
 
+  function retry() {
+    setError("");
+    setLoading(true);
+    loadFeaturedGame();
+  }
+
   return {
     featuredGame,
 
     heroImages,
 
     heroMeta,
-
     loading,
+    error,
+    retry,
   };
 }

@@ -10,7 +10,7 @@ function SettingsMenu({ open }) {
   if (!open) return null;
 
   return (
-    <div className="settings-menu">
+    <div className="settings-menu" role="menu" aria-label="Settings menu">
       {page === "settings" && (
         <>
           <div className="settings-menu-title">Settings</div>
@@ -20,6 +20,7 @@ function SettingsMenu({ open }) {
           <button
             className="settings-menu-item"
             onClick={() => setPage("appearance")}
+            role="menuitem"
           >
             <span>🎨</span>
 
@@ -35,6 +36,7 @@ function SettingsMenu({ open }) {
           <button
             className="settings-back-button"
             onClick={() => setPage("settings")}
+            aria-label="Back to settings"
           >
             <ChevronLeft size={18} />
             Appearance
@@ -47,6 +49,8 @@ function SettingsMenu({ open }) {
               theme === "midnight" ? "active" : ""
             }`}
             onClick={() => setTheme("midnight")}
+            role="menuitemradio"
+            aria-checked={theme === "midnight"}
           >
             Midnight
           </button>
@@ -56,6 +60,8 @@ function SettingsMenu({ open }) {
               theme === "obsidian" ? "active" : ""
             }`}
             onClick={() => setTheme("obsidian")}
+            role="menuitemradio"
+            aria-checked={theme === "obsidian"}
           >
             Obsidian
           </button>
@@ -65,6 +71,8 @@ function SettingsMenu({ open }) {
               theme === "crimson" ? "active" : ""
             }`}
             onClick={() => setTheme("crimson")}
+            role="menuitemradio"
+            aria-checked={theme === "crimson"}
           >
             Crimson
           </button>
@@ -74,6 +82,8 @@ function SettingsMenu({ open }) {
               theme === "emerald" ? "active" : ""
             }`}
             onClick={() => setTheme("emerald")}
+            role="menuitemradio"
+            aria-checked={theme === "emerald"}
           >
             Emerald
           </button>
@@ -83,6 +93,8 @@ function SettingsMenu({ open }) {
               theme === "violet" ? "active" : ""
             }`}
             onClick={() => setTheme("violet")}
+            role="menuitemradio"
+            aria-checked={theme === "violet"}
           >
             Violet
           </button>

@@ -4,9 +4,35 @@ function SearchAutocomplete({
   suggestions = [],
   visible,
   activeIndex,
+  loading,
+  error,
   onSelect,
 }) {
-  if (!visible || suggestions.length === 0) {
+  if (!visible) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="autocomplete-wrapper" role="status" aria-live="polite">
+        <div className="autocomplete-dropdown">
+          <div className="autocomplete-item">Loading suggestions…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="autocomplete-wrapper" role="status" aria-live="polite">
+        <div className="autocomplete-dropdown">
+          <div className="autocomplete-item">{error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (suggestions.length === 0) {
     return null;
   }
 
@@ -27,6 +53,9 @@ function SearchAutocomplete({
             <img
               src={game.background_image || "/placeholder-game.jpg"}
               alt={game.name}
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
             />
 
             <div className="autocomplete-info">

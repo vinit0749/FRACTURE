@@ -9,9 +9,11 @@ export default function useFilters() {
   const [genres, setGenres] = useState(filtersCache?.genres || []);
 
   const [platforms, setPlatforms] = useState(filtersCache?.platforms || []);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (filtersCache) {
+      setError("");
       return;
     }
 
@@ -19,6 +21,8 @@ export default function useFilters() {
   }, []);
 
   async function loadFilters() {
+    setError("");
+
     if (filtersPromise) {
       const data = await filtersPromise;
 
@@ -45,6 +49,7 @@ export default function useFilters() {
         return data;
       } catch (error) {
         console.error("Filters loading failed:", error);
+        setError("We couldn't load the filter options. Please try again.");
 
         return {
           genres: [],
@@ -61,8 +66,15 @@ export default function useFilters() {
     setPlatforms(data.platforms);
   }
 
+  function retry() {
+    setError("");
+    loadFilters();
+  }
+
   return {
     genres,
     platforms,
+    error,
+    retry,
   };
 }

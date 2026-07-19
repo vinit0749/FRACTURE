@@ -21,7 +21,11 @@ function Header({ searchInput, updateSearchInput }) {
 
   const { getRandomGame } = useRandomGameContext();
 
-  const { suggestions } = useGameAutocomplete(searchInput);
+  const {
+    suggestions,
+    loading: suggestionsLoading,
+    error: suggestionsError,
+  } = useGameAutocomplete(searchInput);
 
   function search() {
     const query = searchInput.trim();
@@ -197,8 +201,10 @@ function Header({ searchInput, updateSearchInput }) {
 
             <SearchAutocomplete
               suggestions={suggestions}
-              visible={showAutocomplete && suggestions.length > 0}
+              visible={showAutocomplete}
               activeIndex={activeIndex}
+              loading={suggestionsLoading}
+              error={suggestionsError}
               onSelect={() => {
                 setShowAutocomplete(false);
                 setActiveIndex(-1);

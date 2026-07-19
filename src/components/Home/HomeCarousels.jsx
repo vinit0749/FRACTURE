@@ -8,10 +8,27 @@ import useHomeCarousels from "../../hooks/useHomeCarousels";
 function HomeCarousels() {
   const navigate = useNavigate();
 
-  const { trending, topRated, newReleases, loading } = useHomeCarousels();
+  const { trending, topRated, newReleases, loading, error, retry } =
+    useHomeCarousels();
 
   if (loading) {
     return null;
+  }
+
+  if (error) {
+    return (
+      <section className="empty-state">
+        <div className="empty-icon">⚠️</div>
+
+        <h2>We couldn't load the featured games</h2>
+
+        <p>{error}</p>
+
+        <button className="hero-btn" onClick={retry} type="button">
+          Try Again
+        </button>
+      </section>
+    );
   }
 
   return (

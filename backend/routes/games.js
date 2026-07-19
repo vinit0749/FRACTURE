@@ -33,8 +33,12 @@ router.get("/", async (req, res) => {
   } catch (error) {
     console.error("Games route error:", error);
 
-    res.status(500).json({
-      message: "Failed to fetch games",
+    const status = error.status || 500;
+    const message = error.details?.detail || "Failed to fetch games";
+
+    res.status(status).json({
+      message,
+      error: error.message,
     });
   }
 });
@@ -55,8 +59,12 @@ router.get("/:id/screenshots", async (req, res) => {
   } catch (error) {
     console.error("Screenshots route error:", error);
 
-    res.status(500).json({
-      message: "Failed to fetch screenshots",
+    const status = error.status || 500;
+    const message = error.details?.detail || "Failed to fetch screenshots";
+
+    res.status(status).json({
+      message,
+      error: error.message,
     });
   }
 });
@@ -77,8 +85,12 @@ router.get("/:id/movies", async (req, res) => {
   } catch (error) {
     console.error("Trailers route error:", error);
 
-    res.status(500).json({
-      message: "Failed to fetch trailers",
+    const status = error.status || 500;
+    const message = error.details?.detail || "Failed to fetch trailers";
+
+    res.status(status).json({
+      message,
+      error: error.message,
     });
   }
 });
@@ -97,8 +109,12 @@ router.get("/genres", async (req, res) => {
   } catch (error) {
     console.error("Genres route error:", error);
 
-    res.status(500).json({
-      message: "Failed to fetch genres",
+    const status = error.status || 500;
+    const message = error.details?.detail || "Failed to fetch genres";
+
+    res.status(status).json({
+      message,
+      error: error.message,
     });
   }
 });
@@ -117,8 +133,12 @@ router.get("/platforms", async (req, res) => {
   } catch (error) {
     console.error("Platforms route error:", error);
 
-    res.status(500).json({
-      message: "Failed to fetch platforms",
+    const status = error.status || 500;
+    const message = error.details?.detail || "Failed to fetch platforms";
+
+    res.status(status).json({
+      message,
+      error: error.message,
     });
   }
 });
@@ -137,8 +157,12 @@ router.get("/:id", async (req, res) => {
   } catch (error) {
     console.error("Game details route error:", error);
 
-    res.status(500).json({
-      message: "Failed to fetch game details",
+    const status = error.status || 500;
+    const message = error.details?.detail || "Failed to fetch game details";
+
+    res.status(status).json({
+      message,
+      error: error.message,
     });
   }
 });

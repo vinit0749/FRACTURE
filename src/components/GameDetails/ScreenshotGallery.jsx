@@ -28,6 +28,9 @@ function ScreenshotGallery({ screenshots, game }) {
               alt={`${game.name} Screenshot`}
               loading="lazy"
               onClick={() => setSelectedImage(shot.image)}
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
             />
           ))}
         </div>

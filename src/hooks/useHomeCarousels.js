@@ -15,9 +15,12 @@ export default function useHomeCarousels() {
   );
 
   const [loading, setLoading] = useState(!carouselCache);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (carouselCache) {
+      applyData(carouselCache);
+      setError("");
       return;
     }
 
@@ -25,6 +28,9 @@ export default function useHomeCarousels() {
   }, []);
 
   async function loadCarousels() {
+    setLoading(true);
+    setError("");
+
     // Prevent duplicate calls
     if (carouselPromise) {
       const data = await carouselPromise;
@@ -75,6 +81,7 @@ export default function useHomeCarousels() {
         return data;
       } catch (error) {
         console.error("Carousel loading failed:", error);
+        setError("We couldn't load the featured carousels. Please try again.");
 
         return {
           trending: [],
@@ -91,6 +98,11 @@ export default function useHomeCarousels() {
     const data = await carouselPromise;
 
     applyData(data);
+  }
+
+  function retry() {
+    setError("");
+    loadCarousels();
   }
 
   function applyData(data) {
@@ -111,5 +123,7 @@ export default function useHomeCarousels() {
     newReleases,
 
     loading,
+    error,
+    retry,
   };
 }

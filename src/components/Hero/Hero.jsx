@@ -26,6 +26,10 @@ function getMetacriticColor(score) {
 function Hero({ hero, heroImages = [], heroMeta }) {
   const navigate = useNavigate();
 
+  const handleImageError = (event) => {
+    event.currentTarget.style.display = "none";
+  };
+
   const {
     currentImage,
     currentIndex,
@@ -55,6 +59,7 @@ function Hero({ hero, heroImages = [], heroMeta }) {
           src={currentImage}
           alt={hero.name}
           className="hero-image"
+          onError={handleImageError}
         />
 
         <div className="hero-gradient" />

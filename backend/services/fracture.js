@@ -4,6 +4,17 @@ dotenv.config();
 
 const API_KEY = process.env.RAWG_API_KEY;
 
+if (!API_KEY) {
+  throw new Error("Missing required environment variable: RAWG_API_KEY");
+}
+
+function createError(message, details = {}, status = 500) {
+  const error = new Error(message);
+  error.status = status;
+  error.details = details;
+  return error;
+}
+
 const BASE_URL = "https://api.rawg.io/api";
 
 // ===================================
@@ -21,6 +32,10 @@ async function fractureFetch(endpoint = "") {
   const url = `${BASE_URL}${endpoint}${
     endpoint.includes("?") ? "&" : "?"
   }key=${API_KEY}`;
+
+  if (!API_KEY) {
+    throw createError("Missing RAWG API configuration", {}, 500);
+  }
 
   // Return cached response
   if (cache.has(url)) {
@@ -41,7 +56,15 @@ async function fractureFetch(endpoint = "") {
   const request = fetch(url)
     .then(async (response) => {
       if (!response.ok) {
-        throw new Error(`RAWG error ${response.status}`);
+        const detail =
+          response.status >= 500
+            ? "RAWG upstream failure"
+            : "Invalid RAWG request";
+        throw createError(
+          `RAWG error ${response.status}`,
+          { detail },
+          response.status,
+        );
       }
 
       const data = await response.json();
@@ -110,7 +133,7 @@ export async function getGenres() {
 // ================================
 
 export async function getPlatforms() {
-  return fractureFetch(`/platforms/lists/parents`);
+  return fractureFetch(`/platforms`);
 }
 
 // ================================

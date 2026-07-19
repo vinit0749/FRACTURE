@@ -16,74 +16,78 @@ export default function useGameDetails(id) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  async function loadGame() {
     if (!id) return;
 
-    async function loadGame() {
-      try {
-        setLoading(true);
-        setError("");
+    try {
+      setLoading(true);
+      setError("");
 
-        const gameData = await fetchGameDetails(id);
+      const gameData = await fetchGameDetails(id);
 
-        setGame(gameData);
+      setGame(gameData);
 
-        const [shots, trailers] = await Promise.all([
-          fetchGameScreenshots(id),
-          fetchGameTrailers(id),
-        ]);
+      const [shots, trailers] = await Promise.all([
+        fetchGameScreenshots(id),
+        fetchGameTrailers(id),
+      ]);
 
-        setScreenshots(shots.results || []);
-        setTrailer(trailers.results?.[0] || null);
+      setScreenshots(shots.results || []);
+      setTrailer(trailers.results?.[0] || null);
 
-        /* ================= SIMILAR GAMES ================= */
+      /* ================= SIMILAR GAMES ================= */
 
-        const genreIds = gameData.genres?.map((genre) => genre.id).join(",");
+      const genreIds = gameData.genres?.map((genre) => genre.id).join(",");
 
-        const developerId = gameData.developers?.[0]?.id;
+      const developerId = gameData.developers?.[0]?.id;
 
-        const requests = [];
+      const requests = [];
 
-        // Same Genres
-        if (genreIds) {
-          requests.push(fetchSimilarGames(`genres=${genreIds}&page_size=20`));
-        }
-
-        // Same Developer
-        if (developerId) {
-          requests.push(
-            fetchSimilarGames(`developers=${developerId}&page_size=20`),
-          );
-        }
-
-        // Popular Games
-        requests.push(fetchSimilarGames(`ordering=-added&page_size=20`));
-
-        const results = await Promise.all(requests);
-
-        const uniqueGames = new Map();
-
-        results.forEach((response) => {
-          response.results?.forEach((game) => {
-            if (game.id !== gameData.id) {
-              uniqueGames.set(game.id, game);
-            }
-          });
-        });
-
-        const shuffled = [...uniqueGames.values()]
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 6);
-
-        setSimilarGames(shuffled);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load game.");
-      } finally {
-        setLoading(false);
+      // Same Genres
+      if (genreIds) {
+        requests.push(fetchSimilarGames(`genres=${genreIds}&page_size=20`));
       }
-    }
 
+      // Same Developer
+      if (developerId) {
+        requests.push(
+          fetchSimilarGames(`developers=${developerId}&page_size=20`),
+        );
+      }
+
+      // Popular Games
+      requests.push(fetchSimilarGames(`ordering=-added&page_size=20`));
+
+      const results = await Promise.all(requests);
+
+      const uniqueGames = new Map();
+
+      results.forEach((response) => {
+        response.results?.forEach((game) => {
+          if (game.id !== gameData.id) {
+            uniqueGames.set(game.id, game);
+          }
+        });
+      });
+
+      const shuffled = [...uniqueGames.values()]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 6);
+
+      setSimilarGames(shuffled);
+    } catch (err) {
+      console.error(err);
+      setGame(null);
+      setScreenshots([]);
+      setTrailer(null);
+      setSimilarGames([]);
+      setError("We couldn't load this game right now. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
     loadGame();
   }, [id]);
 
@@ -94,5 +98,6 @@ export default function useGameDetails(id) {
     similarGames,
     loading,
     error,
+    retry: loadGame,
   };
 }

@@ -6,6 +6,7 @@ const suggestionCache = new Map();
 export default function useGameAutocomplete(query) {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const debounceTimer = useRef(null);
 
@@ -16,6 +17,7 @@ export default function useGameAutocomplete(query) {
     if (search.length < 2) {
       setSuggestions([]);
       setLoading(false);
+      setError("");
       return;
     }
 
@@ -23,6 +25,7 @@ export default function useGameAutocomplete(query) {
     if (suggestionCache.has(search)) {
       setSuggestions(suggestionCache.get(search));
       setLoading(false);
+      setError("");
       return;
     }
 
@@ -31,6 +34,7 @@ export default function useGameAutocomplete(query) {
     debounceTimer.current = setTimeout(async () => {
       try {
         setLoading(true);
+        setError("");
 
         const data = await fetchSearchSuggestions(search);
 
@@ -47,6 +51,7 @@ export default function useGameAutocomplete(query) {
         if (error.name !== "AbortError") {
           console.error("Autocomplete failed:", error);
           setSuggestions([]);
+          setError("Suggestions are temporarily unavailable.");
         }
       } finally {
         setLoading(false);
@@ -61,5 +66,6 @@ export default function useGameAutocomplete(query) {
   return {
     suggestions,
     loading,
+    error,
   };
 }

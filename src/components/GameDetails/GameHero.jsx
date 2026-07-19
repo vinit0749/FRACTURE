@@ -1,6 +1,10 @@
 function GameHero({ game }) {
   if (!game) return null;
 
+  const handleImageError = (event) => {
+    event.currentTarget.style.display = "none";
+  };
+
   let description =
     game.description_raw || game.description || "No description available.";
 
@@ -18,6 +22,7 @@ function GameHero({ game }) {
           className="game-image"
           src={game.background_image}
           alt={game.name}
+          onError={handleImageError}
         />
       </div>
 

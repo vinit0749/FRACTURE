@@ -31,6 +31,18 @@ function ExploreToolbar({
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
   };
 
+  const handleDropdownKeyDown = (event, dropdown) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setActiveDropdown(null);
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleDropdown(dropdown);
+    }
+  };
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (toolbarRef.current && !toolbarRef.current.contains(event.target)) {
@@ -82,6 +94,10 @@ function ExploreToolbar({
             <button
               className="dropdown-btn"
               onClick={() => toggleDropdown("sort")}
+              aria-haspopup="listbox"
+              aria-expanded={activeDropdown === "sort"}
+              aria-label="Sort options"
+              onKeyDown={(event) => handleDropdownKeyDown(event, "sort")}
             >
               <span id="sort-label">
                 {sort === "-added"
@@ -161,6 +177,10 @@ function ExploreToolbar({
           <button
             className="dropdown-btn"
             onClick={() => toggleDropdown("genre")}
+            aria-haspopup="listbox"
+            aria-expanded={activeDropdown === "genre"}
+            aria-label="Filter by genre"
+            onKeyDown={(event) => handleDropdownKeyDown(event, "genre")}
           >
             <span id="genre-label">
               {genre
@@ -210,6 +230,10 @@ function ExploreToolbar({
           <button
             className="dropdown-btn"
             onClick={() => toggleDropdown("platform")}
+            aria-haspopup="listbox"
+            aria-expanded={activeDropdown === "platform"}
+            aria-label="Filter by platform"
+            onKeyDown={(event) => handleDropdownKeyDown(event, "platform")}
           >
             <span id="platform-label">
               {platform

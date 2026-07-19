@@ -21,7 +21,7 @@ function GameDetailsPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  const { game, screenshots, trailer, similarGames, loading, error } =
+  const { game, screenshots, trailer, similarGames, loading, error, retry } =
     useGameDetails(id);
 
   // ===============================
@@ -48,7 +48,28 @@ function GameDetailsPage() {
   }
 
   if (error) {
-    return <h2>{error}</h2>;
+    return (
+      <>
+        <Header
+          searchInput={searchInput}
+          updateSearchInput={updateSearchInput}
+        />
+
+        <main className="container">
+          <div className="empty-state">
+            <div className="empty-icon">⚠️</div>
+
+            <h2>We couldn't load this game</h2>
+
+            <p>{error}</p>
+
+            <button className="hero-btn" onClick={retry} type="button">
+              Try Again
+            </button>
+          </div>
+        </main>
+      </>
+    );
   }
 
   if (!game) {

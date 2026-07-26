@@ -1,17 +1,23 @@
-import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import HomePage from "./pages/HomePage";
 import GameDetailsPage from "./pages/GameDetailsPage";
+import ProfilePage from "./pages/ProfilePage";
 import WishlistPage from "./pages/WishlistPage";
 import LibraryPage from "./pages/LibraryPage";
 import TopRatedPage from "./pages/TopRatedPage";
 import NewReleasesPage from "./pages/NewReleasesPage";
 import TrendingPage from "./pages/TrendingPage";
 
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import AuthModal from "./components/Auth/AuthModal";
+
 import RandomOverlay from "./components/Common/RandomOverlay";
 import { useRandomGameContext } from "./context/RandomGameContext";
 import ToastContainer from "./components/Common/ToastContainer";
+
+import { AuthModalProvider, useAuthModal } from "./context/AuthModalContext";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -26,8 +32,10 @@ function ScrollToTop() {
   return null;
 }
 
-function App() {
+function AppContent() {
   const { showRandomOverlay, randomStatus } = useRandomGameContext();
+
+  const { authModalOpen, authMode, closeAuthModal } = useAuthModal();
 
   return (
     <>
@@ -52,14 +60,52 @@ function App() {
           element={<GameDetailsPage key={window.location.pathname} />}
         />
 
-        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/library" element={<LibraryPage />} />
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <WishlistPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/library"
+          element={
+            <ProtectedRoute>
+              <LibraryPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
 
+      <AuthModal
+        open={authModalOpen}
+        mode={authMode}
+        onClose={closeAuthModal}
+      />
+
       <RandomOverlay visible={showRandomOverlay} status={randomStatus} />
+
       <ToastContainer />
     </>
+  );
+}
+
+function App() {
+  return (
+    <AuthModalProvider>
+      <AppContent />
+    </AuthModalProvider>
   );
 }
 

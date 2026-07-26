@@ -1,0 +1,873 @@
+/* ==================================================
+   PROFILE PAGE
+================================================== */
+
+.profile-page {
+  min-height: calc(100vh - 80px);
+
+  padding: 48px 0 90px;
+}
+
+/* ==================================================
+   PROFILE HERO
+================================================== */
+
+.profile-hero {
+  position: relative;
+
+  overflow: hidden;
+
+  margin-bottom: 46px;
+
+  border: 1px solid var(--border-light);
+
+  border-radius: var(--radius-lg);
+
+  background:
+    radial-gradient(circle at 8% 50%, var(--accent-soft), transparent 32%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.025), transparent 55%),
+    var(--surface);
+
+  box-shadow: var(--shadow-card);
+
+  isolation: isolate;
+}
+
+.profile-hero::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.025) 45%,
+    transparent 70%
+  );
+
+  pointer-events: none;
+}
+
+.profile-hero::after {
+  content: "";
+
+  position: absolute;
+
+  width: 420px;
+  height: 420px;
+
+  top: -250px;
+  left: -100px;
+
+  border-radius: 50%;
+
+  background: var(--accent-color);
+
+  opacity: 0.07;
+
+  filter: blur(90px);
+
+  pointer-events: none;
+}
+
+/* ==================================================
+   HERO CONTENT
+================================================== */
+
+.profile-hero-content {
+  position: relative;
+
+  z-index: 2;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 28px;
+
+  min-height: 190px;
+
+  padding: 38px 42px;
+}
+
+/* ==================================================
+   PROFILE AVATAR
+================================================== */
+
+.profile-avatar-container {
+  position: relative;
+
+  flex-shrink: 0;
+}
+
+.profile-avatar {
+  width: 116px;
+  height: 116px;
+
+  display: block;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  border: 3px solid var(--accent-color);
+
+  background: var(--secondary-bg);
+
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.025),
+    0 0 45px var(--accent-soft);
+}
+
+.profile-avatar-fallback {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: var(--text-secondary);
+
+  font-size: 42px;
+}
+
+/* ==================================================
+   AVATAR EDIT BUTTON
+================================================== */
+
+.profile-avatar-edit {
+  position: absolute;
+
+  right: 2px;
+  bottom: 2px;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border: 2px solid var(--surface);
+
+  border-radius: 50%;
+
+  color: white;
+
+  background: var(--accent-color);
+
+  cursor: pointer;
+
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.35);
+
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+
+.profile-avatar-edit:hover {
+  transform: scale(1.08);
+
+  filter: brightness(1.15);
+}
+
+/* ==================================================
+   HERO INFORMATION
+================================================== */
+
+.profile-hero-info {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.profile-eyebrow,
+.profile-card-eyebrow {
+  color: var(--accent-color);
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.18em;
+
+  line-height: 1.2;
+
+  text-transform: uppercase;
+}
+
+.profile-hero-info h1 {
+  margin: 8px 0 5px;
+
+  color: var(--text);
+
+  font-size: clamp(28px, 3vw, 38px);
+
+  font-weight: 800;
+
+  line-height: 1.1;
+
+  letter-spacing: -0.025em;
+}
+
+.profile-hero-info p {
+  margin: 0;
+
+  color: var(--text-secondary);
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+/* ==================================================
+   EDIT PROFILE BUTTON
+================================================== */
+
+.profile-edit-button {
+  flex-shrink: 0;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  min-height: 42px;
+
+  padding: 0 17px;
+
+  border: 1px solid var(--border-light);
+
+  border-radius: 10px;
+
+  color: var(--text);
+
+  background: var(--glass);
+
+  backdrop-filter: blur(12px);
+
+  font: inherit;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.profile-edit-button:hover {
+  transform: translateY(-2px);
+
+  border-color: var(--accent-medium);
+
+  background: var(--accent-soft);
+}
+
+/* ==================================================
+   GENERIC PROFILE SECTION
+================================================== */
+
+.profile-section {
+  margin-bottom: 46px;
+}
+
+.profile-section-heading {
+  margin-bottom: 18px;
+}
+
+.profile-section-heading h2 {
+  margin: 7px 0 0;
+
+  color: var(--text);
+
+  font-size: 21px;
+
+  font-weight: 800;
+
+  line-height: 1.2;
+
+  letter-spacing: -0.015em;
+}
+
+/* ==================================================
+   ACCOUNT DETAILS
+================================================== */
+
+.profile-account-details {
+  overflow: hidden;
+
+  border: 1px solid var(--border-light);
+
+  border-radius: var(--radius-lg);
+
+  background: var(--surface);
+
+  box-shadow: var(--shadow-card);
+}
+
+.profile-info-row {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 30px;
+
+  min-height: 64px;
+
+  padding: 0 24px;
+
+  border-bottom: 1px solid var(--border-light);
+}
+
+.profile-info-row:last-child {
+  border-bottom: none;
+}
+
+.profile-info-row span {
+  color: var(--text-secondary);
+
+  font-size: 13px;
+
+  font-weight: 500;
+}
+
+.profile-info-row strong {
+  max-width: 65%;
+
+  color: var(--text);
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  text-align: right;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.profile-id {
+  color: var(--text-muted) !important;
+
+  font-family: monospace;
+
+  letter-spacing: 0.02em;
+}
+
+/* ==================================================
+   YOUR PROGRESS
+================================================== */
+
+.profile-progress-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  overflow: hidden;
+
+  border: 1px solid var(--border-light);
+
+  border-radius: var(--radius-lg);
+
+  background: var(--surface);
+
+  box-shadow: var(--shadow-card);
+}
+
+.profile-progress-item {
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  min-height: 105px;
+
+  padding: 22px 24px;
+
+  border-right: 1px solid var(--border-light);
+}
+
+.profile-progress-item:last-child {
+  border-right: none;
+}
+
+.profile-progress-icon {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border: 1px solid var(--accent-medium);
+
+  border-radius: 12px;
+
+  color: var(--accent-light);
+
+  background: var(--accent-soft);
+}
+
+.profile-progress-info {
+  min-width: 0;
+}
+
+.profile-progress-info span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: var(--text-secondary);
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+.profile-progress-info strong {
+  display: block;
+
+  color: var(--text);
+
+  font-size: 24px;
+
+  font-weight: 800;
+
+  line-height: 1;
+}
+
+/* ==================================================
+   YOUR COLLECTION
+================================================== */
+
+.profile-collection-section {
+  margin-bottom: 42px;
+}
+
+/* ==================================================
+   COLLECTION QUICK LINKS
+================================================== */
+
+.profile-collection-links {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+
+  margin-bottom: 30px;
+}
+
+.profile-collection-link {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  min-height: 82px;
+
+  padding: 18px 20px;
+
+  border: 1px solid var(--border-light);
+
+  border-radius: var(--radius-lg);
+
+  color: inherit;
+
+  background: var(--surface);
+
+  text-decoration: none;
+
+  box-shadow: var(--shadow-card);
+
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.profile-collection-link:hover {
+  transform: translateY(-4px);
+
+  border-color: var(--accent-medium);
+
+  background: var(--hover-bg);
+}
+
+.profile-collection-link-icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 11px;
+
+  color: var(--accent-light);
+
+  background: var(--accent-soft);
+}
+
+.profile-collection-link strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: var(--text);
+
+  font-size: 14px;
+
+  font-weight: 750;
+}
+
+.profile-collection-link span {
+  display: block;
+
+  color: var(--text-secondary);
+
+  font-size: 12px;
+}
+
+/* ==================================================
+   PROFILE CAROUSEL
+================================================== */
+
+/*
+  The profile page intentionally does NOT style
+  the GameCard or carousel itself.
+
+  The existing FRACTURE systems handle both:
+
+  carousel.css
+    -> carousel-section
+    -> carousel-header
+    -> carousel-container
+    -> carousel-track
+    -> carousel-item
+    -> carousel arrows
+
+  cards.css
+    -> cinematic-card
+    -> GameCard image
+    -> wishlist/library controls
+    -> rating
+    -> genres
+    -> release date
+    -> Metacritic score
+
+  This keeps the profile collection visually
+  identical to the Home page carousels.
+*/
+
+.profile-collection-carousel {
+  width: 100%;
+}
+
+/* ==================================================
+   EMPTY COLLECTION
+================================================== */
+
+.profile-empty-collection {
+  display: flex;
+
+  align-items: center;
+
+  flex-direction: column;
+
+  padding: 60px 24px;
+
+  border: 1px dashed var(--border-light);
+
+  border-radius: var(--radius-lg);
+
+  text-align: center;
+}
+
+.profile-empty-collection svg {
+  margin-bottom: 14px;
+
+  color: var(--accent-color);
+}
+
+.profile-empty-collection h3 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 17px;
+}
+
+.profile-empty-collection p {
+  margin: 8px 0 20px;
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+}
+
+.profile-discover-button {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-height: 40px;
+
+  padding: 0 17px;
+
+  border-radius: 10px;
+
+  color: white;
+
+  background: var(--accent-color);
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+
+.profile-discover-button:hover {
+  transform: translateY(-2px);
+
+  filter: brightness(1.1);
+}
+
+/* ==================================================
+   ACCOUNT ACTIONS
+================================================== */
+
+.profile-actions-section {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 12px;
+
+  padding-top: 4px;
+}
+
+.profile-action-button {
+  min-height: 42px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 0 18px;
+
+  border: 1px solid var(--border-light);
+
+  border-radius: 10px;
+
+  color: var(--text);
+
+  background: var(--surface);
+
+  font: inherit;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.profile-action-button:hover {
+  transform: translateY(-2px);
+
+  border-color: var(--accent-medium);
+
+  background: var(--hover-bg);
+}
+
+.profile-signout-button {
+  color: #ff7b4d;
+}
+
+.profile-signout-button:hover {
+  border-color: rgba(255, 123, 77, 0.55);
+
+  background: rgba(255, 123, 77, 0.08);
+}
+
+/* ==================================================
+   RESPONSIVE
+================================================== */
+
+@media (max-width: 900px) {
+  .profile-hero-content {
+    padding: 32px;
+  }
+
+  .profile-progress-item {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 700px) {
+  .profile-page {
+    padding: 34px 0 70px;
+  }
+
+  .profile-hero-content {
+    align-items: flex-start;
+
+    flex-wrap: wrap;
+
+    padding: 26px;
+  }
+
+  .profile-avatar {
+    width: 96px;
+    height: 96px;
+  }
+
+  .profile-hero-info {
+    min-width: calc(100% - 130px);
+  }
+
+  .profile-edit-button {
+    margin-left: 124px;
+  }
+
+  .profile-progress-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-progress-item {
+    border-right: none;
+
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .profile-progress-item:last-child {
+    border-bottom: none;
+  }
+
+  .profile-collection-links {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .profile-page {
+    padding: 28px 0 60px;
+  }
+
+  .profile-hero {
+    border-radius: 16px;
+  }
+
+  .profile-hero-content {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 18px;
+
+    padding: 24px;
+  }
+
+  .profile-avatar {
+    width: 90px;
+    height: 90px;
+  }
+
+  .profile-hero-info {
+    min-width: 0;
+
+    width: 100%;
+  }
+
+  .profile-hero-info h1 {
+    font-size: 28px;
+  }
+
+  .profile-edit-button {
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+  .profile-section {
+    margin-bottom: 38px;
+  }
+
+  .profile-info-row {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    min-height: 76px;
+
+    padding: 14px 18px;
+  }
+
+  .profile-info-row strong {
+    max-width: 100%;
+
+    text-align: left;
+  }
+
+  .profile-actions-section {
+    flex-direction: column;
+
+    width: 100%;
+  }
+
+  .profile-action-button {
+    width: 100%;
+  }
+}

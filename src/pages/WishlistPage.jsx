@@ -4,11 +4,15 @@ import { Link } from "react-router-dom";
 import Header from "../components/Layout/Header";
 import GameCard from "../components/Explore/GameCard";
 
+import { useAuth } from "../context/AuthContext";
 import { getWishlist, saveWishlist } from "../utils/storage";
+import { saveCloudWishlist } from "../utils/cloudStorage";
 
 import "../styles/wishlist.css";
 
 function WishlistPage() {
+  const { user } = useAuth();
+
   const [wishlist, setWishlist] = useState(getWishlist());
 
   const [searchInput, setSearchInput] = useState("");
@@ -22,9 +26,22 @@ function WishlistPage() {
     // We'll connect this later.
   }
 
-  function clearWishlist() {
+  async function clearWishlist() {
+    // Save locally first
     saveWishlist([]);
+
     setWishlist([]);
+
+    // Save to MongoDB if user is signed in
+    if (user?.uid) {
+      try {
+        await saveCloudWishlist(user.uid, []);
+
+        console.log("Wishlist cleared from MongoDB successfully.");
+      } catch (error) {
+        console.error("Failed to clear wishlist from MongoDB:", error);
+      }
+    }
   }
 
   /* ===============================
@@ -177,8 +194,8 @@ function WishlistPage() {
 
               <button
                 className="danger-btn"
-                onClick={() => {
-                  clearWishlist();
+                onClick={async () => {
+                  await clearWishlist();
                   setShowClearModal(false);
                 }}
               >

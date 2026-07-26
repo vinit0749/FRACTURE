@@ -8,12 +8,20 @@ import useGameAutocomplete from "../../hooks/useGameAutocomplete";
 import SearchAutocomplete from "../Common/SearchAutocomplete";
 import SettingsMenu from "../Common/SettingsMenu";
 
+import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../hooks/useToast";
+import { useAuthModal } from "../../context/AuthModalContext";
+
 function Header({ searchInput, updateSearchInput }) {
   const location = useLocation();
   const navigate = useNavigate();
 
   const searchRef = useRef(null);
   const settingsRef = useRef(null);
+
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const { openAuthModal } = useAuthModal();
 
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -43,22 +51,15 @@ function Header({ searchInput, updateSearchInput }) {
       return;
     }
 
-    // Arrow Down
     if (e.key === "ArrowDown") {
       e.preventDefault();
 
       setActiveIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
-    }
-
-    // Arrow Up
-    else if (e.key === "ArrowUp") {
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
 
       setActiveIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
-    }
-
-    // Enter select suggestion
-    else if (e.key === "Enter") {
+    } else if (e.key === "Enter") {
       e.preventDefault();
 
       if (activeIndex >= 0) {
@@ -71,16 +72,12 @@ function Header({ searchInput, updateSearchInput }) {
       } else {
         search();
       }
-    }
-
-    // Escape close
-    else if (e.key === "Escape") {
+    } else if (e.key === "Escape") {
       setShowAutocomplete(false);
       setActiveIndex(-1);
     }
   }
 
-  // Close menus when clicking outside or pressing Escape
   useEffect(() => {
     function handleClickOutside(event) {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -102,10 +99,12 @@ function Header({ searchInput, updateSearchInput }) {
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+
     document.addEventListener("keydown", handleEscape);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
@@ -223,23 +222,62 @@ function Header({ searchInput, updateSearchInput }) {
               <span className="tooltip">Surprise Me</span>
             </button>
 
-            <Link
-              to="/wishlist"
-              className={`header-icon wishlist-header-icon ${
-                location.pathname === "/wishlist" ? "active" : ""
-              }`}
-            >
-              <Heart size={20} />
-            </Link>
+            {user ? (
+              <Link
+                to="/wishlist"
+                className={`header-icon wishlist-header-icon ${
+                  location.pathname === "/wishlist" ? "active" : ""
+                }`}
+              >
+                <Heart size={20} />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="header-icon wishlist-header-icon"
+                aria-label="Wishlist"
+                onClick={() => {
+                  showToast({
+                    type: "info",
+                    icon: "🔐",
+                    title: "Sign In Required",
+                    description: "Please sign in to access your wishlist.",
+                    duration: 2500,
+                  });
+                }}
+              >
+                <Heart size={20} />
+              </button>
+            )}
 
-            <Link
-              to="/library"
-              className={`header-icon library-header-icon ${
-                location.pathname === "/library" ? "active" : ""
-              }`}
-            >
-              <Bookmark size={20} />
-            </Link>
+            {user ? (
+              <Link
+                to="/library"
+                className={`header-icon library-header-icon ${
+                  location.pathname === "/library" ? "active" : ""
+                }`}
+              >
+                <Bookmark size={20} />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="header-icon library-header-icon"
+                aria-label="Library"
+                onClick={() => {
+                  showToast({
+                    type: "info",
+                    icon: "🔐",
+                    title: "Sign In Required",
+                    description: "Please sign in to access your collection.",
+                    duration: 2500,
+                  });
+                }}
+              >
+                <Bookmark size={20} />
+              </button>
+            )}
+
             <div className="settings-wrapper" ref={settingsRef}>
               <button
                 className="header-icon settings-header-icon"

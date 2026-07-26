@@ -5,11 +5,15 @@ import Header from "../components/Layout/Header";
 import GameCard from "../components/Explore/GameCard";
 import CollectionRow from "../components/Library/CollectionRow";
 
+import { useAuth } from "../context/AuthContext";
 import { getLibrary, saveLibrary } from "../utils/storage";
+import { saveCloudLibrary } from "../utils/cloudStorage";
 
 import "../styles/library.css";
 
 function LibraryPage() {
+  const { user } = useAuth();
+
   const [library, setLibrary] = useState([]);
 
   const [searchInput, setSearchInput] = useState("");
@@ -40,10 +44,22 @@ function LibraryPage() {
     };
   }, []);
 
-  function clearLibrary() {
+  async function clearLibrary() {
+    // Save locally first
     saveLibrary([]);
 
     setLibrary([]);
+
+    // Save to MongoDB if user is signed in
+    if (user?.uid) {
+      try {
+        await saveCloudLibrary(user.uid, []);
+
+        console.log("Library cleared from MongoDB successfully.");
+      } catch (error) {
+        console.error("Failed to clear library from MongoDB:", error);
+      }
+    }
   }
 
   /* ===============================
@@ -271,8 +287,8 @@ function LibraryPage() {
 
               <button
                 className="danger-btn"
-                onClick={() => {
-                  clearLibrary();
+                onClick={async () => {
+                  await clearLibrary();
                   setShowClearModal(false);
                 }}
               >

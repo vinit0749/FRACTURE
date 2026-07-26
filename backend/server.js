@@ -1,7 +1,9 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import gamesRouter from "./routes/games.js";
+import usersRouter from "./routes/users.js";
 
 dotenv.config();
 
@@ -32,7 +34,13 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+
+// ================================
+// Routes
+// ================================
+
 app.use("/api/games", gamesRouter);
+app.use("/api/users", usersRouter);
 
 // ================================
 // Health Check
@@ -46,9 +54,19 @@ app.get("/", (req, res) => {
 });
 
 // ================================
-// Start Server
+// MongoDB Connection
 // ================================
 
-app.listen(PORT, () => {
-  console.log(`FRACTURE backend running on port ${PORT}`);
-});
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("MongoDB connected successfully.");
+
+    app.listen(PORT, () => {
+      console.log(`FRACTURE backend running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("MongoDB connection failed:", error);
+    process.exit(1);
+  });

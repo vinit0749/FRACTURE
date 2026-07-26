@@ -3,6 +3,7 @@ import { Heart, Bookmark, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "../../hooks/useToast";
+import { useAuth } from "../../context/AuthContext";
 
 import {
   toggleWishlist,
@@ -69,6 +70,8 @@ function GameCard({
   onLibraryChange,
   showLibraryStatus = false,
 }) {
+  const { user } = useAuth();
+
   const [wishlisted, setWishlisted] = useState(isWishlisted(game.id));
 
   const [library, setLibrary] = useState(isInLibrary(game.id));
@@ -81,7 +84,11 @@ function GameCard({
 
   const { showToast } = useToast();
 
-  useEffect(() => {
+  /* ===============================
+      REFRESH CARD STATE
+  =============================== */
+
+  function refreshCardState() {
     setWishlisted(isWishlisted(game.id));
 
     setLibrary(isInLibrary(game.id));
@@ -91,7 +98,37 @@ function GameCard({
     );
 
     setStatus(storedGame?.status || "backlog");
-  }, [game.id, game.status]);
+  }
+
+  useEffect(() => {
+    refreshCardState();
+  }, [game.id, game.status, user]);
+
+  /* ===============================
+      SYNC CARD STATE ACROSS APP
+  =============================== */
+
+  useEffect(() => {
+    function handleWishlistUpdated() {
+      refreshCardState();
+    }
+
+    function handleLibraryUpdated() {
+      refreshCardState();
+    }
+
+    window.addEventListener("wishlistUpdated", handleWishlistUpdated);
+    window.addEventListener("libraryUpdated", handleLibraryUpdated);
+
+    return () => {
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdated);
+      window.removeEventListener("libraryUpdated", handleLibraryUpdated);
+    };
+  }, [game.id]);
+
+  /* ===============================
+      CLOSE STATUS MENU
+  =============================== */
 
   useEffect(() => {
     function closeMenu(e) {
@@ -107,13 +144,31 @@ function GameCard({
     };
   }, []);
 
-  function handleWishlist(e) {
+  /* ===============================
+      WISHLIST
+  =============================== */
+
+  async function handleWishlist(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    const active = toggleWishlist(game);
+    if (!user) {
+      showToast({
+        type: "info",
+        icon: "🔐",
+        title: "Sign In Required",
+        description: "Please sign in to use your wishlist.",
+        duration: 2500,
+      });
+
+      return;
+    }
+
+    const active = await toggleWishlist(game, user);
 
     setWishlisted(active);
+
+    window.dispatchEvent(new Event("wishlistUpdated"));
 
     showToast({
       type: active ? "success" : "info",
@@ -126,17 +181,35 @@ function GameCard({
     onWishlistChange?.();
   }
 
-  function handleLibrary(e) {
+  /* ===============================
+      LIBRARY
+  =============================== */
+
+  async function handleLibrary(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    const active = toggleLibrary(game);
+    if (!user) {
+      showToast({
+        type: "info",
+        icon: "🔐",
+        title: "Sign In Required",
+        description: "Please sign in to use your collection.",
+        duration: 2500,
+      });
+
+      return;
+    }
+
+    const active = await toggleLibrary(game, user);
 
     setLibrary(active);
 
     if (active) {
       setStatus("backlog");
     }
+
+    window.dispatchEvent(new Event("libraryUpdated"));
 
     showToast({
       type: active ? "success" : "info",
@@ -149,14 +222,22 @@ function GameCard({
     onLibraryChange?.();
   }
 
-  function changeStatus(newStatus) {
-    updateLibraryStatus(game.id, newStatus);
+  /* ===============================
+      LIBRARY STATUS
+  =============================== */
 
-    window.dispatchEvent(new Event("libraryUpdated"));
+  async function changeStatus(newStatus) {
+    if (!user) {
+      return;
+    }
+
+    await updateLibraryStatus(game.id, newStatus, user);
 
     setStatus(newStatus);
 
     setShowStatusMenu(false);
+
+    window.dispatchEvent(new Event("libraryUpdated"));
 
     onLibraryChange?.();
   }
@@ -167,6 +248,10 @@ function GameCard({
     <Link to={`/game/${game.id}`} className="game-card cinematic-card">
       <div className="card-image">
         <div className="card-actions">
+          {/* ===============================
+              WISHLIST BUTTON
+          =============================== */}
+
           <button
             className={`card-action-btn wishlist-card-btn ${
               wishlisted ? "active" : ""
@@ -176,6 +261,10 @@ function GameCard({
           >
             <Heart size={18} fill={wishlisted ? "currentColor" : "none"} />
           </button>
+
+          {/* ===============================
+              LIBRARY BUTTON
+          =============================== */}
 
           <button
             className={`card-action-btn library-card-btn ${
@@ -187,6 +276,10 @@ function GameCard({
             <Bookmark size={18} fill={library ? "currentColor" : "none"} />
           </button>
         </div>
+
+        {/* ===============================
+            LIBRARY STATUS
+        =============================== */}
 
         {showLibraryStatus && library && (
           <div className="library-status-wrapper" ref={badgeRef}>

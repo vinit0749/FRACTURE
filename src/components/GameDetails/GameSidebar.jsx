@@ -5,7 +5,10 @@ import { Bookmark, Heart } from "lucide-react";
 
 import { SiEpicgames } from "react-icons/si";
 import { FiExternalLink } from "react-icons/fi";
+
 import { useToast } from "../../hooks/useToast";
+import { useAuth } from "../../context/AuthContext";
+import { useAuthModal } from "../../context/AuthModalContext";
 
 import {
   isWishlisted,
@@ -41,6 +44,9 @@ function formatDate(date) {
 }
 
 function GameSidebar({ game }) {
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
+
   const [saved, setSaved] = useState(game ? isWishlisted(game.id) : false);
 
   const [inLibrary, setInLibrary] = useState(
@@ -69,30 +75,76 @@ function GameSidebar({ game }) {
     status: "backlog",
   };
 
-  function handleWishlist() {
-    const status = toggleWishlist(gameData);
+  async function handleWishlist() {
+    // ==========================================
+    // SIGNED OUT → OPEN SIGN IN MODAL
+    // ==========================================
 
-    setSaved(status);
+    if (!user) {
+      openAuthModal("login");
+      return;
+    }
 
-    showToast({
-      type: status ? "success" : "info",
-      icon: status ? "❤️" : "💔",
-      title: status ? "Added to Wishlist" : "Removed from Wishlist",
-      description: game.name,
-    });
+    try {
+      const status = await toggleWishlist(gameData, user);
+
+      setSaved(status);
+
+      // Keep other cards/pages in sync
+      window.dispatchEvent(new Event("wishlistUpdated"));
+
+      showToast({
+        type: status ? "success" : "info",
+        icon: status ? "❤️" : "💔",
+        title: status ? "Added to Wishlist" : "Removed from Wishlist",
+        description: game.name,
+      });
+    } catch (error) {
+      console.error("Wishlist update failed:", error);
+
+      showToast({
+        type: "error",
+        icon: "⚠️",
+        title: "Something went wrong",
+        description: "Could not update your wishlist.",
+      });
+    }
   }
 
-  function handleLibrary() {
-    const status = toggleLibrary(gameData);
+  async function handleLibrary() {
+    // ==========================================
+    // SIGNED OUT → OPEN SIGN IN MODAL
+    // ==========================================
 
-    setInLibrary(status);
+    if (!user) {
+      openAuthModal("login");
+      return;
+    }
 
-    showToast({
-      type: status ? "success" : "info",
-      icon: status ? "📚" : "🗑️",
-      title: status ? "Added to Collection" : "Removed from Collection",
-      description: game.name,
-    });
+    try {
+      const status = await toggleLibrary(gameData, user);
+
+      setInLibrary(status);
+
+      // Keep other cards/pages in sync
+      window.dispatchEvent(new Event("libraryUpdated"));
+
+      showToast({
+        type: status ? "success" : "info",
+        icon: status ? "📚" : "🗑️",
+        title: status ? "Added to Collection" : "Removed from Collection",
+        description: game.name,
+      });
+    } catch (error) {
+      console.error("Library update failed:", error);
+
+      showToast({
+        type: "error",
+        icon: "⚠️",
+        title: "Something went wrong",
+        description: "Could not update your collection.",
+      });
+    }
   }
 
   return (
@@ -204,6 +256,7 @@ function GameSidebar({ game }) {
         <div className="sidebar-title">LINKS</div>
 
         <button
+          type="button"
           className={`library-button ${inLibrary ? "active" : ""}`}
           onClick={handleLibrary}
         >
@@ -215,6 +268,7 @@ function GameSidebar({ game }) {
         </button>
 
         <button
+          type="button"
           className={`wishlist-button ${saved ? "active" : ""}`}
           onClick={handleWishlist}
         >

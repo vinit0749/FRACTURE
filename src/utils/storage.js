@@ -1,5 +1,13 @@
+import { saveCloudWishlist, saveCloudLibrary } from "./cloudStorage";
+
+/* ===============================
+   STORAGE KEYS
+================================ */
+
 const WISHLIST_KEY = "wishlist";
 const LIBRARY_KEY = "library";
+
+const DEFAULT_STATUS = "backlog";
 
 /* ===============================
    WISHLIST
@@ -9,39 +17,43 @@ export function getWishlist() {
   return JSON.parse(localStorage.getItem(WISHLIST_KEY)) || [];
 }
 
-export function saveWishlist(games) {
+export async function saveWishlist(games, user = null) {
   localStorage.setItem(WISHLIST_KEY, JSON.stringify(games));
+
+  if (user?.uid) {
+    try {
+      await saveCloudWishlist(user.uid, games);
+    } catch (error) {
+      console.error("Failed to sync wishlist with MongoDB:", error);
+    }
+  }
 }
 
 export function isWishlisted(id) {
   return getWishlist().some((game) => game.id === id);
 }
 
-export function toggleWishlist(game) {
+export async function toggleWishlist(game, user = null) {
   const wishlist = getWishlist();
 
   const exists = wishlist.some((item) => item.id === game.id);
 
+  let updatedWishlist;
+
   if (exists) {
-    const updated = wishlist.filter((item) => item.id !== game.id);
-
-    saveWishlist(updated);
-
-    return false;
+    updatedWishlist = wishlist.filter((item) => item.id !== game.id);
+  } else {
+    updatedWishlist = [...wishlist, game];
   }
 
-  wishlist.push(game);
+  await saveWishlist(updatedWishlist, user);
 
-  saveWishlist(wishlist);
-
-  return true;
+  return !exists;
 }
 
 /* ===============================
    LIBRARY / COLLECTION
 ================================ */
-
-const DEFAULT_STATUS = "backlog";
 
 function normalizeStatus(status) {
   const value = status?.toLowerCase();
@@ -73,45 +85,52 @@ export function getLibrary() {
   return migratedLibrary;
 }
 
-export function saveLibrary(games) {
+export async function saveLibrary(games, user = null) {
   localStorage.setItem(LIBRARY_KEY, JSON.stringify(games));
+
+  if (user?.uid) {
+    try {
+      await saveCloudLibrary(user.uid, games);
+    } catch (error) {
+      console.error("Failed to sync library with MongoDB:", error);
+    }
+  }
 }
 
 export function isInLibrary(id) {
   return getLibrary().some((game) => game.id === id);
 }
 
-export function toggleLibrary(game) {
+export async function toggleLibrary(game, user = null) {
   const library = getLibrary();
 
   const exists = library.some((item) => item.id === game.id);
 
+  let updatedLibrary;
+
   if (exists) {
-    const updated = library.filter((item) => item.id !== game.id);
-
-    saveLibrary(updated);
-
-    return false;
+    updatedLibrary = library.filter((item) => item.id !== game.id);
+  } else {
+    updatedLibrary = [
+      ...library,
+      {
+        ...game,
+        addedAt: Date.now(),
+        status: DEFAULT_STATUS,
+      },
+    ];
   }
 
-  library.push({
-    ...game,
+  await saveLibrary(updatedLibrary, user);
 
-    addedAt: Date.now(),
-
-    status: DEFAULT_STATUS,
-  });
-
-  saveLibrary(library);
-
-  return true;
+  return !exists;
 }
 
 /* ===============================
    UPDATE COLLECTION STATUS
 ================================ */
 
-export function updateLibraryStatus(id, status) {
+export async function updateLibraryStatus(id, status, user = null) {
   const library = getLibrary();
 
   const updatedLibrary = library.map((game) => {
@@ -121,12 +140,11 @@ export function updateLibraryStatus(id, status) {
 
     return {
       ...game,
-
       status: normalizeStatus(status),
     };
   });
 
-  saveLibrary(updatedLibrary);
+  await saveLibrary(updatedLibrary, user);
 
   return updatedLibrary;
 }

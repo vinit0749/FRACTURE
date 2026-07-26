@@ -25,7 +25,7 @@ function GameDetailsPage() {
     useGameDetails(id);
 
   // ===============================
-  // Header Search
+  // HEADER SEARCH
   // ===============================
 
   const [searchInput, setSearchInput] = useState("");
@@ -33,6 +33,10 @@ function GameDetailsPage() {
   function updateSearchInput(value) {
     setSearchInput(value);
   }
+
+  // ===============================
+  // LOADING
+  // ===============================
 
   if (loading) {
     return (
@@ -46,6 +50,10 @@ function GameDetailsPage() {
       </>
     );
   }
+
+  // ===============================
+  // ERROR
+  // ===============================
 
   if (error) {
     return (
@@ -83,10 +91,16 @@ function GameDetailsPage() {
       <main className="game-page">
         <div className="container">
           <div className="game-layout">
-            {/* TOP SECTION */}
+            {/* ===============================
+                TOP SECTION
+            =============================== */}
 
             <div className="top-section">
-              <button className="back-button" onClick={() => navigate(-1)}>
+              <button
+                type="button"
+                className="back-button"
+                onClick={() => navigate(-1)}
+              >
                 ← Back
               </button>
 
@@ -109,7 +123,9 @@ function GameDetailsPage() {
               <h1 id="game-title">{game.name}</h1>
             </div>
 
-            {/* LEFT COLUMN */}
+            {/* ===============================
+                LEFT COLUMN
+            =============================== */}
 
             <div className="left-column">
               <GameHero game={game} />
@@ -121,7 +137,9 @@ function GameDetailsPage() {
               <SimilarGames games={similarGames} />
             </div>
 
-            {/* RIGHT SIDEBAR */}
+            {/* ===============================
+                RIGHT SIDEBAR
+            =============================== */}
 
             <GameSidebar game={game} />
           </div>

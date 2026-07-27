@@ -85,6 +85,10 @@ function ProfilePage() {
 
                 <h1>{user.displayName || "FRACTURE User"}</h1>
 
+                {user.username && (
+                  <p className="profile-username">@{user.username}</p>
+                )}
+
                 <p>{user.email || "No email available"}</p>
               </div>
 

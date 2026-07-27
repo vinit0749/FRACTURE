@@ -128,6 +128,30 @@ export async function fetchSimilarGames(params = "") {
 }
 
 // ==================================================
+// CHECK USERNAME AVAILABILITY
+// ==================================================
+
+export async function checkUsernameAvailability(username, currentUid) {
+  const params = new URLSearchParams({ username });
+
+  if (currentUid) {
+    params.set("uid", currentUid);
+  }
+
+  const response = await fetch(`${BASE_URL}/users/check-username?${params.toString()}`);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+
+    throw new Error(
+      errorData.message || `FRACTURE backend error ${response.status}`,
+    );
+  }
+
+  return response.json();
+}
+
+// ==================================================
 // USER SYNC
 // ==================================================
 
@@ -214,18 +238,23 @@ export async function updateUserProfile(
   displayName,
   photoFile,
   removePhoto,
+  username,
 ) {
   const formData = new FormData();
 
   formData.append("displayName", displayName);
 
+  if (typeof username === "string") {
+    formData.append("username", username);
+  }
+
   if (typeof removePhoto === "boolean") {
     formData.append("removePhoto", String(removePhoto));
   }
 
-  if (photoFile) {
-    formData.append("photo", photoFile);
-  }
+if (photoFile) {
+     formData.append("photo", photoFile, photoFile.name);
+   }
 
   const response = await fetch(`${BASE_URL}/users/${firebaseUid}/profile`, {
     method: "PUT",

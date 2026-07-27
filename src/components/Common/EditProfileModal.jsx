@@ -1,12 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Upload, ImagePlus, User } from "lucide-react";
+import { X, Camera, Trash2, Loader2, User } from "lucide-react";
+import ImageCropModal from "./ImageCropModal";
+import { checkUsernameAvailabilityApi } from "../../utils/cloudStorage";
 
 function EditProfileModal({ open, user, onClose, onSave }) {
   const [displayName, setDisplayName] = useState("");
   const [photoURL, setPhotoURL] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [username, setUsername] = useState("");
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [pendingImageSrc, setPendingImageSrc] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
+  const previewUrlRef = useRef("");
 
   const fileInputRef = useRef(null);
 
@@ -15,13 +25,61 @@ function EditProfileModal({ open, user, onClose, onSave }) {
       setDisplayName(user.displayName || "");
       setPhotoURL(user.photoURL || "");
       setSelectedFile(null);
+      setUsername(user.username || "");
+      setUsernameAvailable(null);
       setError("");
+      setLoading(false);
+      setSaving(false);
+      setShowCropModal(false);
+      setPendingImageSrc("");
+      setPreviewUrl("");
+      previewUrlRef.current = "";
     }
   }, [open, user]);
 
+  useEffect(() => {
+    const trimmed = username.trim().toLowerCase();
+
+    if (!trimmed || trimmed.length < 3) {
+      setUsernameAvailable(null);
+
+      return;
+    }
+
+    if (!/^[a-z0-9_]+$/.test(trimmed)) {
+      setUsernameAvailable(false);
+
+      return;
+    }
+
+    if (trimmed === (user.username || "").toLowerCase()) {
+      setUsernameAvailable(true);
+      setUsernameChecking(false);
+
+      return;
+    }
+
+    setUsernameChecking(true);
+    setUsernameAvailable(null);
+
+    const timer = setTimeout(async () => {
+      try {
+        const result = await checkUsernameAvailabilityApi(trimmed, user.uid);
+        setUsernameAvailable(result.available);
+      } catch (err) {
+        console.error("Username check failed:", err);
+        setUsernameAvailable(null);
+      } finally {
+        setUsernameChecking(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [username, user.uid, user.username]);
+
   if (!open || !user) return null;
 
-  function handleFileChange(e) {
+  async function handleFileChange(e) {
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -37,22 +95,19 @@ function EditProfileModal({ open, user, onClose, onSave }) {
     }
 
     setError("");
-    setSelectedFile(file);
 
-    // Create a temporary local preview.
-    // This does NOT upload anything to Firebase.
-    const previewURL = URL.createObjectURL(file);
+    const reader = new FileReader();
 
-    setPhotoURL(previewURL);
-  }
+    reader.onload = () => {
+      setPendingImageSrc(reader.result);
+      setShowCropModal(true);
+    };
 
-  function handleRemovePhoto() {
-    setSelectedFile(null);
-    setPhotoURL("");
+    reader.onerror = () => {
+      setError("Failed to load image.");
+    };
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    reader.readAsDataURL(file);
   }
 
   async function handleSubmit(e) {
@@ -65,8 +120,25 @@ function EditProfileModal({ open, user, onClose, onSave }) {
       return;
     }
 
+    const trimmedUsername = username.trim().toLowerCase();
+
+    if (trimmedUsername && !/^[a-z0-9_]+$/.test(trimmedUsername)) {
+      setError("Username can only contain letters, numbers, and underscores.");
+      return;
+    }
+
+    if (trimmedUsername && (trimmedUsername.length < 3 || trimmedUsername.length > 30)) {
+      setError("Username must be between 3 and 30 characters.");
+      return;
+    }
+
+    if (trimmedUsername && usernameAvailable === false) {
+      setError("This username is already taken.");
+      return;
+    }
+
     try {
-      setLoading(true);
+      setSaving(true);
       setError("");
 
       const removePhoto = !selectedFile && !photoURL;
@@ -75,25 +147,77 @@ function EditProfileModal({ open, user, onClose, onSave }) {
         displayName: trimmedName,
         photoFile: selectedFile,
         removePhoto,
+        username: trimmedUsername || undefined,
       });
 
       onClose();
     } catch (err) {
       console.error("Profile update failed:", err);
 
-      setError(
-        err?.message || "Could not update your profile. Please try again.",
-      );
+      const message = err?.message || "Could not update your profile. Please try again.";
+
+      if (message.toLowerCase().includes("username")) {
+        setError(message);
+        setUsernameAvailable(false);
+      } else {
+        setError(message);
+      }
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
+
+  function handleRemovePhoto() {
+    setSelectedFile(null);
+    setPhotoURL("");
+    setPreviewUrl("");
+    previewUrlRef.current = "";
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function handleAvatarClick() {
+    if (loading || saving) return;
+
+    fileInputRef.current?.click();
+  }
+
+  function handleCropConfirm(croppedFile) {
+    const blobUrl = URL.createObjectURL(croppedFile);
+
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+    }
+
+    previewUrlRef.current = blobUrl;
+    setSelectedFile(croppedFile);
+    setPreviewUrl(blobUrl);
+    setPhotoURL(blobUrl);
+    setShowCropModal(false);
+    setPendingImageSrc("");
+  }
+
+  function handleCropCancel() {
+    setSelectedFile(null);
+    setPreviewUrl("");
+    setShowCropModal(false);
+    setPendingImageSrc("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  const showRemove = selectedFile || photoURL;
+  const avatarSrc = previewUrl || photoURL;
 
   return (
     <div
       className="edit-profile-modal-backdrop"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget && !loading) {
+        if (e.target === e.currentTarget && !loading && !saving) {
           onClose();
         }
       }}
@@ -104,34 +228,43 @@ function EditProfileModal({ open, user, onClose, onSave }) {
         aria-modal="true"
         aria-labelledby="edit-profile-modal-title"
       >
-        {/* CLOSE */}
-
         <button
           type="button"
           className="edit-profile-modal-close"
           onClick={onClose}
-          disabled={loading}
+          disabled={saving}
           aria-label="Close edit profile"
         >
           <X size={20} />
         </button>
 
-        {/* HEADER */}
-
         <div className="edit-profile-modal-header">
-          <div className="edit-profile-modal-avatar">
-            {photoURL ? (
-              <img
-                src={photoURL}
-                alt="Profile preview"
-                onError={() => setPhotoURL("")}
-              />
-            ) : (
-              <span className="edit-profile-avatar-fallback">
-                <User size={32} />
-              </span>
-            )}
-          </div>
+          <button
+            type="button"
+            className="edit-profile-modal-avatar-button"
+            onClick={handleAvatarClick}
+            disabled={saving}
+            aria-label="Change profile picture"
+            title="Click to change profile picture"
+          >
+            <div className="edit-profile-modal-avatar">
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt="Profile preview"
+                  onError={() => setPhotoURL("")}
+                />
+              ) : (
+                <span className="edit-profile-avatar-fallback">
+                  <User size={32} />
+                </span>
+              )}
+
+              <div className="edit-profile-avatar-overlay">
+                <Camera size={18} />
+              </div>
+            </div>
+          </button>
 
           <div>
             <h2 id="edit-profile-modal-title">Edit Profile</h2>
@@ -141,8 +274,6 @@ function EditProfileModal({ open, user, onClose, onSave }) {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* DISPLAY NAME */}
-
           <div className="edit-profile-field">
             <label htmlFor="edit-profile-name">Display Name</label>
 
@@ -153,12 +284,49 @@ function EditProfileModal({ open, user, onClose, onSave }) {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Enter your display name"
               maxLength={40}
-              disabled={loading}
+              disabled={saving}
               autoComplete="name"
             />
           </div>
 
-          {/* PROFILE PICTURE */}
+          <div className="edit-profile-field">
+            <label htmlFor="edit-profile-username">Username</label>
+
+            <div className="edit-profile-username-wrapper">
+              <span className="edit-profile-username-prefix">@</span>
+
+              <input
+                id="edit-profile-username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter a username"
+                maxLength={30}
+                disabled={saving}
+                autoComplete="off"
+                className="edit-profile-username-input"
+              />
+            </div>
+
+            {username.trim() && (
+              <div className={`edit-profile-username-status ${usernameAvailable === true ? "available" : usernameAvailable === false ? "taken" : ""}`}>
+                {usernameChecking ? (
+                  <>
+                    <Loader2 size={14} className="edit-profile-username-spinner" />
+                    <span>Checking availability...</span>
+                  </>
+                ) : usernameAvailable === true ? (
+                  <span>Username is available.</span>
+                ) : usernameAvailable === false ? (
+                  <span>This username is already taken.</span>
+                ) : null}
+              </div>
+            )}
+
+            <span className="edit-profile-field-hint">
+              3-30 characters. Lowercase letters, numbers, and underscores only.
+            </span>
+          </div>
 
           <div className="edit-profile-field">
             <label>Profile Picture</label>
@@ -168,40 +336,31 @@ function EditProfileModal({ open, user, onClose, onSave }) {
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              disabled={loading}
+              disabled={saving}
               hidden
             />
 
-            <button
-              type="button"
-              className="edit-profile-upload-button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
-            >
-              <Upload size={18} />
+            {selectedFile && (
+              <div className="edit-profile-crop-preview">
+                <img
+                  src={previewUrl}
+                  alt="Cropped preview"
+                />
+              </div>
+            )}
 
-              {selectedFile
-                ? "Choose Another Picture"
-                : "Upload Profile Picture"}
-            </button>
-
-            <span className="edit-profile-field-hint">
-              JPG, PNG, WEBP or GIF. Maximum 5 MB.
-            </span>
-
-            {(selectedFile || photoURL) && (
+            {showRemove && (
               <button
                 type="button"
-                className="edit-profile-remove-button"
+                className="edit-profile-remove-link"
                 onClick={handleRemovePhoto}
-                disabled={loading}
+                disabled={saving}
               >
-                Remove Profile Picture
+                <Trash2 size={14} />
+                <span>Remove picture</span>
               </button>
             )}
           </div>
-
-          {/* ERROR */}
 
           {error && (
             <div className="edit-profile-error" role="alert">
@@ -209,14 +368,12 @@ function EditProfileModal({ open, user, onClose, onSave }) {
             </div>
           )}
 
-          {/* ACTIONS */}
-
           <div className="edit-profile-actions">
             <button
               type="button"
               className="edit-profile-cancel-button"
               onClick={onClose}
-              disabled={loading}
+              disabled={saving}
             >
               Cancel
             </button>
@@ -224,13 +381,16 @@ function EditProfileModal({ open, user, onClose, onSave }) {
             <button
               type="submit"
               className="edit-profile-save-button"
-              disabled={loading}
+              disabled={saving || (username.trim().length >= 3 && usernameAvailable === false)}
             >
-              {loading ? (
-                "Saving..."
+              {saving ? (
+                <>
+                  <Loader2 size={16} className="edit-profile-spinner" />
+                  Saving...
+                </>
               ) : (
                 <>
-                  <ImagePlus size={17} />
+                  <Camera size={17} />
                   Save Changes
                 </>
               )}
@@ -238,6 +398,15 @@ function EditProfileModal({ open, user, onClose, onSave }) {
           </div>
         </form>
       </div>
+
+      {showCropModal && (
+        <ImageCropModal
+          imageSrc={pendingImageSrc}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+          saving={saving}
+        />
+      )}
     </div>
   );
 }

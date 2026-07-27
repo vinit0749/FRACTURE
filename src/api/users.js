@@ -5,6 +5,24 @@ const API_BASE_URL =
 // Get user data
 // ================================
 
+export async function checkUsernameAvailability(username) {
+  const response = await fetch(
+    `${API_BASE_URL}/users/check-username/${encodeURIComponent(username)}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+
+    throw new Error(errorData.message || "Failed to check username availability.");
+  }
+
+  return response.json();
+}
+
+// ================================
+// Get user data
+// ================================
+
 export async function getUserData(firebaseUid) {
   const response = await fetch(`${API_BASE_URL}/users/${firebaseUid}`);
 
@@ -75,10 +93,15 @@ export async function updateUserProfile(
   displayName,
   photoFile,
   removePhoto,
+  username,
 ) {
   const formData = new FormData();
 
   formData.append("displayName", displayName);
+
+  if (typeof username === "string") {
+    formData.append("username", username);
+  }
 
   if (typeof removePhoto === "boolean") {
     formData.append("removePhoto", String(removePhoto));

@@ -46,6 +46,7 @@ export function AuthProvider({ children }) {
               ...prev,
               displayName: syncedUser.displayName ?? prev.displayName,
               photoURL: syncedUser.photoURL,
+              username: syncedUser.username ?? prev.username,
             }));
           }
 
@@ -122,7 +123,7 @@ export function AuthProvider({ children }) {
   // UPDATE PROFILE
   // ================================
 
-  const updateUserProfile = async ({ displayName, photoFile, removePhoto }) => {
+  const updateUserProfile = async ({ displayName, photoFile, removePhoto, username }) => {
     if (!auth.currentUser) {
       throw new Error("You must be signed in to update your profile.");
     }
@@ -141,12 +142,14 @@ export function AuthProvider({ children }) {
       updatedDisplayName,
       photoFile,
       removePhoto,
+      username,
     );
 
     setUser({
       ...currentUser,
       displayName: updatedDisplayName,
       photoURL: updatedUser?.user?.photoURL ?? "",
+      username: updatedUser?.user?.username ?? currentUser.username,
     });
 
     console.log("Profile updated successfully.");

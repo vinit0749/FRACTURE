@@ -4,6 +4,7 @@ import {
   updateUserWishlist,
   updateUserLibrary,
   updateUserProfile,
+  checkUsernameAvailability,
 } from "../api/fracture";
 
 /* ===============================
@@ -63,18 +64,31 @@ export async function saveCloudLibrary(firebaseUid, library) {
 }
 
 /* ===============================
-   UPDATE PROFILE
-================================ */
+    CHECK USERNAME AVAILABILITY
+ ================================ */
+
+export async function checkUsernameAvailabilityApi(username, currentUid) {
+  if (!username) {
+    return { available: true, message: "Username is available." };
+  }
+
+  return checkUsernameAvailability(username, currentUid);
+}
+
+/* ===============================
+    UPDATE PROFILE
+ ================================ */
 
 export async function saveCloudUserProfile(
   firebaseUid,
   displayName,
   photoFile,
   removePhoto,
+  username,
 ) {
   if (!firebaseUid) {
     return null;
   }
 
-  return updateUserProfile(firebaseUid, displayName, photoFile, removePhoto);
+  return updateUserProfile(firebaseUid, displayName, photoFile, removePhoto, username);
 }

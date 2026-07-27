@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post("/sync", async (req, res) => {
   try {
-    const { firebaseUid, email, displayName, photoURL } = req.body;
+    const { firebaseUid, email, displayName, photoURL, username } = req.body;
 
     if (!firebaseUid || !email) {
       return res.status(400).json({
@@ -26,12 +26,17 @@ router.post("/sync", async (req, res) => {
         email,
         displayName: displayName || "",
         photoURL: photoURL || "",
+        username: username ? username.toLowerCase().trim() : "",
         wishlist: [],
         library: [],
       });
     } else {
       user.email = email;
       user.displayName = displayName || "";
+
+      if (username && !user.username) {
+        user.username = username.toLowerCase().trim();
+      }
 
       if (user.useProviderPhoto && !user.photoURL) {
         user.photoURL = photoURL || "";
@@ -60,7 +65,7 @@ router.put(
   async (req, res) => {
     try {
       const { firebaseUid } = req.params;
-      const { displayName, removePhoto } = req.body;
+      const { displayName, username, removePhoto } = req.body;
 
       const user = await User.findOne({ firebaseUid });
 
@@ -72,6 +77,38 @@ router.put(
 
       if (typeof displayName === "string") {
         user.displayName = displayName.trim();
+      }
+
+      if (typeof username === "string") {
+        const trimmedUsername = username.toLowerCase().trim();
+
+        if (trimmedUsername && !/^[a-z0-9_]+$/.test(trimmedUsername)) {
+          return res.status(400).json({
+            message:
+              "Username can only contain lowercase letters, numbers, and underscores.",
+          });
+        }
+
+        if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
+          return res.status(400).json({
+            message: "Username must be between 3 and 30 characters.",
+          });
+        }
+
+        if (trimmedUsername !== user.username) {
+          const existingUser = await User.findOne({
+            username: trimmedUsername,
+            firebaseUid: { $ne: firebaseUid },
+          });
+
+          if (existingUser) {
+            return res.status(409).json({
+              message: "This username is already taken.",
+            });
+          }
+
+          user.username = trimmedUsername;
+        }
       }
 
       if (removePhoto === "true") {
@@ -91,6 +128,7 @@ router.put(
           email: user.email,
           displayName: user.displayName,
           photoURL: user.photoURL,
+          username: user.username,
         },
       });
     } catch (error) {
@@ -102,6 +140,40 @@ router.put(
     }
   },
 );
+
+router.get("/check-username", async (req, res) => {
+  try {
+    const { username, uid } = req.query;
+
+    if (!username || !/^[a-z0-9_]+$/.test(username.toLowerCase())) {
+      return res.status(400).json({
+        available: false,
+        message: "Invalid username format.",
+      });
+    }
+
+    const normalizedUsername = username.toLowerCase().trim();
+
+    const existingUser = await User.findOne({
+      username: normalizedUsername,
+      ...(uid ? { firebaseUid: { $ne: uid } } : {}),
+    });
+
+    return res.status(200).json({
+      available: !existingUser,
+      message: existingUser
+        ? "This username is already taken."
+        : "Username is available.",
+    });
+  } catch (error) {
+    console.error("Username check error:", error);
+
+    return res.status(500).json({
+      available: false,
+      message: "Failed to check username availability.",
+    });
+  }
+});
 
 // ================================
 // Get user data

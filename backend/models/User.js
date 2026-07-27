@@ -90,6 +90,18 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    username: {
+      type: String,
+      default: "",
+      lowercase: true,
+      trim: true,
+      unique: true,
+      sparse: true,
+      minlength: 3,
+      maxlength: 30,
+      match: [/^[a-z0-9_]+$/, "Username can only contain letters, numbers, and underscores"],
+    },
+
     useProviderPhoto: {
       type: Boolean,
       default: true,

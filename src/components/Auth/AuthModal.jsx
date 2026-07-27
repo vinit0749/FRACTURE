@@ -124,7 +124,11 @@ function AuthModal({ open, mode = "login", onClose }) {
     } catch (err) {
       console.error("GitHub authentication error:", err);
 
-      if (err.code !== "auth/popup-closed-by-user") {
+      if (err.code === "auth/account-exists-with-different-credential") {
+        setError(
+          "An account with this email already exists. Sign in with Google first, then connect GitHub from Settings → Connected Accounts.",
+        );
+      } else if (err.code !== "auth/popup-closed-by-user") {
         setError("GitHub sign-in failed. Please try again.");
       }
     } finally {

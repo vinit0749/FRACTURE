@@ -114,29 +114,61 @@
 
   color: var(--text-secondary, #aaa);
 }
-
 /* ==================================================
-   PROFILE PREVIEW
-================================================== */
+    PROFILE PREVIEW
+ ================================================== */
+
+.edit-profile-modal-avatar-button {
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.edit-profile-modal-avatar-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
 
 .edit-profile-modal-avatar {
-  flex-shrink: 0;
+  position: relative;
 
-  width: 68px;
-  height: 68px;
+  width: 88px;
+  height: 88px;
 
   display: flex;
+
   align-items: center;
+
   justify-content: center;
 
   overflow: hidden;
 
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+
+  border-radius: 14px;
 
   background: rgba(255, 255, 255, 0.06);
 
-  font-size: 1.8rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.edit-profile-modal-avatar-button:hover .edit-profile-modal-avatar {
+  border-color: rgba(255, 255, 255, 0.28);
+
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.04);
 }
 
 .edit-profile-modal-avatar img {
@@ -144,11 +176,51 @@
   height: 100%;
 
   object-fit: cover;
+
+  display: block;
+}
+
+.edit-profile-avatar-fallback {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: var(--text-secondary);
+
+  font-size: 32px;
+}
+
+.edit-profile-avatar-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.45);
+
+  color: white;
+
+  opacity: 0;
+
+  transition: opacity 0.2s ease;
+
+  pointer-events: none;
+}
+
+.edit-profile-modal-avatar-button:hover .edit-profile-avatar-overlay {
+  opacity: 1;
 }
 
 /* ==================================================
-   FORM
-================================================== */
+    FORM
+ ================================================== */
 
 .edit-profile-field {
   display: flex;
@@ -208,6 +280,70 @@
   line-height: 1.4;
 
   color: var(--text-secondary, #888);
+}
+
+/* ==================================================
+    USERNAME
+ ================================================== */
+
+.edit-profile-username-wrapper {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+}
+
+.edit-profile-username-prefix {
+  position: absolute;
+
+  left: 14px;
+
+  color: var(--text-muted);
+
+  font-size: 0.95rem;
+
+  font-weight: 600;
+
+  pointer-events: none;
+}
+
+.edit-profile-username-input {
+  padding-left: 28px !important;
+}
+
+.edit-profile-username-status {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  font-size: 0.8rem;
+
+  min-height: 18px;
+}
+
+.edit-profile-username-status.available {
+  color: #2EE59D;
+}
+
+.edit-profile-username-status.taken {
+  color: #ff7b4d;
+}
+
+.edit-profile-username-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ==================================================
@@ -300,8 +436,120 @@
 }
 
 /* ==================================================
-   ANIMATIONS
-================================================== */
+    CROP SECTION
+ ================================================== */
+
+.edit-profile-crop-section {
+  margin-top: 6px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+.edit-profile-cropper {
+  max-width: 100%;
+
+  overflow: hidden;
+
+  border-radius: 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.edit-profile-cropper img {
+  max-width: 100%;
+
+  display: block;
+}
+
+.edit-profile-crop-preview {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+}
+
+.edit-profile-crop-preview img {
+  width: 72px;
+  height: 72px;
+
+  object-fit: cover;
+
+  border-radius: 10px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.edit-profile-crop-preview span {
+  font-size: 0.82rem;
+
+  color: var(--text-secondary);
+}
+
+/* ==================================================
+    REMOVE LINK
+ ================================================== */
+
+.edit-profile-remove-link {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 6px 10px;
+
+  border: 1px solid rgba(255, 80, 80, 0.2);
+
+  border-radius: 8px;
+
+  background: rgba(255, 80, 80, 0.08);
+
+  color: #ff8f8f;
+
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.edit-profile-remove-link:hover:not(:disabled) {
+  background: rgba(255, 80, 80, 0.14);
+
+  border-color: rgba(255, 80, 80, 0.35);
+
+  color: #ff9f9f;
+}
+
+.edit-profile-remove-link:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+/* ==================================================
+    SPINNER
+ ================================================== */
+
+.edit-profile-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ==================================================
+    ANIMATIONS
+ ================================================== */
 
 @keyframes editProfileModalFadeIn {
   from {
@@ -326,8 +574,183 @@
 }
 
 /* ==================================================
-   RESPONSIVE
-================================================== */
+    IMAGE CROP MODAL
+ ================================================== */
+
+.image-crop-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  animation: editProfileModalFadeIn 0.2s ease;
+}
+
+.image-crop-modal {
+  position: relative;
+
+  width: 100%;
+  max-width: 520px;
+
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+
+  padding: 28px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+
+  background: var(--card-bg, #15151f);
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(70, 120, 255, 0.08);
+
+  animation: editProfileModalSlideUp 0.25s ease;
+}
+
+.image-crop-modal-header {
+  margin-bottom: 20px;
+
+  text-align: center;
+}
+
+.image-crop-modal-header h3 {
+  margin: 0 0 6px;
+
+  font-size: 1.25rem;
+  font-weight: 700;
+
+  color: var(--text-primary, #fff);
+}
+
+.image-crop-modal-header p {
+  margin: 0;
+
+  font-size: 0.85rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.image-crop-content {
+  margin-bottom: 24px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 220px;
+
+  border-radius: 12px;
+
+  background: rgba(0, 0, 0, 0.25);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.image-crop-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 12px;
+}
+
+.image-crop-cancel {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 10px 16px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary, #bbb);
+
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.image-crop-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  color: #fff;
+}
+
+.image-crop-confirm {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 10px 16px;
+
+  border: 1px solid rgba(90, 140, 255, 0.4);
+  border-radius: 9px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(70, 110, 255, 0.9),
+    rgba(100, 70, 255, 0.9)
+  );
+
+  color: #fff;
+
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow: 0 8px 24px rgba(70, 100, 255, 0.2);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.image-crop-confirm:hover:not(:disabled) {
+  transform: translateY(-1px);
+
+  box-shadow: 0 10px 28px rgba(70, 100, 255, 0.3);
+}
+
+.image-crop-cancel:disabled,
+.image-crop-confirm:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+.image-crop-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ==================================================
+    RESPONSIVE
+ ================================================== */
 
 @media (max-width: 600px) {
   .edit-profile-modal-backdrop {

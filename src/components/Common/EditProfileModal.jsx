@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Upload, ImagePlus } from "lucide-react";
+import { X, Upload, ImagePlus, User } from "lucide-react";
 
 function EditProfileModal({ open, user, onClose, onSave }) {
   const [displayName, setDisplayName] = useState("");
@@ -69,11 +69,12 @@ function EditProfileModal({ open, user, onClose, onSave }) {
       setLoading(true);
       setError("");
 
-      // Pass the selected File to AuthContext.
-      // The actual backend upload will be handled there.
+      const removePhoto = !selectedFile && !photoURL;
+
       await onSave({
         displayName: trimmedName,
         photoFile: selectedFile,
+        removePhoto,
       });
 
       onClose();
@@ -126,7 +127,9 @@ function EditProfileModal({ open, user, onClose, onSave }) {
                 onError={() => setPhotoURL("")}
               />
             ) : (
-              <span>👤</span>
+              <span className="edit-profile-avatar-fallback">
+                <User size={32} />
+              </span>
             )}
           </div>
 

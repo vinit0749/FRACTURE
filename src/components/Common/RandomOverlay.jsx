@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Dices } from "lucide-react";
 
 function RandomOverlay({ visible, status }) {
   const [shouldRender, setShouldRender] = useState(visible);
@@ -22,9 +23,11 @@ function RandomOverlay({ visible, status }) {
   if (!shouldRender) return null;
 
   return (
-    <div className={`random-overlay ${closing ? "random-overlay-hide" : ""}`}>
-      <div className="random-content">
-        <div className="dice-animation">🎲</div>
+      <div className={`random-overlay ${closing ? "random-overlay-hide" : ""}`}>
+        <div className="random-content">
+          <div className="dice-animation">
+            <Dices size={56} />
+          </div>
 
         <h2>
           {status === "found"

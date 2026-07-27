@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import useHeroCarousel from "../../hooks/useHeroCarousel";
@@ -79,7 +79,7 @@ function Hero({ hero, heroImages = [], heroMeta }) {
 
       <div className="hero-content">
         <span className="hero-tag">
-          ✦ {heroMeta?.badge || "FEATURED DISCOVERY"}
+          <Sparkles size={16} /> {heroMeta?.badge || "FEATURED DISCOVERY"}
         </span>
 
         <h1>{hero.name}</h1>

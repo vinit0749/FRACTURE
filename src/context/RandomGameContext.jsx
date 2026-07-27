@@ -5,6 +5,8 @@ import { fetchGames } from "../api/fracture";
 
 import { useToast } from "../hooks/useToast";
 
+import { TriangleAlert, Dices, X } from "lucide-react";
+
 const RandomGameContext = createContext();
 
 export function RandomGameProvider({ children }) {
@@ -29,7 +31,7 @@ export function RandomGameProvider({ children }) {
 
         showToast({
           type: "error",
-          icon: "⚠️",
+          icon: <TriangleAlert size={20} />,
           title: "Randomizer Failed",
           description: "Couldn't find a game. Try again.",
         });
@@ -43,7 +45,7 @@ export function RandomGameProvider({ children }) {
       setRandomStatus("found");
       showToast({
         type: "success",
-        icon: "🎲",
+        icon: <Dices size={20} />,
         title: "Random Game Found",
         description: randomGame.name,
       });
@@ -62,7 +64,7 @@ export function RandomGameProvider({ children }) {
 
       showToast({
         type: "error",
-        icon: "❌",
+        icon: <X size={20} />,
         title: "Randomizer Error",
         description: "Something went wrong.",
       });

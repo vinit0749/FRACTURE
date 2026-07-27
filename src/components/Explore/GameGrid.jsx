@@ -1,6 +1,8 @@
 import GameCard from "./GameCard";
 import SkeletonCard from "./SkeletonCard";
 
+import { TriangleAlert, Gamepad2 } from "lucide-react";
+
 function GameGrid({ games = [], loading, error, retry }) {
   if (loading) {
     return (
@@ -16,7 +18,9 @@ function GameGrid({ games = [], loading, error, retry }) {
     return (
       <main id="game-grid" className="game-grid">
         <div className="empty-state">
-          <div className="empty-icon">⚠️</div>
+          <div className="empty-icon">
+            <TriangleAlert size={40} />
+          </div>
 
           <h2>We couldn't load these games</h2>
 
@@ -36,7 +40,9 @@ function GameGrid({ games = [], loading, error, retry }) {
     return (
       <main id="game-grid" className="game-grid">
         <div className="empty-state">
-          <div className="empty-icon">🎮</div>
+          <div className="empty-icon">
+            <Gamepad2 size={40} />
+          </div>
 
           <h2>No games matched your search</h2>
 

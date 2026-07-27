@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
 
+import { Lock } from "lucide-react";
+
 import "../../styles/protected.css";
 
 function ProtectedRoute({ children }) {
@@ -17,7 +19,9 @@ function ProtectedRoute({ children }) {
     return (
       <main className="protected-page">
         <div className="protected-page-content">
-          <div className="protected-page-icon">🔐</div>
+          <div className="protected-page-icon">
+            <Lock size={40} />
+          </div>
 
           <h1>Sign In Required</h1>
 

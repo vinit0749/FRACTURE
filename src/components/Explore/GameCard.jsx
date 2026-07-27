@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, Bookmark, Play } from "lucide-react";
+import { Heart, Bookmark, Play, Lock, HeartOff, Library, Trash2, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "../../hooks/useToast";
@@ -155,7 +155,7 @@ function GameCard({
     if (!user) {
       showToast({
         type: "info",
-        icon: "🔐",
+        icon: <Lock size={20} />,
         title: "Sign In Required",
         description: "Please sign in to use your wishlist.",
         duration: 2500,
@@ -172,7 +172,7 @@ function GameCard({
 
     showToast({
       type: active ? "success" : "info",
-      icon: active ? "❤️" : "💔",
+      icon: active ? <Heart size={20} /> : <HeartOff size={20} />,
       title: active ? "Added to Wishlist" : "Removed from Wishlist",
       description: game.name,
       duration: 2500,
@@ -192,7 +192,7 @@ function GameCard({
     if (!user) {
       showToast({
         type: "info",
-        icon: "🔐",
+        icon: <Lock size={20} />,
         title: "Sign In Required",
         description: "Please sign in to use your collection.",
         duration: 2500,
@@ -213,7 +213,7 @@ function GameCard({
 
     showToast({
       type: active ? "success" : "info",
-      icon: active ? "📚" : "🗑️",
+      icon: active ? <Library size={20} /> : <Trash2 size={20} />,
       title: active ? "Added to Collection" : "Removed from Collection",
       description: game.name,
       duration: 2500,

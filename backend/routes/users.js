@@ -32,7 +32,10 @@ router.post("/sync", async (req, res) => {
     } else {
       user.email = email;
       user.displayName = displayName || "";
-      user.photoURL = photoURL || "";
+
+      if (user.useProviderPhoto && !user.photoURL) {
+        user.photoURL = photoURL || "";
+      }
 
       await user.save();
     }
@@ -57,7 +60,7 @@ router.put(
   async (req, res) => {
     try {
       const { firebaseUid } = req.params;
-      const { displayName } = req.body;
+      const { displayName, removePhoto } = req.body;
 
       const user = await User.findOne({ firebaseUid });
 
@@ -67,14 +70,16 @@ router.put(
         });
       }
 
-      // Update display name if provided
       if (typeof displayName === "string") {
         user.displayName = displayName.trim();
       }
 
-      // Update photo URL if a new image was uploaded
-      if (req.file) {
+      if (removePhoto === "true") {
+        user.photoURL = "";
+        user.useProviderPhoto = false;
+      } else if (req.file) {
         user.photoURL = req.file.path;
+        user.useProviderPhoto = false;
       }
 
       await user.save();

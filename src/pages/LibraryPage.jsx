@@ -5,6 +5,8 @@ import Header from "../components/Layout/Header";
 import GameCard from "../components/Explore/GameCard";
 import CollectionRow from "../components/Library/CollectionRow";
 
+import { ArrowLeft, Library } from "lucide-react";
+
 import { useAuth } from "../context/AuthContext";
 import { getLibrary, saveLibrary } from "../utils/storage";
 import { saveCloudLibrary } from "../utils/cloudStorage";
@@ -208,7 +210,7 @@ function LibraryPage() {
                     className="secondary-btn"
                     onClick={() => setActiveFilter("all")}
                   >
-                    ← Back to Collection
+                    <ArrowLeft size={16} /> Back to Collection
                   </button>
 
                   <h2>
@@ -246,7 +248,9 @@ function LibraryPage() {
             )
           ) : (
             <div className="library-empty">
-              <div className="empty-icon">📚</div>
+              <div className="empty-icon">
+                <Library size={40} />
+              </div>
 
               <h2>Your Collection is Empty</h2>
 
@@ -268,7 +272,9 @@ function LibraryPage() {
       {showClearModal && (
         <div className="modal-overlay" onClick={() => setShowClearModal(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-icon">📚</div>
+            <div className="modal-icon">
+              <Library size={24} />
+            </div>
 
             <h2>Clear Collection?</h2>
 

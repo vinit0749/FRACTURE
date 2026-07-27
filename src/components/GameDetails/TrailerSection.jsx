@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { VideoOff, Play } from "lucide-react";
 
 function TrailerSection({ trailer, game }) {
   const [play, setPlay] = useState(false);
@@ -9,7 +10,9 @@ function TrailerSection({ trailer, game }) {
 
       {!trailer ? (
         <div className="no-trailer">
-          <div className="no-trailer-icon">🎬</div>
+          <div className="no-trailer-icon">
+            <VideoOff size={40} />
+          </div>
 
           <h3>Trailer unavailable</h3>
 
@@ -32,7 +35,9 @@ function TrailerSection({ trailer, game }) {
             alt={game.name}
           />
 
-          <div className="trailer-play">▶ Play Trailer</div>
+          <div className="trailer-play">
+            <Play size={18} /> Play Trailer
+          </div>
         </div>
       )}
     </section>

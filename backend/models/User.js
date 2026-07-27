@@ -90,6 +90,11 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    useProviderPhoto: {
+      type: Boolean,
+      default: true,
+    },
+
     wishlist: {
       type: [gameSchema],
       default: [],

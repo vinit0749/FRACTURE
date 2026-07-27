@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 function Pagination({ page, totalPages, search, setPage }) {
   if (search) return null;
 
@@ -11,7 +13,7 @@ function Pagination({ page, totalPages, search, setPage }) {
       disabled={page === 1}
       onClick={() => setPage(Math.max(page - 1, 1))}
     >
-      ◀
+      <ChevronLeft size={18} />
     </button>,
   );
 
@@ -90,7 +92,7 @@ function Pagination({ page, totalPages, search, setPage }) {
       disabled={page === totalPages}
       onClick={() => setPage(Math.min(page + 1, totalPages))}
     >
-      ▶
+      <ChevronRight size={18} />
     </button>,
   );
 

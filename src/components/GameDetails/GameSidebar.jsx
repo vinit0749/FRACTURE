@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { FaSteam, FaXbox, FaPlaystation } from "react-icons/fa";
-import { Bookmark, Heart } from "lucide-react";
+import { Bookmark, Heart, TriangleAlert, Library, Trash2 } from "lucide-react";
 
 import { SiEpicgames } from "react-icons/si";
 import { FiExternalLink } from "react-icons/fi";
@@ -95,7 +95,7 @@ function GameSidebar({ game }) {
 
       showToast({
         type: status ? "success" : "info",
-        icon: status ? "❤️" : "💔",
+        icon: status ? <Heart size={20} /> : <HeartOff size={20} />,
         title: status ? "Added to Wishlist" : "Removed from Wishlist",
         description: game.name,
       });
@@ -104,7 +104,7 @@ function GameSidebar({ game }) {
 
       showToast({
         type: "error",
-        icon: "⚠️",
+        icon: <TriangleAlert size={20} />,
         title: "Something went wrong",
         description: "Could not update your wishlist.",
       });
@@ -131,7 +131,7 @@ function GameSidebar({ game }) {
 
       showToast({
         type: status ? "success" : "info",
-        icon: status ? "📚" : "🗑️",
+        icon: status ? <Library size={20} /> : <Trash2 size={20} />,
         title: status ? "Added to Collection" : "Removed from Collection",
         description: game.name,
       });
@@ -140,7 +140,7 @@ function GameSidebar({ game }) {
 
       showToast({
         type: "error",
-        icon: "⚠️",
+        icon: <TriangleAlert size={20} />,
         title: "Something went wrong",
         description: "Could not update your collection.",
       });

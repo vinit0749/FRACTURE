@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { ArrowLeft, ChevronRight, TriangleAlert } from "lucide-react";
+
 import Header from "../components/Layout/Header";
 
 import GameDetailsSkeleton from "../components/GameDetails/GameDetailsSkeleton";
@@ -65,7 +67,9 @@ function GameDetailsPage() {
 
         <main className="container">
           <div className="empty-state">
-            <div className="empty-icon">⚠️</div>
+            <div className="empty-icon">
+              <TriangleAlert size={40} />
+            </div>
 
             <h2>We couldn't load this game</h2>
 
@@ -101,7 +105,7 @@ function GameDetailsPage() {
                 className="back-button"
                 onClick={() => navigate(-1)}
               >
-                ← Back
+                <ArrowLeft size={16} /> Back
               </button>
 
               <div className="hero-divider"></div>
@@ -109,13 +113,17 @@ function GameDetailsPage() {
               <nav className="breadcrumb">
                 <Link to="/">Home</Link>
 
-                <span>›</span>
+                <span>
+                  <ChevronRight size={14} />
+                </span>
 
                 <span id="breadcrumb-genre">
                   {game.genres?.[0]?.name || "Game"}
                 </span>
 
-                <span>›</span>
+                <span>
+                  <ChevronRight size={14} />
+                </span>
 
                 <span id="breadcrumb-title">{game.name}</span>
               </nav>

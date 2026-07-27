@@ -39,7 +39,15 @@ export function AuthProvider({ children }) {
           // SYNC USER WITH MONGODB
           // ================================
 
-          await syncCloudUser(currentUser);
+          const syncedUser = await syncCloudUser(currentUser);
+
+          if (syncedUser) {
+            setUser((prev) => ({
+              ...prev,
+              displayName: syncedUser.displayName ?? prev.displayName,
+              photoURL: syncedUser.photoURL,
+            }));
+          }
 
           console.log("User synced with MongoDB successfully.");
 
@@ -114,7 +122,7 @@ export function AuthProvider({ children }) {
   // UPDATE PROFILE
   // ================================
 
-  const updateUserProfile = async ({ displayName, photoFile }) => {
+  const updateUserProfile = async ({ displayName, photoFile, removePhoto }) => {
     if (!auth.currentUser) {
       throw new Error("You must be signed in to update your profile.");
     }
@@ -124,32 +132,21 @@ export function AuthProvider({ children }) {
     const updatedDisplayName =
       displayName?.trim() || currentUser.displayName || "";
 
-    // ================================
-    // UPDATE FIREBASE AUTH NAME
-    // ================================
-
     await updateProfile(currentUser, {
       displayName: updatedDisplayName,
     });
-
-    // ================================
-    // UPDATE PROFILE IN MONGODB
-    // ================================
 
     const updatedUser = await saveCloudUserProfile(
       currentUser.uid,
       updatedDisplayName,
       photoFile,
+      removePhoto,
     );
-
-    // ================================
-    // REFRESH REACT USER STATE
-    // ================================
 
     setUser({
       ...currentUser,
       displayName: updatedDisplayName,
-      photoURL: updatedUser?.user?.photoURL || currentUser.photoURL || "",
+      photoURL: updatedUser?.user?.photoURL ?? "",
     });
 
     console.log("Profile updated successfully.");

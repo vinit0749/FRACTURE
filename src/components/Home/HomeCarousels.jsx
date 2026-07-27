@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Carousel from "../Common/Carousel";
 import GameCard from "../Explore/GameCard";
 
+import { TriangleAlert } from "lucide-react";
+
 import useHomeCarousels from "../../hooks/useHomeCarousels";
 
 function HomeCarousels() {
@@ -18,7 +20,9 @@ function HomeCarousels() {
   if (error) {
     return (
       <section className="empty-state">
-        <div className="empty-icon">⚠️</div>
+        <div className="empty-icon">
+          <TriangleAlert size={40} />
+        </div>
 
         <h2>We couldn't load the featured games</h2>
 

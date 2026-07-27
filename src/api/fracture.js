@@ -209,10 +209,19 @@ export async function updateUserLibrary(firebaseUid, library) {
 // UPDATE USER PROFILE
 // ==================================================
 
-export async function updateUserProfile(firebaseUid, displayName, photoFile) {
+export async function updateUserProfile(
+  firebaseUid,
+  displayName,
+  photoFile,
+  removePhoto,
+) {
   const formData = new FormData();
 
   formData.append("displayName", displayName);
+
+  if (typeof removePhoto === "boolean") {
+    formData.append("removePhoto", String(removePhoto));
+  }
 
   if (photoFile) {
     formData.append("photo", photoFile);

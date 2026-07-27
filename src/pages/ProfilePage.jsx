@@ -8,6 +8,8 @@ import {
   Clock3,
   CheckCircle2,
   Pencil,
+  User,
+  ArrowLeft,
 } from "lucide-react";
 
 import Header from "../components/Layout/Header";
@@ -63,7 +65,7 @@ function ProfilePage() {
                   />
                 ) : (
                   <div className="profile-avatar profile-avatar-fallback">
-                    👤
+                    <User size={32} />
                   </div>
                 )}
 
@@ -284,7 +286,7 @@ function ProfilePage() {
 
           <section className="profile-actions-section">
             <Link to="/" className="profile-action-button">
-              ← Back to Explore
+              <ArrowLeft size={17} /> Back to Explore
             </Link>
 
             <button

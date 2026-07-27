@@ -8,6 +8,8 @@ import { useAuth } from "../context/AuthContext";
 import { getWishlist, saveWishlist } from "../utils/storage";
 import { saveCloudWishlist } from "../utils/cloudStorage";
 
+import { Heart, Library } from "lucide-react";
+
 import "../styles/wishlist.css";
 
 function WishlistPage() {
@@ -154,7 +156,9 @@ function WishlistPage() {
             </div>
           ) : (
             <div className="wishlist-empty">
-              <div className="empty-icon">♡</div>
+              <div className="empty-icon">
+                <Heart size={40} />
+              </div>
 
               <h2>Your Wishlist is Empty</h2>
 
@@ -175,7 +179,9 @@ function WishlistPage() {
       {showClearModal && (
         <div className="modal-overlay" onClick={() => setShowClearModal(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-icon">❤️</div>
+            <div className="modal-icon">
+              <Heart size={24} />
+            </div>
 
             <h2>Clear Wishlist?</h2>
 

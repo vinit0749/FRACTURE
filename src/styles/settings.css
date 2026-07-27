@@ -448,6 +448,8 @@
 
 .settings-account-details {
   min-width: 0;
+
+  flex: 1;
 }
 
 .settings-account-name {
@@ -479,68 +481,30 @@
 }
 
 /* ==================================================
-   VIEW PROFILE
-================================================== */
+    PROFILE PREVIEW CLICKABLE
+ ================================================== */
 
-.settings-view-profile-button {
-  width: 100%;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  margin-top: 6px;
-
-  padding: 9px 10px;
+.settings-menu .settings-account-info {
+  align-items: flex-start;
 
   border: none;
 
-  border-radius: 10px;
-
-  color: var(--text-secondary);
-
-  background: transparent;
-
-  font: inherit;
-
-  font-size: 0.78rem;
-
-  font-weight: 600;
+  width: 100%;
 
   text-align: left;
 
   cursor: pointer;
 
-  transition:
-    color 0.2s ease,
-    background 0.2s ease;
+  transition: background 0.2s ease;
 }
 
-.settings-view-profile-button:hover {
-  color: var(--text);
-
+.settings-menu .settings-account-info:hover {
   background: rgba(59, 130, 246, 0.12);
 }
 
-.settings-view-profile-button span:last-child {
-  opacity: 0.6;
-
-  font-size: 1rem;
-
-  transition: transform 0.2s ease;
-}
-
-.settings-view-profile-button:hover span:last-child {
-  transform: translateX(3px);
-
-  opacity: 1;
-}
-
 /* ==================================================
-   RESPONSIVE
-================================================== */
+    RESPONSIVE
+ ================================================== */
 
 @media (max-width: 768px) {
   .settings-menu {

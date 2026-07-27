@@ -70,10 +70,11 @@ export async function saveCloudUserProfile(
   firebaseUid,
   displayName,
   photoFile,
+  removePhoto,
 ) {
   if (!firebaseUid) {
     return null;
   }
 
-  return updateUserProfile(firebaseUid, displayName, photoFile);
+  return updateUserProfile(firebaseUid, displayName, photoFile, removePhoto);
 }

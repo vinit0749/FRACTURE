@@ -3,7 +3,7 @@ function Toast({ toast, onClose }) {
     <div className={`toast toast-${toast.type}`}>
       <div className="toast-main">
         <div className="toast-icon-wrapper">
-          <span className="toast-icon">{toast.icon}</span>
+          {toast.icon}
         </div>
 
         <div className="toast-text">

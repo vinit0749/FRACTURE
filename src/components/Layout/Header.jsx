@@ -1,5 +1,5 @@
 import fractureLogo from "../../assets/fracture-logo.png";
-import { Search, Heart, Bookmark, Dices, Settings } from "lucide-react";
+import { Search, Heart, Bookmark, Dices, Settings, Lock } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 
@@ -239,7 +239,7 @@ function Header({ searchInput, updateSearchInput }) {
                 onClick={() => {
                   showToast({
                     type: "info",
-                    icon: "🔐",
+                    icon: <Lock size={20} />,
                     title: "Sign In Required",
                     description: "Please sign in to access your wishlist.",
                     duration: 2500,
@@ -267,7 +267,7 @@ function Header({ searchInput, updateSearchInput }) {
                 onClick={() => {
                   showToast({
                     type: "info",
-                    icon: "🔐",
+                    icon: <Lock size={20} />,
                     title: "Sign In Required",
                     description: "Please sign in to access your collection.",
                     duration: 2500,

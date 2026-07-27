@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, User, Palette, LogOut, LogIn, UserPlus } from "lucide-react";
 
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
@@ -117,32 +117,36 @@ function SettingsMenu({ open }) {
           <>
             <div className="settings-menu-title">Settings</div>
 
-            <button
-              className="settings-menu-item"
-              onClick={() => {
-                setGithubError("");
-                setPage("account");
-              }}
-              role="menuitem"
-            >
-              <span>👤</span>
+              <button
+                className="settings-menu-item"
+                onClick={() => {
+                  setGithubError("");
+                  setPage("account");
+                }}
+                role="menuitem"
+              >
+                <User size={18} />
 
-              <span>Account</span>
+                <span>Account</span>
 
-              <span className="settings-arrow">›</span>
-            </button>
+                <span className="settings-arrow">
+                  <ChevronRight size={16} />
+                </span>
+              </button>
 
-            <button
-              className="settings-menu-item"
-              onClick={() => setPage("appearance")}
-              role="menuitem"
-            >
-              <span>🎨</span>
+              <button
+                className="settings-menu-item"
+                onClick={() => setPage("appearance")}
+                role="menuitem"
+              >
+                <Palette size={18} />
 
-              <span>Appearance</span>
+                <span>Appearance</span>
 
-              <span className="settings-arrow">›</span>
-            </button>
+                <span className="settings-arrow">
+                  <ChevronRight size={16} />
+                </span>
+              </button>
           </>
         )}
 
@@ -246,7 +250,11 @@ function SettingsMenu({ open }) {
 
                 <div className="settings-section-label">Profile</div>
 
-                <div className="settings-account-info">
+                <button
+                  type="button"
+                  className="settings-account-info"
+                  onClick={() => navigate("/profile")}
+                >
                   {user.photoURL ? (
                     <img
                       src={user.photoURL}
@@ -254,9 +262,9 @@ function SettingsMenu({ open }) {
                       className="settings-account-avatar"
                     />
                   ) : (
-                    <div className="settings-account-avatar settings-account-avatar-fallback">
-                      👤
-                    </div>
+                  <div className="settings-account-avatar settings-account-avatar-fallback">
+                    <User size={20} />
+                  </div>
                   )}
 
                   <div className="settings-account-details">
@@ -266,17 +274,10 @@ function SettingsMenu({ open }) {
 
                     <div className="settings-account-email">{user.email}</div>
                   </div>
-                </div>
 
-                <button
-                  type="button"
-                  className="settings-view-profile-button"
-                  onClick={() => {
-                    navigate("/profile");
-                  }}
-                >
-                  <span>View Profile</span>
-                  <span>→</span>
+                  <span className="settings-arrow">
+                    <ChevronRight size={16} />
+                  </span>
                 </button>
 
                 {/* ==================================================
@@ -358,12 +359,13 @@ function SettingsMenu({ open }) {
                 ================================================== */}
 
                 <button
+                  type="button"
                   className="settings-menu-item settings-signout-button"
                   onClick={() => setShowSignOutModal(true)}
                   disabled={githubConnecting || githubDisconnecting}
                   role="menuitem"
                 >
-                  <span>🚪</span>
+                  <LogOut size={18} />
 
                   <span>Sign Out</span>
                 </button>
@@ -380,7 +382,7 @@ function SettingsMenu({ open }) {
                   onClick={handleSignIn}
                   role="menuitem"
                 >
-                  <span>🔑</span>
+                  <LogIn size={18} />
 
                   <span>Sign In</span>
                 </button>
@@ -395,7 +397,7 @@ function SettingsMenu({ open }) {
                   onClick={handleCreateAccount}
                   role="menuitem"
                 >
-                  <span>✨</span>
+                  <UserPlus size={18} />
 
                   <span>Create Account</span>
                 </button>

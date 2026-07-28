@@ -65,9 +65,9 @@ export default function useHomeCarousels() {
         ]);
 
         const data = {
-          trending: trendingData.results || [],
+          trending: (trendingData.results || []).filter(isSafeGame),
 
-          topRated: topRatedData.results || [],
+          topRated: (topRatedData.results || []).filter(isSafeGame),
 
           newReleases: (newReleaseData.results || []).filter(
             (game) =>

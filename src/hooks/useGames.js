@@ -75,7 +75,7 @@ export default function useGames({
 
       params.append("page", page);
 
-      params.append("page_size", search ? 40 : 20);
+      params.append("page_size", 40);
 
       if (search) {
         params.append("search", search.trim().toLowerCase());
@@ -137,13 +137,11 @@ export default function useGames({
       let results = data.results || [];
       results = results.filter(isSafeGame);
 
-      if (section === "new-releases") {
-        results = results.filter((game) => game.background_image);
-      }
-
       if (search) {
         results = rankSearchResults(results, search);
       }
+
+      results = results.slice(0, 20);
 
       gamesCache.set(cacheKey, {
         results,

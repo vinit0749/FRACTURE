@@ -123,7 +123,12 @@ export function AuthProvider({ children }) {
   // UPDATE PROFILE
   // ================================
 
-  const updateUserProfile = async ({ displayName, photoFile, removePhoto, username }) => {
+  const updateUserProfile = async ({
+    displayName,
+    photoFile,
+    removePhoto,
+    username,
+  }) => {
     if (!auth.currentUser) {
       throw new Error("You must be signed in to update your profile.");
     }
@@ -159,20 +164,30 @@ export function AuthProvider({ children }) {
   // GITHUB LINKING
   // ================================
 
-  const linkGithub = () => {
+  const linkGithub = async () => {
     if (!auth.currentUser) {
       throw new Error("You must be signed in to connect GitHub.");
     }
 
-    return linkWithPopup(auth.currentUser, githubProvider);
+    const result = await linkWithPopup(auth.currentUser, githubProvider);
+
+    // Update React state with the refreshed Firebase user
+    setUser(result.user);
+
+    return result;
   };
 
-  const unlinkGithub = () => {
+  const unlinkGithub = async () => {
     if (!auth.currentUser) {
       throw new Error("You must be signed in to disconnect GitHub.");
     }
 
-    return unlink(auth.currentUser, "github.com");
+    const updatedUser = await unlink(auth.currentUser, "github.com");
+
+    // Update React state with the refreshed Firebase user
+    setUser(updatedUser);
+
+    return updatedUser;
   };
 
   // ================================

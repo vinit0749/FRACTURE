@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, User, Palette, LogOut, LogIn, UserPlus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Palette,
+  LogOut,
+  LogIn,
+  UserPlus,
+} from "lucide-react";
+
+import { FaGoogle, FaGithub } from "react-icons/fa";
 
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
@@ -117,36 +127,36 @@ function SettingsMenu({ open }) {
           <>
             <div className="settings-menu-title">Settings</div>
 
-              <button
-                className="settings-menu-item"
-                onClick={() => {
-                  setGithubError("");
-                  setPage("account");
-                }}
-                role="menuitem"
-              >
-                <User size={18} />
+            <button
+              className="settings-menu-item"
+              onClick={() => {
+                setGithubError("");
+                setPage("account");
+              }}
+              role="menuitem"
+            >
+              <User size={18} />
 
-                <span>Account</span>
+              <span>Account</span>
 
-                <span className="settings-arrow">
-                  <ChevronRight size={16} />
-                </span>
-              </button>
+              <span className="settings-arrow">
+                <ChevronRight size={16} />
+              </span>
+            </button>
 
-              <button
-                className="settings-menu-item"
-                onClick={() => setPage("appearance")}
-                role="menuitem"
-              >
-                <Palette size={18} />
+            <button
+              className="settings-menu-item"
+              onClick={() => setPage("appearance")}
+              role="menuitem"
+            >
+              <Palette size={18} />
 
-                <span>Appearance</span>
+              <span>Appearance</span>
 
-                <span className="settings-arrow">
-                  <ChevronRight size={16} />
-                </span>
-              </button>
+              <span className="settings-arrow">
+                <ChevronRight size={16} />
+              </span>
+            </button>
           </>
         )}
 
@@ -262,9 +272,9 @@ function SettingsMenu({ open }) {
                       className="settings-account-avatar"
                     />
                   ) : (
-                  <div className="settings-account-avatar settings-account-avatar-fallback">
-                    <User size={20} />
-                  </div>
+                    <div className="settings-account-avatar settings-account-avatar-fallback">
+                      <User size={20} />
+                    </div>
                   )}
 
                   <div className="settings-account-details">
@@ -293,7 +303,7 @@ function SettingsMenu({ open }) {
                 <div className="settings-connected-account">
                   <div className="settings-connected-account-info">
                     <div className="settings-provider-icon settings-google-icon">
-                      G
+                      <FaGoogle />
                     </div>
 
                     <div className="settings-provider-details">
@@ -315,7 +325,7 @@ function SettingsMenu({ open }) {
                 <div className="settings-connected-account">
                   <div className="settings-connected-account-info">
                     <div className="settings-provider-icon settings-github-icon">
-                      🐙
+                      <FaGithub />
                     </div>
 
                     <div className="settings-provider-details">

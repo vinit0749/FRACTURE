@@ -8,14 +8,23 @@ if (!API_KEY) {
   throw new Error("Missing required environment variable: RAWG_API_KEY");
 }
 
+const BASE_URL = "https://api.rawg.io/api";
+
+const CACHE_TIME = 1000 * 60 * 10; // 10 minutes
+const REQUEST_TIMEOUT = 10000; // 10 seconds
+const MAX_CACHE_ENTRIES = 500;
+const MAX_ENDPOINT_LENGTH = 2000;
+
+// ===================================
+// Error Helper
+// ===================================
+
 function createError(message, details = {}, status = 500) {
   const error = new Error(message);
   error.status = status;
   error.details = details;
   return error;
 }
-
-const BASE_URL = "https://api.rawg.io/api";
 
 // ===================================
 // Cache
@@ -26,40 +35,92 @@ const cache = new Map();
 // Prevent duplicate simultaneous requests
 const pendingRequests = new Map();
 
-const CACHE_TIME = 1000 * 60 * 10; // 10 minutes
+// ===================================
+// Cache Helpers
+// ===================================
+
+function setCache(key, data) {
+  // Remove the oldest cache entry if the cache is full
+  if (cache.size >= MAX_CACHE_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+
+    if (oldestKey) {
+      cache.delete(oldestKey);
+    }
+  }
+
+  cache.set(key, {
+    data,
+    time: Date.now(),
+  });
+}
+
+// ===================================
+// RAWG API Fetch
+// ===================================
 
 async function fractureFetch(endpoint = "") {
-  const url = `${BASE_URL}${endpoint}${
-    endpoint.includes("?") ? "&" : "?"
-  }key=${API_KEY}`;
-
   if (!API_KEY) {
     throw createError("Missing RAWG API configuration", {}, 500);
   }
 
+  if (typeof endpoint !== "string") {
+    throw createError("Invalid RAWG endpoint", {}, 400);
+  }
+
+  if (endpoint.length > MAX_ENDPOINT_LENGTH) {
+    throw createError("RAWG request is too large", {}, 400);
+  }
+
+  // Cache key deliberately excludes the API key
+  const cacheKey = endpoint;
+
+  const url = `${BASE_URL}${endpoint}${
+    endpoint.includes("?") ? "&" : "?"
+  }key=${API_KEY}`;
+
+  // ===================================
   // Return cached response
-  if (cache.has(url)) {
-    const cached = cache.get(url);
+  // ===================================
+
+  if (cache.has(cacheKey)) {
+    const cached = cache.get(cacheKey);
 
     if (Date.now() - cached.time < CACHE_TIME) {
       return cached.data;
     }
 
-    cache.delete(url);
+    cache.delete(cacheKey);
   }
 
-  // Return pending request if already fetching
-  if (pendingRequests.has(url)) {
-    return pendingRequests.get(url);
+  // ===================================
+  // Return existing pending request
+  // ===================================
+
+  if (pendingRequests.has(cacheKey)) {
+    return pendingRequests.get(cacheKey);
   }
 
-  const request = fetch(url)
+  // ===================================
+  // Create request with timeout
+  // ===================================
+
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, REQUEST_TIMEOUT);
+
+  const request = fetch(url, {
+    signal: controller.signal,
+  })
     .then(async (response) => {
       if (!response.ok) {
         const detail =
           response.status >= 500
             ? "RAWG upstream failure"
             : "Invalid RAWG request";
+
         throw createError(
           `RAWG error ${response.status}`,
           { detail },
@@ -69,21 +130,29 @@ async function fractureFetch(endpoint = "") {
 
       const data = await response.json();
 
-      cache.set(url, {
-        data,
-        time: Date.now(),
-      });
-
-      pendingRequests.delete(url);
+      setCache(cacheKey, data);
 
       return data;
     })
     .catch((error) => {
-      pendingRequests.delete(url);
+      if (error.name === "AbortError") {
+        throw createError(
+          "RAWG request timed out",
+          {
+            detail: "RAWG upstream request exceeded the timeout limit.",
+          },
+          504,
+        );
+      }
+
       throw error;
+    })
+    .finally(() => {
+      clearTimeout(timeout);
+      pendingRequests.delete(cacheKey);
     });
 
-  pendingRequests.set(url, request);
+  pendingRequests.set(cacheKey, request);
 
   return request;
 }
@@ -125,7 +194,7 @@ export async function getGameTrailers(id) {
 // ================================
 
 export async function getGenres() {
-  return fractureFetch(`/genres`);
+  return fractureFetch("/genres");
 }
 
 // ================================
@@ -133,7 +202,7 @@ export async function getGenres() {
 // ================================
 
 export async function getPlatforms() {
-  return fractureFetch(`/platforms`);
+  return fractureFetch("/platforms");
 }
 
 // ================================

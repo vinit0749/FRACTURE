@@ -47,6 +47,27 @@ function Header({ searchInput, updateSearchInput }) {
   }
 
   function handleKeyboardNavigation(e) {
+    // Enter should always work, even if autocomplete suggestions
+    // haven't loaded yet.
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      if (showAutocomplete && suggestions.length > 0 && activeIndex >= 0) {
+        const selectedGame = suggestions[activeIndex];
+
+        navigate(`/game/${selectedGame.id}`);
+
+        setShowAutocomplete(false);
+        setActiveIndex(-1);
+      } else {
+        search();
+      }
+
+      return;
+    }
+
+    // The remaining keyboard navigation only applies when
+    // autocomplete suggestions are available.
     if (!showAutocomplete || suggestions.length === 0) {
       return;
     }
@@ -59,19 +80,6 @@ function Header({ searchInput, updateSearchInput }) {
       e.preventDefault();
 
       setActiveIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-
-      if (activeIndex >= 0) {
-        const selectedGame = suggestions[activeIndex];
-
-        navigate(`/game/${selectedGame.id}`);
-
-        setShowAutocomplete(false);
-        setActiveIndex(-1);
-      } else {
-        search();
-      }
     } else if (e.key === "Escape") {
       setShowAutocomplete(false);
       setActiveIndex(-1);

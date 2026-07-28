@@ -33,6 +33,7 @@ function ProfilePage() {
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
 
   if (!user) {
     return null;
@@ -46,7 +47,7 @@ function ProfilePage() {
 
   return (
     <>
-      <Header searchInput="" updateSearchInput={() => {}} />
+      <Header searchInput={searchInput} updateSearchInput={setSearchInput} />
 
       <main className="profile-page">
         <div className="container">

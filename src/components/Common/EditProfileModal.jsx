@@ -9,6 +9,7 @@ function EditProfileModal({ open, user, onClose, onSave }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [username, setUsername] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [isCurrentUsername, setIsCurrentUsername] = useState(false);
   const [usernameChecking, setUsernameChecking] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,7 @@ function EditProfileModal({ open, user, onClose, onSave }) {
       setSelectedFile(null);
       setUsername(user.username || "");
       setUsernameAvailable(null);
+      setIsCurrentUsername(false);
       setError("");
       setLoading(false);
       setSaving(false);
@@ -42,23 +44,29 @@ function EditProfileModal({ open, user, onClose, onSave }) {
 
     if (!trimmed || trimmed.length < 3) {
       setUsernameAvailable(null);
+      setIsCurrentUsername(false);
+      setUsernameChecking(false);
 
       return;
     }
 
     if (!/^[a-z0-9_]+$/.test(trimmed)) {
       setUsernameAvailable(false);
-
-      return;
-    }
-
-    if (trimmed === (user.username || "").toLowerCase()) {
-      setUsernameAvailable(true);
+      setIsCurrentUsername(false);
       setUsernameChecking(false);
 
       return;
     }
 
+    if (trimmed === (user.username || "").toLowerCase()) {
+      setUsernameAvailable(null);
+      setIsCurrentUsername(true);
+      setUsernameChecking(false);
+
+      return;
+    }
+
+    setIsCurrentUsername(false);
     setUsernameChecking(true);
     setUsernameAvailable(null);
 
@@ -127,7 +135,10 @@ function EditProfileModal({ open, user, onClose, onSave }) {
       return;
     }
 
-    if (trimmedUsername && (trimmedUsername.length < 3 || trimmedUsername.length > 30)) {
+    if (
+      trimmedUsername &&
+      (trimmedUsername.length < 3 || trimmedUsername.length > 30)
+    ) {
       setError("Username must be between 3 and 30 characters.");
       return;
     }
@@ -154,7 +165,8 @@ function EditProfileModal({ open, user, onClose, onSave }) {
     } catch (err) {
       console.error("Profile update failed:", err);
 
-      const message = err?.message || "Could not update your profile. Please try again.";
+      const message =
+        err?.message || "Could not update your profile. Please try again.";
 
       if (message.toLowerCase().includes("username")) {
         setError(message);
@@ -309,12 +321,27 @@ function EditProfileModal({ open, user, onClose, onSave }) {
             </div>
 
             {username.trim() && (
-              <div className={`edit-profile-username-status ${usernameAvailable === true ? "available" : usernameAvailable === false ? "taken" : ""}`}>
+              <div
+                className={`edit-profile-username-status ${
+                  isCurrentUsername
+                    ? "current"
+                    : usernameAvailable === true
+                      ? "available"
+                      : usernameAvailable === false
+                        ? "taken"
+                        : ""
+                }`}
+              >
                 {usernameChecking ? (
                   <>
-                    <Loader2 size={14} className="edit-profile-username-spinner" />
+                    <Loader2
+                      size={14}
+                      className="edit-profile-username-spinner"
+                    />
                     <span>Checking availability...</span>
                   </>
+                ) : isCurrentUsername ? (
+                  <span>That's your current username.</span>
                 ) : usernameAvailable === true ? (
                   <span>Username is available.</span>
                 ) : usernameAvailable === false ? (
@@ -342,10 +369,7 @@ function EditProfileModal({ open, user, onClose, onSave }) {
 
             {selectedFile && (
               <div className="edit-profile-crop-preview">
-                <img
-                  src={previewUrl}
-                  alt="Cropped preview"
-                />
+                <img src={previewUrl} alt="Cropped preview" />
               </div>
             )}
 
@@ -381,7 +405,10 @@ function EditProfileModal({ open, user, onClose, onSave }) {
             <button
               type="submit"
               className="edit-profile-save-button"
-              disabled={saving || (username.trim().length >= 3 && usernameAvailable === false)}
+              disabled={
+                saving ||
+                (username.trim().length >= 3 && usernameAvailable === false)
+              }
             >
               {saving ? (
                 <>

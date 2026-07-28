@@ -2,14 +2,44 @@ import express from "express";
 import User from "../models/User.js";
 import upload from "../middleware/upload.js";
 import authenticateToken from "../middleware/auth.js";
+import cloudinary from "../config/cloudinary.js";
+import {
+  usernameCheckLimiter,
+  userWriteLimiter,
+  profileUpdateLimiter,
+  profileUploadLimiter,
+} from "../middleware/rateLimit.js";
 
 const router = express.Router();
+
+const MAX_COLLECTION_SIZE = 500;
+const MAX_GAME_NAME_LENGTH = 200;
+
+// ================================
+// Cloudinary Helpers
+// ================================
+
+async function deleteCloudinaryProfilePhoto(publicId) {
+  if (!publicId) {
+    return;
+  }
+
+  try {
+    await cloudinary.uploader.destroy(publicId);
+    console.log(`Deleted old Cloudinary profile picture: ${publicId}`);
+  } catch (error) {
+    console.error(
+      `Failed to delete Cloudinary profile picture: ${publicId}`,
+      error,
+    );
+  }
+}
 
 // ================================
 // Get or create user
 // ================================
 
-router.post("/sync", authenticateToken, async (req, res) => {
+router.post("/sync", authenticateToken, userWriteLimiter, async (req, res) => {
   try {
     const { displayName, photoURL, username } = req.body;
     const firebaseUid = req.user.uid;
@@ -29,6 +59,7 @@ router.post("/sync", authenticateToken, async (req, res) => {
         email,
         displayName: displayName || "",
         photoURL: photoURL || "",
+        photoPublicId: "",
         username: username ? username.toLowerCase().trim() : "",
         wishlist: [],
         library: [],
@@ -65,6 +96,8 @@ router.post("/sync", authenticateToken, async (req, res) => {
 router.put(
   "/:firebaseUid/profile",
   authenticateToken,
+  profileUpdateLimiter,
+  profileUploadLimiter,
   upload.single("photo"),
   async (req, res) => {
     try {
@@ -122,15 +155,44 @@ router.put(
         }
       }
 
+      // ==================================
+      // Remove custom Cloudinary photo
+      // ==================================
+
       if (removePhoto === "true") {
+        const oldPhotoPublicId = user.photoPublicId;
+
         user.photoURL = "";
+        user.photoPublicId = "";
         user.useProviderPhoto = false;
-      } else if (req.file) {
-        user.photoURL = req.file.path;
-        user.useProviderPhoto = false;
+
+        await user.save();
+
+        await deleteCloudinaryProfilePhoto(oldPhotoPublicId);
       }
 
-      await user.save();
+      // ==================================
+      // Replace with new Cloudinary photo
+      // ==================================
+      else if (req.file) {
+        const oldPhotoPublicId = user.photoPublicId;
+        const newPhotoURL = req.file.path;
+        const newPhotoPublicId = req.file.filename;
+
+        user.photoURL = newPhotoURL;
+        user.photoPublicId = newPhotoPublicId;
+        user.useProviderPhoto = false;
+
+        await user.save();
+
+        // Delete the old image only after the new image
+        // has been successfully saved to MongoDB.
+        if (oldPhotoPublicId && oldPhotoPublicId !== newPhotoPublicId) {
+          await deleteCloudinaryProfilePhoto(oldPhotoPublicId);
+        }
+      } else {
+        await user.save();
+      }
 
       return res.status(200).json({
         message: "Profile updated successfully.",
@@ -152,39 +214,49 @@ router.put(
   },
 );
 
-router.get("/check-username", async (req, res) => {
-  try {
-    const { username, uid } = req.query;
+// ================================
+// Check username availability
+// ================================
 
-    if (!username || !/^[a-z0-9_]+$/.test(username.toLowerCase())) {
-      return res.status(400).json({
+router.get(
+  "/check-username",
+  authenticateToken,
+  usernameCheckLimiter,
+  async (req, res) => {
+    try {
+      const { username } = req.query;
+      const uid = req.user.uid;
+
+      if (!username || !/^[a-z0-9_]+$/.test(username.toLowerCase())) {
+        return res.status(400).json({
+          available: false,
+          message: "Invalid username format.",
+        });
+      }
+
+      const normalizedUsername = username.toLowerCase().trim();
+
+      const existingUser = await User.findOne({
+        username: normalizedUsername,
+        firebaseUid: { $ne: uid },
+      });
+
+      return res.status(200).json({
+        available: !existingUser,
+        message: existingUser
+          ? "This username is already taken."
+          : "Username is available.",
+      });
+    } catch (error) {
+      console.error("Username check error:", error);
+
+      return res.status(500).json({
         available: false,
-        message: "Invalid username format.",
+        message: "Failed to check username availability.",
       });
     }
-
-    const normalizedUsername = username.toLowerCase().trim();
-
-    const existingUser = await User.findOne({
-      username: normalizedUsername,
-      ...(uid ? { firebaseUid: { $ne: uid } } : {}),
-    });
-
-    return res.status(200).json({
-      available: !existingUser,
-      message: existingUser
-        ? "This username is already taken."
-        : "Username is available.",
-    });
-  } catch (error) {
-    console.error("Username check error:", error);
-
-    return res.status(500).json({
-      available: false,
-      message: "Failed to check username availability.",
-    });
-  }
-});
+  },
+);
 
 // ================================
 // Get user data
@@ -225,106 +297,156 @@ router.get("/:firebaseUid", authenticateToken, async (req, res) => {
 // Update wishlist
 // ================================
 
-router.put("/:firebaseUid/wishlist", authenticateToken, async (req, res) => {
-  try {
-    const { firebaseUid } = req.params;
+router.put(
+  "/:firebaseUid/wishlist",
+  authenticateToken,
+  userWriteLimiter,
+  async (req, res) => {
+    try {
+      const { firebaseUid } = req.params;
 
-    if (req.user.uid !== firebaseUid) {
-      return res.status(403).json({
-        message: "Forbidden. You can only update your own wishlist.",
-      });
-    }
+      if (req.user.uid !== firebaseUid) {
+        return res.status(403).json({
+          message: "Forbidden. You can only update your own wishlist.",
+        });
+      }
 
-    const { wishlist } = req.body;
+      const { wishlist } = req.body;
 
-    if (!Array.isArray(wishlist)) {
-      return res.status(400).json({
-        message: "Wishlist must be an array.",
-      });
-    }
+      if (!Array.isArray(wishlist)) {
+        return res.status(400).json({
+          message: "Wishlist must be an array.",
+        });
+      }
 
-    const user = await User.findOneAndUpdate(
-      { firebaseUid },
-      {
-        $set: {
-          wishlist,
+      if (wishlist.length > MAX_COLLECTION_SIZE) {
+        return res.status(400).json({
+          message: `Wishlist cannot contain more than ${MAX_COLLECTION_SIZE} games.`,
+        });
+      }
+
+      for (const game of wishlist) {
+        if (
+          !game ||
+          typeof game !== "object" ||
+          !Number.isInteger(game.id) ||
+          typeof game.name !== "string" ||
+          game.name.length > MAX_GAME_NAME_LENGTH
+        ) {
+          return res.status(400).json({
+            message: "Invalid game data in wishlist.",
+          });
+        }
+      }
+
+      const user = await User.findOneAndUpdate(
+        { firebaseUid },
+        {
+          $set: {
+            wishlist,
+          },
         },
-      },
-      {
-        returnDocument: "after",
-        runValidators: true,
-      },
-    );
+        {
+          returnDocument: "after",
+          runValidators: true,
+        },
+      );
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found.",
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found.",
+        });
+      }
+
+      return res.status(200).json({
+        wishlist: user.wishlist,
+      });
+    } catch (error) {
+      console.error("Update wishlist error:", error);
+
+      return res.status(500).json({
+        message: "Failed to update wishlist.",
       });
     }
-
-    return res.status(200).json({
-      wishlist: user.wishlist,
-    });
-  } catch (error) {
-    console.error("Update wishlist error:", error);
-
-    return res.status(500).json({
-      message: "Failed to update wishlist.",
-    });
-  }
-});
+  },
+);
 
 // ================================
 // Update library
 // ================================
 
-router.put("/:firebaseUid/library", authenticateToken, async (req, res) => {
-  try {
-    const { firebaseUid } = req.params;
+router.put(
+  "/:firebaseUid/library",
+  authenticateToken,
+  userWriteLimiter,
+  async (req, res) => {
+    try {
+      const { firebaseUid } = req.params;
 
-    if (req.user.uid !== firebaseUid) {
-      return res.status(403).json({
-        message: "Forbidden. You can only update your own library.",
-      });
-    }
+      if (req.user.uid !== firebaseUid) {
+        return res.status(403).json({
+          message: "Forbidden. You can only update your own library.",
+        });
+      }
 
-    const { library } = req.body;
+      const { library } = req.body;
 
-    if (!Array.isArray(library)) {
-      return res.status(400).json({
-        message: "Library must be an array.",
-      });
-    }
+      if (!Array.isArray(library)) {
+        return res.status(400).json({
+          message: "Library must be an array.",
+        });
+      }
 
-    const user = await User.findOneAndUpdate(
-      { firebaseUid },
-      {
-        $set: {
-          library,
+      if (library.length > MAX_COLLECTION_SIZE) {
+        return res.status(400).json({
+          message: `Library cannot contain more than ${MAX_COLLECTION_SIZE} games.`,
+        });
+      }
+
+      for (const game of library) {
+        if (
+          !game ||
+          typeof game !== "object" ||
+          !Number.isInteger(game.id) ||
+          typeof game.name !== "string" ||
+          game.name.length > MAX_GAME_NAME_LENGTH
+        ) {
+          return res.status(400).json({
+            message: "Invalid game data in library.",
+          });
+        }
+      }
+
+      const user = await User.findOneAndUpdate(
+        { firebaseUid },
+        {
+          $set: {
+            library,
+          },
         },
-      },
-      {
-        returnDocument: "after",
-        runValidators: true,
-      },
-    );
+        {
+          returnDocument: "after",
+          runValidators: true,
+        },
+      );
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found.",
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found.",
+        });
+      }
+
+      return res.status(200).json({
+        library: user.library,
+      });
+    } catch (error) {
+      console.error("Update library error:", error);
+
+      return res.status(500).json({
+        message: "Failed to update library.",
       });
     }
-
-    return res.status(200).json({
-      library: user.library,
-    });
-  } catch (error) {
-    console.error("Update library error:", error);
-
-    return res.status(500).json({
-      message: "Failed to update library.",
-    });
-  }
-});
+  },
+);
 
 export default router;

@@ -1,13 +1,51 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
+import { getAuth } from "firebase/auth";
+
+import app from "../firebase/config";
+
+const auth = getAuth(app);
+
+async function getAuthHeaders() {
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    return { "Content-Type": "application/json" };
+  }
+
+  const idToken = await currentUser.getIdToken();
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${idToken}`,
+  };
+}
+
+async function getAuthHeadersForFormData() {
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    return {};
+  }
+
+  const idToken = await currentUser.getIdToken();
+
+  return { Authorization: `Bearer ${idToken}` };
+}
+
 // ================================
-// Get user data
+// Check username availability
 // ================================
 
 export async function checkUsernameAvailability(username) {
+  const params = new URLSearchParams({ username });
+
+  const headers = await getAuthHeaders();
+
   const response = await fetch(
-    `${API_BASE_URL}/users/check-username/${encodeURIComponent(username)}`,
+    `${API_BASE_URL}/users/check-username?${params.toString()}`,
+    { headers },
   );
 
   if (!response.ok) {
@@ -24,7 +62,9 @@ export async function checkUsernameAvailability(username) {
 // ================================
 
 export async function getUserData(firebaseUid) {
-  const response = await fetch(`${API_BASE_URL}/users/${firebaseUid}`);
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE_URL}/users/${firebaseUid}`, { headers });
 
   if (!response.ok) {
     throw new Error("Failed to fetch user data.");
@@ -38,15 +78,13 @@ export async function getUserData(firebaseUid) {
 // ================================
 
 export async function updateUserWishlist(firebaseUid, wishlist) {
+  const headers = await getAuthHeaders();
+
   const response = await fetch(
     `${API_BASE_URL}/users/${firebaseUid}/wishlist`,
     {
       method: "PUT",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
+      headers,
       body: JSON.stringify({
         wishlist,
       }),
@@ -65,13 +103,11 @@ export async function updateUserWishlist(firebaseUid, wishlist) {
 // ================================
 
 export async function updateUserLibrary(firebaseUid, library) {
+  const headers = await getAuthHeaders();
+
   const response = await fetch(`${API_BASE_URL}/users/${firebaseUid}/library`, {
     method: "PUT",
-
-    headers: {
-      "Content-Type": "application/json",
-    },
-
+    headers,
     body: JSON.stringify({
       library,
     }),
@@ -111,8 +147,11 @@ export async function updateUserProfile(
     formData.append("photo", photoFile);
   }
 
+  const headers = await getAuthHeadersForFormData();
+
   const response = await fetch(`${API_BASE_URL}/users/${firebaseUid}/profile`, {
     method: "PUT",
+    headers,
     body: formData,
   });
 

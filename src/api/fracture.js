@@ -1,6 +1,39 @@
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
+import { getAuth } from "firebase/auth";
+
+import app from "../firebase/config";
+
+const auth = getAuth(app);
+
+async function getAuthHeaders() {
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    return { "Content-Type": "application/json" };
+  }
+
+  const idToken = await currentUser.getIdToken();
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${idToken}`,
+  };
+}
+
+async function getAuthHeadersForFormData() {
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    return {};
+  }
+
+  const idToken = await currentUser.getIdToken();
+
+  return { Authorization: `Bearer ${idToken}` };
+}
+
 // ==============================================
 // GLOBAL API CACHE
 // ==============================================
@@ -138,7 +171,9 @@ export async function checkUsernameAvailability(username, currentUid) {
     params.set("uid", currentUid);
   }
 
-  const response = await fetch(`${BASE_URL}/users/check-username?${params.toString()}`);
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${BASE_URL}/users/check-username?${params.toString()}`, { headers });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -156,11 +191,11 @@ export async function checkUsernameAvailability(username, currentUid) {
 // ==================================================
 
 export async function syncUser(userData) {
+  const headers = await getAuthHeaders();
+
   const response = await fetch(`${BASE_URL}/users/sync`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify(userData),
   });
 
@@ -176,7 +211,9 @@ export async function syncUser(userData) {
 // ==================================================
 
 export async function getUserData(firebaseUid) {
-  const response = await fetch(`${BASE_URL}/users/${firebaseUid}`);
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${BASE_URL}/users/${firebaseUid}`, { headers });
 
   if (!response.ok) {
     throw new Error(`FRACTURE backend error ${response.status}`);
@@ -190,11 +227,11 @@ export async function getUserData(firebaseUid) {
 // ==================================================
 
 export async function updateUserWishlist(firebaseUid, wishlist) {
+  const headers = await getAuthHeaders();
+
   const response = await fetch(`${BASE_URL}/users/${firebaseUid}/wishlist`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       wishlist,
     }),
@@ -212,11 +249,11 @@ export async function updateUserWishlist(firebaseUid, wishlist) {
 // ==================================================
 
 export async function updateUserLibrary(firebaseUid, library) {
+  const headers = await getAuthHeaders();
+
   const response = await fetch(`${BASE_URL}/users/${firebaseUid}/library`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       library,
     }),
@@ -253,11 +290,14 @@ export async function updateUserProfile(
   }
 
 if (photoFile) {
-     formData.append("photo", photoFile, photoFile.name);
-   }
+      formData.append("photo", photoFile, photoFile.name);
+    }
+
+  const headers = await getAuthHeadersForFormData();
 
   const response = await fetch(`${BASE_URL}/users/${firebaseUid}/profile`, {
     method: "PUT",
+    headers,
     body: formData,
   });
 

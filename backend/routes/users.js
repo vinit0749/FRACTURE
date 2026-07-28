@@ -1,6 +1,7 @@
 import express from "express";
 import User from "../models/User.js";
 import upload from "../middleware/upload.js";
+import authenticateToken from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -8,13 +9,15 @@ const router = express.Router();
 // Get or create user
 // ================================
 
-router.post("/sync", async (req, res) => {
+router.post("/sync", authenticateToken, async (req, res) => {
   try {
-    const { firebaseUid, email, displayName, photoURL, username } = req.body;
+    const { displayName, photoURL, username } = req.body;
+    const firebaseUid = req.user.uid;
+    const email = req.user.email;
 
     if (!firebaseUid || !email) {
       return res.status(400).json({
-        message: "firebaseUid and email are required.",
+        message: "Invalid authentication data.",
       });
     }
 
@@ -61,10 +64,18 @@ router.post("/sync", async (req, res) => {
 
 router.put(
   "/:firebaseUid/profile",
+  authenticateToken,
   upload.single("photo"),
   async (req, res) => {
     try {
       const { firebaseUid } = req.params;
+
+      if (req.user.uid !== firebaseUid) {
+        return res.status(403).json({
+          message: "Forbidden. You can only update your own profile.",
+        });
+      }
+
       const { displayName, username, removePhoto } = req.body;
 
       const user = await User.findOne({ firebaseUid });
@@ -179,9 +190,15 @@ router.get("/check-username", async (req, res) => {
 // Get user data
 // ================================
 
-router.get("/:firebaseUid", async (req, res) => {
+router.get("/:firebaseUid", authenticateToken, async (req, res) => {
   try {
     const { firebaseUid } = req.params;
+
+    if (req.user.uid !== firebaseUid) {
+      return res.status(403).json({
+        message: "Forbidden. You can only access your own data.",
+      });
+    }
 
     const user = await User.findOne({ firebaseUid });
 
@@ -208,9 +225,16 @@ router.get("/:firebaseUid", async (req, res) => {
 // Update wishlist
 // ================================
 
-router.put("/:firebaseUid/wishlist", async (req, res) => {
+router.put("/:firebaseUid/wishlist", authenticateToken, async (req, res) => {
   try {
     const { firebaseUid } = req.params;
+
+    if (req.user.uid !== firebaseUid) {
+      return res.status(403).json({
+        message: "Forbidden. You can only update your own wishlist.",
+      });
+    }
+
     const { wishlist } = req.body;
 
     if (!Array.isArray(wishlist)) {
@@ -254,9 +278,16 @@ router.put("/:firebaseUid/wishlist", async (req, res) => {
 // Update library
 // ================================
 
-router.put("/:firebaseUid/library", async (req, res) => {
+router.put("/:firebaseUid/library", authenticateToken, async (req, res) => {
   try {
     const { firebaseUid } = req.params;
+
+    if (req.user.uid !== firebaseUid) {
+      return res.status(403).json({
+        message: "Forbidden. You can only update your own library.",
+      });
+    }
+
     const { library } = req.body;
 
     if (!Array.isArray(library)) {

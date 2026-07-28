@@ -145,11 +145,15 @@ export async function fetchPlatforms() {
 }
 
 // ==============================================
-// TRAILERS
+// YOUTUBE TRAILER
 // ==============================================
 
-export async function fetchGameTrailers(id) {
-  return cachedFetch(`${BASE_URL}/games/${id}/movies`);
+export async function fetchGameTrailer(gameName) {
+  const params = new URLSearchParams({
+    query: `${gameName} official trailer`,
+  });
+
+  return cachedFetch(`${BASE_URL}/games/youtube/trailer?${params.toString()}`);
 }
 
 // ==============================================
@@ -173,7 +177,10 @@ export async function checkUsernameAvailability(username, currentUid) {
 
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`${BASE_URL}/users/check-username?${params.toString()}`, { headers });
+  const response = await fetch(
+    `${BASE_URL}/users/check-username?${params.toString()}`,
+    { headers },
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -289,9 +296,9 @@ export async function updateUserProfile(
     formData.append("removePhoto", String(removePhoto));
   }
 
-if (photoFile) {
-      formData.append("photo", photoFile, photoFile.name);
-    }
+  if (photoFile) {
+    formData.append("photo", photoFile, photoFile.name);
+  }
 
   const headers = await getAuthHeadersForFormData();
 

@@ -5,6 +5,7 @@ import {
   getGameDetails,
   getGameScreenshots,
   getGameTrailers,
+  getYouTubeTrailer,
   getGenres,
   getPlatforms,
 } from "../services/fracture.js";
@@ -137,6 +138,39 @@ router.get("/", async (req, res) => {
 
     const status = error.status || 500;
     const message = error.details?.detail || "Failed to fetch games";
+
+    return res.status(status).json({
+      message,
+    });
+  }
+});
+
+// ==================================
+// GET YOUTUBE GAME TRAILER
+//
+// /api/games/youtube/trailer?query=Game%20Name%20official%20trailer
+// ==================================
+
+router.get("/youtube/trailer", async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query) {
+      return res.status(400).json({
+        message: "YouTube trailer search query is required.",
+      });
+    }
+
+    const trailer = await getYouTubeTrailer(query);
+
+    return res.json({
+      trailer,
+    });
+  } catch (error) {
+    console.error("YouTube trailer route error:", error);
+
+    const status = error.status || 500;
+    const message = error.details?.detail || "Failed to fetch YouTube trailer";
 
     return res.status(status).json({
       message,

@@ -212,3 +212,48 @@ export async function getPlatforms() {
 export async function getSimilarGames(params = "") {
   return fractureFetch(`/games${params ? `?${params}` : ""}`);
 }
+
+// ================================
+// YouTube Trailer Search
+// ================================
+
+export async function getYouTubeTrailer(query) {
+  if (!query || typeof query !== "string") {
+    throw createError("Invalid YouTube search query", {}, 400);
+  }
+
+  const youtubeUrl = new URL("https://www.googleapis.com/youtube/v3/search");
+
+  youtubeUrl.searchParams.set("part", "snippet");
+  youtubeUrl.searchParams.set("q", query);
+  youtubeUrl.searchParams.set("type", "video");
+  youtubeUrl.searchParams.set("maxResults", "5");
+  youtubeUrl.searchParams.set("key", process.env.YOUTUBE_API_KEY);
+
+  const response = await fetch(youtubeUrl);
+
+  if (!response.ok) {
+    throw createError(
+      `YouTube API error ${response.status}`,
+      {
+        detail: "Failed to search YouTube trailers.",
+      },
+      response.status,
+    );
+  }
+
+  const data = await response.json();
+
+  const video = data.items?.[0];
+
+  if (!video?.id?.videoId) {
+    return null;
+  }
+
+  return {
+    videoId: video.id.videoId,
+    title: video.snippet.title,
+    channelTitle: video.snippet.channelTitle,
+    thumbnail: video.snippet.thumbnails?.high?.url || null,
+  };
+}

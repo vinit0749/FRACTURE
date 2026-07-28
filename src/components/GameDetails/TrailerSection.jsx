@@ -16,23 +16,34 @@ function TrailerSection({ trailer, game }) {
 
           <h3>Trailer unavailable</h3>
 
-          <p>The publisher has not provided a trailer for this game.</p>
+          <p>No official trailer could be found for this game.</p>
         </div>
       ) : play ? (
-        <video
-          className="game-trailer"
-          controls
-          autoPlay
-          poster={game.background_image}
-        >
-          <source src={trailer.data.max} type="video/mp4" />
-        </video>
+        <div className="trailer-video-wrapper">
+          <iframe
+            className="game-trailer"
+            src={`https://www.youtube.com/embed/${trailer.videoId}?autoplay=1`}
+            title={trailer.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </div>
       ) : (
-        <div className="trailer-wrapper" onClick={() => setPlay(true)}>
+        <div
+          className="trailer-wrapper"
+          onClick={() => setPlay(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              setPlay(true);
+            }
+          }}
+        >
           <img
             className="trailer-thumb"
-            src={game.background_image}
-            alt={game.name}
+            src={trailer.thumbnail || game.background_image}
+            alt={trailer.title || `${game.name} trailer`}
           />
 
           <div className="trailer-play">

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   fetchGameDetails,
   fetchGameScreenshots,
-  fetchGameTrailers,
+  fetchGameTrailer,
   fetchSimilarGames,
 } from "../api/fracture";
 
@@ -27,13 +27,13 @@ export default function useGameDetails(id) {
 
       setGame(gameData);
 
-      const [shots, trailers] = await Promise.all([
+      const [shots, trailerData] = await Promise.all([
         fetchGameScreenshots(id),
-        fetchGameTrailers(id),
+        fetchGameTrailer(gameData.name),
       ]);
 
       setScreenshots(shots.results || []);
-      setTrailer(trailers.results?.[0] || null);
+      setTrailer(trailerData.trailer || null);
 
       /* ================= SIMILAR GAMES ================= */
 

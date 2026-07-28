@@ -135,6 +135,25 @@ function Header({ searchInput, updateSearchInput }) {
         </div>
 
         <div className="header-actions">
+          {/* ==================================
+              FORTUNA — SEPARATE EXPERIENCE
+              ================================== */}
+
+          <Link
+            to="/fortuna"
+            className={`fortuna-header-entry ${
+              location.pathname === "/fortuna" ? "active" : ""
+            }`}
+          >
+            <span className="fortuna-header-icon">✦</span>
+
+            <span className="fortuna-header-label">Ask Fortuna</span>
+          </Link>
+
+          {/* ==================================
+      FRACTURE NAVIGATION
+      ================================== */}
+
           <nav className="nav-links">
             <Link
               to="/"

@@ -9,6 +9,7 @@ import LibraryPage from "./pages/LibraryPage";
 import TopRatedPage from "./pages/TopRatedPage";
 import NewReleasesPage from "./pages/NewReleasesPage";
 import TrendingPage from "./pages/TrendingPage";
+import FortunaPage from "./pages/FortunaPage";
 
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import AuthModal from "./components/Auth/AuthModal";
@@ -48,6 +49,8 @@ function AppContent() {
             <HomePage key={window.location.search + window.location.pathname} />
           }
         />
+
+        <Route path="/fortuna" element={<FortunaPage />} />
 
         <Route path="/trending" element={<TrendingPage />} />
 

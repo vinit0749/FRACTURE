@@ -1,0 +1,1955 @@
+/* ============================================================
+   FORTUNA — CONVERSATIONAL GAME DISCOVERY
+   Premium cinematic AI discovery interface
+============================================================ */
+
+/* ============================================================
+   PAGE
+============================================================ */
+
+.fortuna-page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  background:
+    radial-gradient(circle at 50% -15%, var(--accent-soft), transparent 30%),
+    var(--background);
+
+  color: var(--text);
+
+  overflow-x: hidden;
+}
+
+/* Ambient top atmosphere */
+
+.fortuna-page::before {
+  content: "";
+
+  position: fixed;
+  top: -350px;
+  left: 50%;
+
+  width: 1000px;
+  height: 700px;
+
+  transform: translateX(-50%);
+
+  background: radial-gradient(circle, var(--accent-soft), transparent 68%);
+
+  opacity: 0.12;
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+/* Side atmosphere */
+
+.fortuna-page::after {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+
+  background:
+    radial-gradient(circle at 0% 45%, var(--accent-soft), transparent 24%),
+    radial-gradient(circle at 100% 65%, var(--accent-soft), transparent 22%);
+
+  opacity: 0.025;
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+/* ============================================================
+   MAIN
+============================================================ */
+
+.fortuna-main {
+  position: relative;
+
+  z-index: 1;
+
+  width: 100%;
+
+  min-height: calc(100vh - 70px);
+  min-height: calc(100dvh - 70px);
+
+  padding: 0 24px 170px;
+}
+
+/* ============================================================
+   SHELL
+============================================================ */
+
+.fortuna-shell {
+  width: 100%;
+  max-width: 1080px;
+
+  margin: 0 auto;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+/* ============================================================
+   TOP BAR
+   IMPORTANT:
+   No card, no rectangle, no panel background.
+   This sits cleanly below the main FRACTURE header.
+============================================================ */
+
+.fortuna-topbar {
+  position: relative;
+
+  z-index: 30;
+
+  width: 100%;
+
+  min-height: 64px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 12px 0;
+
+  background: transparent;
+
+  border: none;
+
+  border-bottom: none;
+
+  box-shadow: none;
+
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ============================================================
+   BRAND
+============================================================ */
+
+.fortuna-brand {
+  display: flex;
+
+  align-items: center;
+
+  gap: 11px;
+
+  min-width: 0;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-brand-symbol {
+  width: 36px;
+  height: 36px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: var(--accent-soft);
+
+  border: 1px solid var(--accent-medium);
+
+  color: var(--accent-light);
+
+  box-shadow:
+    0 0 18px var(--accent-soft),
+    inset 0 0 10px var(--accent-soft);
+
+  font-size: 0.9rem;
+
+  animation: fortunaSymbolPulse 4s ease-in-out infinite;
+}
+
+@keyframes fortunaSymbolPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 15px var(--accent-soft),
+      inset 0 0 7px var(--accent-soft);
+  }
+
+  50% {
+    box-shadow:
+      0 0 25px var(--accent-medium),
+      inset 0 0 12px var(--accent-soft);
+  }
+}
+
+.fortuna-brand > div:last-child {
+  display: flex;
+
+  flex-direction: column;
+
+  min-width: 0;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-brand-eyebrow {
+  display: block;
+
+  margin: 0 0 3px;
+
+  color: var(--accent-light);
+
+  font-size: 0.5rem;
+
+  font-weight: 800;
+
+  line-height: 1;
+
+  letter-spacing: 2px;
+
+  text-transform: uppercase;
+
+  opacity: 0.65;
+}
+
+.fortuna-brand h1 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 1rem;
+
+  font-weight: 850;
+
+  line-height: 1;
+
+  letter-spacing: 2.5px;
+
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   NEW DISCOVERY
+============================================================ */
+
+.fortuna-new-chat {
+  padding: 8px 12px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  border: 1px solid var(--border-light);
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: var(--text-secondary);
+
+  font-family: inherit;
+
+  font-size: 0.64rem;
+
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.fortuna-new-chat span {
+  color: var(--accent-light);
+}
+
+.fortuna-new-chat:hover:not(:disabled) {
+  color: var(--text);
+
+  background: var(--accent-soft);
+
+  border-color: var(--accent-medium);
+
+  transform: translateY(-1px);
+}
+
+.fortuna-new-chat:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.fortuna-new-chat:disabled {
+  opacity: 0.4;
+
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   CONTENT
+============================================================ */
+
+.fortuna-content {
+  width: 100%;
+
+  padding: 20px 0 50px;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+/* ============================================================
+   WELCOME
+============================================================ */
+
+.fortuna-welcome {
+  width: 100%;
+
+  min-height: calc(100vh - 230px);
+  min-height: calc(100dvh - 230px);
+
+  padding: 40px 0 80px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+/* ============================================================
+   WELCOME MARK
+   Completely transparent.
+   No rectangle / card / panel.
+============================================================ */
+
+.fortuna-welcome-mark {
+  width: auto;
+
+  height: auto;
+
+  margin: 0 0 22px;
+
+  padding: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: transparent;
+
+  border: none;
+
+  border-radius: 0;
+
+  box-shadow: none;
+
+  color: var(--accent-light);
+
+  font-size: 1.2rem;
+
+  animation: fortunaWelcomeFloat 4s ease-in-out infinite;
+}
+
+.fortuna-welcome-mark::before,
+.fortuna-welcome-mark::after {
+  content: none;
+
+  display: none;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+@keyframes fortunaWelcomeFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* ============================================================
+   WELCOME EYEBROW
+============================================================ */
+
+.fortuna-welcome-eyebrow {
+  margin: 0 0 13px;
+
+  color: var(--accent-light);
+
+  font-size: 0.56rem;
+
+  font-weight: 850;
+
+  letter-spacing: 2.5px;
+
+  text-transform: uppercase;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+/* ============================================================
+   WELCOME TITLE
+============================================================ */
+
+.fortuna-welcome h2 {
+  margin: 0;
+
+  max-width: 760px;
+
+  color: var(--text);
+
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+
+  line-height: 0.98;
+
+  font-weight: 900;
+
+  letter-spacing: -2.8px;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-welcome-description {
+  max-width: 520px;
+
+  margin: 20px auto 32px;
+
+  color: var(--text-secondary);
+
+  font-size: 0.86rem;
+
+  line-height: 1.7;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+/* ============================================================
+   SUGGESTIONS
+============================================================ */
+
+.fortuna-suggestions {
+  width: min(680px, 100%);
+
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 9px;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-suggestions button {
+  min-height: 70px;
+
+  padding: 13px 14px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 11px;
+
+  text-align: left;
+
+  border: 1px solid var(--border-light);
+
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.018);
+
+  color: var(--text);
+
+  font-family: inherit;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.fortuna-suggestions button:hover {
+  transform: translateY(-2px);
+
+  background: var(--accent-soft);
+
+  border-color: var(--accent-medium);
+
+  box-shadow: 0 8px 25px var(--accent-soft);
+}
+
+.fortuna-suggestions button:active {
+  transform: translateY(0);
+}
+
+.fortuna-suggestion-icon {
+  width: 31px;
+  height: 31px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: var(--accent-soft);
+
+  border: 1px solid var(--accent-medium);
+
+  color: var(--accent-light);
+
+  font-size: 0.78rem;
+}
+
+.fortuna-suggestions strong {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: var(--text);
+
+  font-size: 0.72rem;
+
+  font-weight: 800;
+}
+
+.fortuna-suggestions small {
+  display: block;
+
+  color: var(--text-secondary);
+
+  font-size: 0.6rem;
+
+  line-height: 1.4;
+}
+
+/* ============================================================
+   CONVERSATION
+============================================================ */
+
+.fortuna-conversation {
+  width: 100%;
+
+  max-width: 850px;
+
+  margin: 0 auto;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 28px;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-message-list {
+  width: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 28px;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+/* ============================================================
+   MESSAGE
+============================================================ */
+
+.fortuna-message {
+  width: 100%;
+
+  display: flex;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+
+  animation: fortunaMessageIn 0.28s ease both;
+}
+
+@keyframes fortunaMessageIn {
+  from {
+    opacity: 0;
+
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   USER MESSAGE
+============================================================ */
+
+.fortuna-message-user {
+  justify-content: flex-end;
+}
+
+.fortuna-user-message {
+  max-width: min(600px, 76%);
+
+  padding: 11px 15px;
+
+  border-radius: 16px 16px 4px 16px;
+
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    var(--accent-dark, var(--accent))
+  );
+
+  border: 1px solid var(--accent-medium);
+
+  color: white;
+
+  box-shadow: 0 6px 20px var(--accent-soft);
+}
+
+.fortuna-user-message p {
+  margin: 0;
+
+  font-size: 0.84rem;
+
+  line-height: 1.55;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   ASSISTANT MESSAGE
+============================================================ */
+
+.fortuna-message-assistant {
+  justify-content: flex-start;
+}
+
+.fortuna-assistant-message {
+  width: 100%;
+
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 12px;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-assistant-avatar {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  margin-top: 1px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: var(--accent-soft);
+
+  border: 1px solid var(--accent-medium);
+
+  color: var(--accent-light);
+
+  box-shadow: 0 0 15px var(--accent-soft);
+
+  font-size: 0.78rem;
+}
+
+.fortuna-assistant-body {
+  max-width: 720px;
+
+  padding-top: 0;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-assistant-name {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: var(--accent-light);
+
+  font-size: 0.5rem;
+
+  font-weight: 850;
+
+  letter-spacing: 1.6px;
+
+  opacity: 0.7;
+}
+
+.fortuna-assistant-body p {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 0.88rem;
+
+  line-height: 1.7;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   THINKING
+============================================================ */
+
+.fortuna-thinking {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  height: 24px;
+}
+
+.fortuna-thinking span {
+  width: 5px;
+  height: 5px;
+
+  border-radius: 50%;
+
+  background: var(--accent-light);
+
+  animation: fortunaThinking 1.25s ease-in-out infinite;
+}
+
+.fortuna-thinking span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.fortuna-thinking span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes fortunaThinking {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+
+    transform: translateY(-3px);
+  }
+}
+
+/* ============================================================
+   DISCOVERY RESULTS
+============================================================ */
+
+.fortuna-discovery-results {
+  width: 100%;
+
+  max-width: 1000px;
+
+  margin: 60px auto 0;
+
+  padding: 0;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+/* ============================================================
+   DISCOVERY INTRO
+============================================================ */
+
+.fortuna-discovery-intro {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 26px;
+
+  margin-bottom: 45px;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-discovery-heading {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-discovery-eyebrow,
+.fortuna-section-eyebrow {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: var(--accent-light);
+
+  font-size: 0.52rem;
+
+  font-weight: 850;
+
+  letter-spacing: 1.7px;
+
+  text-transform: uppercase;
+}
+
+.fortuna-discovery-heading h2 {
+  margin: 0;
+
+  max-width: 700px;
+
+  color: var(--text);
+
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+
+  line-height: 1.05;
+
+  letter-spacing: -1.4px;
+}
+
+.fortuna-discovery-heading p {
+  max-width: 680px;
+
+  margin: 12px 0 0;
+
+  color: var(--text-secondary);
+
+  font-size: 0.82rem;
+
+  line-height: 1.7;
+}
+
+/* ============================================================
+   DISCOVERY PROFILE
+============================================================ */
+
+.fortuna-discovery-profile {
+  width: 100%;
+
+  padding: 14px 0;
+
+  border-top: 1px solid var(--border-light);
+
+  border-bottom: 1px solid var(--border-light);
+
+  background: transparent;
+
+  box-shadow: none;
+}
+
+.fortuna-discovery-profile-label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: var(--text-secondary);
+
+  font-size: 0.5rem;
+
+  font-weight: 850;
+
+  letter-spacing: 1.4px;
+
+  text-transform: uppercase;
+}
+
+.fortuna-discovery-profile-tags {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 6px;
+}
+
+.fortuna-discovery-profile-tags span {
+  padding: 4px 8px;
+
+  border-radius: 999px;
+
+  background: var(--accent-soft);
+
+  border: 1px solid var(--accent-medium);
+
+  color: var(--accent-light);
+
+  font-size: 0.56rem;
+
+  font-weight: 700;
+}
+
+/* ============================================================
+   AI ANALYSIS
+============================================================ */
+
+.fortuna-analysis {
+  margin-top: 0;
+
+  padding: 0;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-analysis-header {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 12px;
+
+  margin-bottom: 20px;
+}
+
+.fortuna-analysis-number {
+  color: var(--accent-light);
+
+  font-size: 0.54rem;
+
+  font-weight: 850;
+
+  letter-spacing: 1.4px;
+}
+
+.fortuna-analysis-header h3 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 1.15rem;
+
+  font-weight: 800;
+}
+
+.fortuna-analysis-list {
+  border-top: 1px solid var(--border-light);
+
+  background: transparent;
+}
+
+.fortuna-analysis-item {
+  display: grid;
+
+  grid-template-columns:
+    42px
+    minmax(0, 1fr);
+
+  gap: 14px;
+
+  padding: 18px 0;
+
+  border-bottom: 1px solid var(--border-light);
+
+  background: transparent;
+
+  transition: padding-left 0.2s ease;
+}
+
+.fortuna-analysis-item:hover {
+  padding-left: 5px;
+}
+
+.fortuna-analysis-rank {
+  color: var(--accent-light);
+
+  font-size: 0.56rem;
+
+  font-weight: 850;
+
+  letter-spacing: 1px;
+}
+
+.fortuna-analysis-content h4 {
+  margin: 0 0 5px;
+
+  color: var(--text);
+
+  font-size: 0.86rem;
+
+  font-weight: 800;
+}
+
+.fortuna-analysis-content p {
+  max-width: 780px;
+
+  margin: 0;
+
+  color: var(--text-secondary);
+
+  font-size: 0.72rem;
+
+  line-height: 1.7;
+}
+
+/* ============================================================
+   GAME RESULTS
+============================================================ */
+
+.fortuna-games {
+  margin-top: 60px;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-games-header {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 12px;
+
+  margin-bottom: 20px;
+}
+
+.fortuna-section-number {
+  color: var(--accent-light);
+
+  font-size: 0.54rem;
+
+  font-weight: 850;
+
+  letter-spacing: 1.4px;
+}
+
+.fortuna-games-header h3 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 1.15rem;
+
+  font-weight: 800;
+}
+
+.fortuna-games-header p {
+  max-width: 680px;
+
+  margin: 6px 0 0;
+
+  color: var(--text-secondary);
+
+  font-size: 0.7rem;
+
+  line-height: 1.7;
+}
+
+/* ============================================================
+   GAME CARD GRID
+============================================================ */
+
+.fortuna-results-grid {
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+
+  gap: 18px;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+/* ============================================================
+   CONTINUE
+============================================================ */
+
+.fortuna-continue {
+  margin-top: 60px;
+
+  padding: 22px 0;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 11px;
+
+  border-top: 1px solid var(--border-light);
+
+  background: transparent;
+
+  box-shadow: none;
+}
+
+.fortuna-continue-symbol {
+  flex-shrink: 0;
+
+  color: var(--accent-light);
+
+  font-size: 0.9rem;
+}
+
+.fortuna-continue strong {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: var(--text);
+
+  font-size: 0.72rem;
+
+  font-weight: 800;
+}
+
+.fortuna-continue p {
+  margin: 0;
+
+  color: var(--text-secondary);
+
+  font-size: 0.66rem;
+
+  line-height: 1.6;
+}
+
+/* ============================================================
+   ERROR
+============================================================ */
+
+.fortuna-error {
+  width: 100%;
+
+  max-width: 850px;
+
+  margin: 22px auto 0;
+
+  padding: 13px 15px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  border: 1px solid rgba(255, 90, 90, 0.22);
+
+  border-radius: 10px;
+
+  background: rgba(255, 60, 60, 0.045);
+
+  box-shadow: none;
+}
+
+.fortuna-error-icon {
+  width: 23px;
+  height: 23px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  color: #ff7b7b;
+
+  border: 1px solid rgba(255, 90, 90, 0.3);
+
+  font-size: 0.65rem;
+
+  font-weight: 900;
+}
+
+.fortuna-error > div:nth-child(2) {
+  flex: 1;
+
+  min-width: 0;
+}
+
+.fortuna-error strong {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: #ff7b7b;
+
+  font-size: 0.7rem;
+}
+
+.fortuna-error p {
+  margin: 0;
+
+  color: var(--text-secondary);
+
+  font-size: 0.64rem;
+
+  line-height: 1.5;
+}
+
+.fortuna-error button {
+  flex-shrink: 0;
+
+  padding: 6px 10px;
+
+  border: 1px solid rgba(255, 90, 90, 0.3);
+
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #ff7b7b;
+
+  font-family: inherit;
+
+  font-size: 0.6rem;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.fortuna-error button:hover:not(:disabled) {
+  background: rgba(255, 60, 60, 0.08);
+
+  border-color: rgba(255, 90, 90, 0.5);
+}
+
+.fortuna-error button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   NO RESULTS
+============================================================ */
+
+.fortuna-no-results {
+  width: 100%;
+
+  max-width: 600px;
+
+  margin: 60px auto;
+
+  padding: 26px 0;
+
+  text-align: center;
+
+  border-top: 1px solid var(--border-light);
+
+  border-bottom: 1px solid var(--border-light);
+
+  background: transparent;
+
+  box-shadow: none;
+}
+
+.fortuna-no-results-symbol {
+  margin-bottom: 10px;
+
+  color: var(--accent-light);
+
+  font-size: 1.4rem;
+}
+
+.fortuna-no-results h3 {
+  margin: 0 0 7px;
+
+  color: var(--text);
+
+  font-size: 0.92rem;
+}
+
+.fortuna-no-results p {
+  margin: 0;
+
+  color: var(--text-secondary);
+
+  font-size: 0.7rem;
+
+  line-height: 1.7;
+}
+
+/* ============================================================
+   INPUT WRAPPER
+============================================================ */
+
+.fortuna-input-wrapper {
+  position: fixed;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 40;
+
+  padding: 12px 24px max(16px, env(safe-area-inset-bottom));
+
+  background: linear-gradient(
+    to top,
+    rgba(5, 7, 15, 0.98),
+    rgba(5, 7, 15, 0.9) 60%,
+    rgba(5, 7, 15, 0)
+  );
+
+  pointer-events: none;
+}
+
+/* ============================================================
+   INPUT CONTAINER
+============================================================ */
+
+.fortuna-input-container {
+  width: min(800px, 100%);
+
+  min-height: 52px;
+
+  margin: 0 auto;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 6px 7px 6px 14px;
+
+  border: 1px solid var(--border-light);
+
+  border-radius: 15px;
+
+  background: rgba(18, 20, 29, 0.94);
+
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+
+  pointer-events: auto;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.fortuna-input-container:focus-within {
+  border-color: var(--accent-medium);
+
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 25px var(--accent-soft);
+}
+
+/* ============================================================
+   INPUT ICON
+============================================================ */
+
+.fortuna-input-icon {
+  flex-shrink: 0;
+
+  color: var(--accent-light);
+
+  font-size: 0.82rem;
+}
+
+/* ============================================================
+   INPUT FIELD
+============================================================ */
+
+.fortuna-input-container input {
+  flex: 1;
+
+  min-width: 0;
+
+  border: none;
+
+  outline: none;
+
+  background: transparent;
+
+  color: var(--text);
+
+  font-family: inherit;
+
+  font-size: 0.82rem;
+}
+
+.fortuna-input-container input::placeholder {
+  color: var(--text-secondary);
+
+  opacity: 0.55;
+}
+
+.fortuna-input-container input:disabled {
+  opacity: 0.5;
+}
+
+/* ============================================================
+   SEND BUTTON
+============================================================ */
+
+.fortuna-input-container button {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: var(--accent);
+
+  color: white;
+
+  font-family: inherit;
+
+  font-size: 1rem;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.fortuna-input-container button:hover:not(:disabled) {
+  transform: scale(1.04);
+
+  box-shadow: 0 0 18px var(--accent-medium);
+}
+
+.fortuna-input-container button:active:not(:disabled) {
+  transform: scale(0.93);
+}
+
+.fortuna-input-container button:disabled {
+  opacity: 0.28;
+
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   INPUT FOOTER
+============================================================ */
+
+.fortuna-input-footer {
+  width: min(800px, 100%);
+
+  margin: 6px auto 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 12px;
+
+  pointer-events: auto;
+
+  background: transparent;
+
+  border: none;
+
+  box-shadow: none;
+}
+
+.fortuna-input-footer > span {
+  color: var(--text-secondary);
+
+  font-size: 0.48rem;
+
+  opacity: 0.4;
+
+  pointer-events: none;
+}
+
+.fortuna-input-footer button {
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  color: var(--text-secondary);
+
+  font-family: inherit;
+
+  font-size: 0.5rem;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  opacity: 0.55;
+
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.fortuna-input-footer button:hover:not(:disabled) {
+  color: var(--accent-light);
+
+  opacity: 1;
+}
+
+.fortuna-input-footer button:disabled {
+  opacity: 0.25;
+
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   LARGE SCREENS
+============================================================ */
+
+@media (min-width: 1600px) {
+  .fortuna-shell {
+    max-width: 1160px;
+  }
+
+  .fortuna-conversation {
+    max-width: 900px;
+  }
+
+  .fortuna-discovery-results {
+    max-width: 1080px;
+  }
+}
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media (max-width: 900px) {
+  .fortuna-main {
+    padding-left: 18px;
+
+    padding-right: 18px;
+  }
+
+  .fortuna-results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 680px) {
+  .fortuna-main {
+    padding: 0 12px 145px;
+  }
+
+  .fortuna-topbar {
+    min-height: 60px;
+
+    padding: 9px 0;
+  }
+
+  .fortuna-brand {
+    gap: 9px;
+  }
+
+  .fortuna-brand-symbol {
+    width: 33px;
+    height: 33px;
+
+    border-radius: 9px;
+
+    font-size: 0.8rem;
+  }
+
+  .fortuna-brand-eyebrow {
+    font-size: 0.45rem;
+
+    letter-spacing: 1.7px;
+  }
+
+  .fortuna-brand h1 {
+    font-size: 0.88rem;
+
+    letter-spacing: 2px;
+  }
+
+  .fortuna-new-chat {
+    padding: 7px 9px;
+
+    font-size: 0.58rem;
+  }
+
+  .fortuna-content {
+    padding: 15px 0 30px;
+  }
+
+  /* Welcome */
+
+  .fortuna-welcome {
+    min-height: calc(100vh - 200px);
+
+    min-height: calc(100dvh - 200px);
+
+    padding: 30px 0 60px;
+  }
+
+  .fortuna-welcome-mark {
+    margin-bottom: 19px;
+
+    font-size: 1.05rem;
+  }
+
+  .fortuna-welcome h2 {
+    font-size: clamp(2.2rem, 11vw, 3.2rem);
+
+    letter-spacing: -2px;
+  }
+
+  .fortuna-welcome-description {
+    margin: 17px auto 27px;
+
+    font-size: 0.78rem;
+  }
+
+  /* Suggestions */
+
+  .fortuna-suggestions {
+    grid-template-columns: 1fr;
+
+    gap: 7px;
+  }
+
+  .fortuna-suggestions button {
+    min-height: 64px;
+  }
+
+  /* Conversation */
+
+  .fortuna-conversation {
+    gap: 24px;
+  }
+
+  .fortuna-message-list {
+    gap: 24px;
+  }
+
+  .fortuna-user-message {
+    max-width: 88%;
+
+    padding: 10px 13px;
+  }
+
+  .fortuna-user-message p {
+    font-size: 0.78rem;
+  }
+
+  .fortuna-assistant-message {
+    gap: 9px;
+  }
+
+  .fortuna-assistant-avatar {
+    width: 29px;
+    height: 29px;
+
+    border-radius: 8px;
+
+    font-size: 0.7rem;
+  }
+
+  .fortuna-assistant-body p {
+    font-size: 0.81rem;
+
+    line-height: 1.65;
+  }
+
+  /* Results */
+
+  .fortuna-discovery-results {
+    margin-top: 45px;
+  }
+
+  .fortuna-discovery-heading h2 {
+    font-size: 1.9rem;
+  }
+
+  .fortuna-results-grid {
+    grid-template-columns: 1fr;
+
+    gap: 15px;
+  }
+
+  /* Error */
+
+  .fortuna-error {
+    align-items: flex-start;
+
+    flex-wrap: wrap;
+  }
+
+  .fortuna-error button {
+    margin-left: 36px;
+  }
+
+  /* Composer */
+
+  .fortuna-input-wrapper {
+    padding: 9px 12px max(10px, env(safe-area-inset-bottom));
+  }
+
+  .fortuna-input-container {
+    min-height: 50px;
+
+    padding-left: 12px;
+
+    border-radius: 14px;
+  }
+
+  .fortuna-input-container input {
+    font-size: 0.78rem;
+  }
+
+  .fortuna-input-container button {
+    width: 36px;
+    height: 36px;
+
+    border-radius: 9px;
+  }
+
+  .fortuna-input-footer > span {
+    display: none;
+  }
+
+  .fortuna-input-footer {
+    justify-content: flex-end;
+  }
+}
+
+/* ============================================================
+   SMALL MOBILE
+============================================================ */
+
+@media (max-width: 420px) {
+  .fortuna-main {
+    padding-left: 10px;
+
+    padding-right: 10px;
+  }
+
+  .fortuna-brand {
+    gap: 8px;
+  }
+
+  .fortuna-brand-symbol {
+    width: 31px;
+    height: 31px;
+
+    border-radius: 8px;
+  }
+
+  .fortuna-brand-eyebrow {
+    font-size: 0.42rem;
+  }
+
+  .fortuna-brand h1 {
+    font-size: 0.82rem;
+
+    letter-spacing: 1.8px;
+  }
+
+  .fortuna-new-chat {
+    padding: 6px 8px;
+
+    font-size: 0.55rem;
+  }
+
+  .fortuna-content {
+    padding-left: 1px;
+
+    padding-right: 1px;
+  }
+
+  .fortuna-welcome h2 {
+    font-size: 2.15rem;
+  }
+
+  .fortuna-welcome-description {
+    font-size: 0.74rem;
+  }
+
+  .fortuna-user-message {
+    max-width: 92%;
+  }
+
+  .fortuna-discovery-heading h2 {
+    font-size: 1.7rem;
+  }
+
+  .fortuna-analysis-item {
+    grid-template-columns:
+      34px
+      minmax(0, 1fr);
+
+    gap: 9px;
+  }
+
+  .fortuna-input-icon {
+    display: none;
+  }
+
+  .fortuna-input-footer button {
+    font-size: 0.55rem;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION
+============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+
+    animation-duration: 0.01ms !important;
+
+    animation-iteration-count: 1 !important;
+
+    transition-duration: 0.01ms !important;
+  }
+}

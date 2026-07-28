@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import helmet from "helmet";
 import gamesRouter from "./routes/games.js";
 import usersRouter from "./routes/users.js";
+import fortunaRouter from "./routes/fortunaRoutes.js";
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ app.use(express.json({ limit: "100kb" }));
 
 app.use("/api/games", gamesRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/fortuna", fortunaRouter);
 
 // ================================
 // Health Check

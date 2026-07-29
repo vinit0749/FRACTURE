@@ -16,19 +16,9 @@ export function useFortuna() {
   // - Fortuna messages
   // - Discovery result blocks
   //
-  // Example:
-  //
-  // [
-  //   { role: "user", content: "I want an RPG." },
-  //   { role: "model", content: "What kind?" },
-  //   { type: "discovery", ... },
-  //   { role: "user", content: "Something less dark." },
-  //   { role: "model", content: "Got it..." },
-  //   { type: "discovery", ... }
-  // ]
-  //
-  // This allows FORTUNA to become a continuous
-  // conversation instead of a one-shot search.
+  // Discovery blocks are kept in the UI timeline
+  // but are excluded from chat history sent to
+  // the chat API.
   // ============================================
 
   const [timeline, setTimeline] = useState([]);
@@ -50,6 +40,11 @@ export function useFortuna() {
   //
   // Represents the user's CURRENT accumulated
   // preferences.
+  //
+  // This is sent to the backend on every new
+  // FORTUNA message so the backend can preserve
+  // preferences that the latest AI response may
+  // accidentally omit.
   // ============================================
 
   const [intent, setIntent] = useState(null);
@@ -131,11 +126,21 @@ export function useFortuna() {
       // ========================================
       // STEP 1
       // ASK FORTUNA
+      //
+      // IMPORTANT:
+      //
+      // Send the CURRENT accumulated intent along
+      // with the conversation.
+      //
+      // This protects previously extracted
+      // preferences if the AI returns an intent
+      // that accidentally omits them.
       // ========================================
 
       const fortunaResponse = await sendFortunaMessage(
         trimmedMessage,
         currentHistory,
+        intent,
       );
 
       if (!fortunaResponse?.reply) {
@@ -156,10 +161,10 @@ export function useFortuna() {
       setTimeline(conversationWithReply);
 
       // ========================================
-      // SAVE CURRENT INTENT
+      // SAVE CURRENT ACCUMULATED INTENT
       // ========================================
 
-      const newIntent = fortunaResponse?.intent || null;
+      const newIntent = fortunaResponse?.intent || intent || null;
 
       setIntent(newIntent);
 

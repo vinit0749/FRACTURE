@@ -11,6 +11,7 @@ function FortunaPage() {
   const [searchInput, setSearchInput] = useState("");
 
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   const {
     timeline = [],
@@ -53,11 +54,27 @@ function FortunaPage() {
   // ============================================
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
+    if (!messagesEndRef.current) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      messagesEndRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
     });
   }, [safeTimeline.length, loading]);
+
+  // ============================================
+  // AUTO FOCUS INPUT
+  // ============================================
+
+  useEffect(() => {
+    if (!loading) {
+      inputRef.current?.focus();
+    }
+  }, [loading]);
 
   // ============================================
   // SEND MESSAGE
@@ -208,7 +225,7 @@ function FortunaPage() {
             <div className="fortuna-analysis-list">
               {recommendations.slice(0, 6).map((recommendation, index) => (
                 <article
-                  key={`${recommendation?.gameName || "game"}-${index}`}
+                  key={`${recommendation?.title || "game"}-${index}`}
                   className="fortuna-analysis-item"
                 >
                   <span className="fortuna-analysis-rank">
@@ -216,7 +233,7 @@ function FortunaPage() {
                   </span>
 
                   <div className="fortuna-analysis-content">
-                    <h4>{recommendation?.gameName || "Recommended game"}</h4>
+                    <h4>{recommendation?.title || "Recommended game"}</h4>
 
                     <p>
                       {recommendation?.reason ||
@@ -352,86 +369,6 @@ function FortunaPage() {
                   Don't search for a title. Tell me about the experience you
                   want, and we'll figure it out together.
                 </p>
-
-                <div className="fortuna-suggestions">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handlePromptSelect(
-                        "I want an RPG with a great story that I can really get lost in.",
-                      )
-                    }
-                  >
-                    <span className="fortuna-suggestion-icon">✦</span>
-
-                    <span>
-                      <strong>A story I can get lost in</strong>
-
-                      <small>
-                        Find an RPG with characters and a world worth caring
-                        about.
-                      </small>
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handlePromptSelect(
-                        "I want a huge open world where exploration is the main focus.",
-                      )
-                    }
-                  >
-                    <span className="fortuna-suggestion-icon">◈</span>
-
-                    <span>
-                      <strong>A world to disappear into</strong>
-
-                      <small>
-                        Massive worlds, exploration, secrets and discovery.
-                      </small>
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handlePromptSelect(
-                        "I want something difficult but rewarding that feels great to master.",
-                      )
-                    }
-                  >
-                    <span className="fortuna-suggestion-icon">◆</span>
-
-                    <span>
-                      <strong>Something worth mastering</strong>
-
-                      <small>
-                        Challenging combat, skill and satisfying progression.
-                      </small>
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handlePromptSelect(
-                        "I loved Cyberpunk 2077. Find me something with a similar feeling but more exploration.",
-                      )
-                    }
-                  >
-                    <span className="fortuna-suggestion-icon">◇</span>
-
-                    <span>
-                      <strong>Something like a game I love</strong>
-
-                      <small>
-                        Start with a game you already know and we'll go from
-                        there.
-                      </small>
-                    </span>
-                  </button>
-                </div>
               </section>
             ) : (
               /* ======================================
@@ -512,8 +449,6 @@ function FortunaPage() {
                       </div>
                     </div>
                   )}
-
-                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* ==================================
@@ -562,7 +497,7 @@ function FortunaPage() {
                     </div>
                   )}
 
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} className="fortuna-scroll-anchor" />
               </section>
             )}
           </div>
@@ -576,6 +511,7 @@ function FortunaPage() {
               <div className="fortuna-input-icon">✦</div>
 
               <input
+                ref={inputRef}
                 type="text"
                 value={input || ""}
                 onChange={(event) => setInput(event.target.value)}

@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post("/chat", async (req, res) => {
   try {
-    const { message, history = [] } = req.body;
+    const { message, history = [], intent = {} } = req.body;
 
     if (!message || typeof message !== "string") {
       return res.status(400).json({
@@ -26,7 +26,13 @@ router.post("/chat", async (req, res) => {
       });
     }
 
-    const fortunaResponse = await askFortuna(message, history);
+    if (!intent || typeof intent !== "object" || Array.isArray(intent)) {
+      return res.status(400).json({
+        message: "FORTUNA intent must be an object.",
+      });
+    }
+
+    const fortunaResponse = await askFortuna(message, history, intent);
 
     return res.json({
       reply: fortunaResponse.reply,

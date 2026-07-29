@@ -5,13 +5,20 @@ const BASE_URL =
 // FORTUNA CHAT
 // ==============================================
 
-export async function sendFortunaMessage(message, history = []) {
+export async function sendFortunaMessage(message, history = [], intent = null) {
   if (!message || typeof message !== "string") {
     throw new Error("A valid FORTUNA message is required.");
   }
 
   if (!Array.isArray(history)) {
     throw new Error("FORTUNA conversation history must be an array.");
+  }
+
+  if (
+    intent !== null &&
+    (typeof intent !== "object" || Array.isArray(intent))
+  ) {
+    throw new Error("FORTUNA intent must be an object or null.");
   }
 
   const response = await fetch(`${BASE_URL}/fortuna/chat`, {
@@ -24,6 +31,7 @@ export async function sendFortunaMessage(message, history = []) {
     body: JSON.stringify({
       message,
       history,
+      intent: intent || {},
     }),
   });
 

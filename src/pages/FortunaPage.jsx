@@ -19,7 +19,6 @@ function FortunaPage() {
     setInput,
     sendMessage,
     loading = false,
-    intent = null,
     error = null,
     resetFortuna,
   } = useFortuna();
@@ -35,10 +34,6 @@ function FortunaPage() {
       item &&
       (item.role === "user" || item.role === "model") &&
       typeof item.content === "string",
-  );
-
-  const discoveryBlocks = safeTimeline.filter(
-    (item) => item && item.type === "discovery",
   );
 
   // ============================================
@@ -59,7 +54,7 @@ function FortunaPage() {
     }
 
     requestAnimationFrame(() => {
-      messagesEndRef.current.scrollIntoView({
+      messagesEndRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
@@ -93,72 +88,6 @@ function FortunaPage() {
   }
 
   // ============================================
-  // PROMPT SUGGESTION
-  // ============================================
-
-  function handlePromptSelect(prompt) {
-    if (loading) {
-      return;
-    }
-
-    setInput(prompt);
-  }
-
-  // ============================================
-  // DISCOVERY PROFILE
-  // ============================================
-
-  function renderIntentTags(discoveryIntent) {
-    if (!discoveryIntent) {
-      return null;
-    }
-
-    const tags = [];
-
-    if (Array.isArray(discoveryIntent.genres)) {
-      discoveryIntent.genres.forEach((genre) => {
-        if (genre) {
-          tags.push(genre);
-        }
-      });
-    }
-
-    if (discoveryIntent.setting) {
-      tags.push(discoveryIntent.setting);
-    }
-
-    if (discoveryIntent.worldStructure) {
-      tags.push(discoveryIntent.worldStructure);
-    }
-
-    if (discoveryIntent.exploration) {
-      tags.push(`${discoveryIntent.exploration} exploration`);
-    }
-
-    if (discoveryIntent.storyImportance) {
-      tags.push(`${discoveryIntent.storyImportance} story`);
-    }
-
-    if (tags.length === 0) {
-      return null;
-    }
-
-    return (
-      <div className="fortuna-discovery-profile">
-        <span className="fortuna-discovery-profile-label">
-          DISCOVERY PROFILE
-        </span>
-
-        <div className="fortuna-discovery-profile-tags">
-          {tags.map((tag, index) => (
-            <span key={`${tag}-${index}`}>{tag}</span>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================
   // DISCOVERY RESULT BLOCK
   // ============================================
 
@@ -172,10 +101,6 @@ function FortunaPage() {
       : [];
 
     const games = Array.isArray(discovery.games) ? discovery.games : [];
-
-    const discoveryAnalysis = discovery.analysis || "";
-
-    const discoveryIntent = discovery.intent || null;
 
     if (games.length === 0) {
       return null;
@@ -197,11 +122,7 @@ function FortunaPage() {
             </span>
 
             <h2>I think I found something for you.</h2>
-
-            {discoveryAnalysis && <p>{discoveryAnalysis}</p>}
           </div>
-
-          {renderIntentTags(discoveryIntent)}
         </div>
 
         {/* ========================================
@@ -223,25 +144,31 @@ function FortunaPage() {
             </div>
 
             <div className="fortuna-analysis-list">
-              {recommendations.slice(0, 6).map((recommendation, index) => (
-                <article
-                  key={`${recommendation?.title || "game"}-${index}`}
-                  className="fortuna-analysis-item"
-                >
-                  <span className="fortuna-analysis-rank">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
+              {recommendations.slice(0, 6).map((recommendation, index) => {
+                if (!recommendation) {
+                  return null;
+                }
 
-                  <div className="fortuna-analysis-content">
-                    <h4>{recommendation?.title || "Recommended game"}</h4>
+                return (
+                  <article
+                    key={`${recommendation.title || "game"}-${index}`}
+                    className="fortuna-analysis-item"
+                  >
+                    <span className="fortuna-analysis-rank">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
 
-                    <p>
-                      {recommendation?.reason ||
-                        "This game matches the experience you described."}
-                    </p>
-                  </div>
-                </article>
-              ))}
+                    <div className="fortuna-analysis-content">
+                      <h4>{recommendation.title || "Recommended game"}</h4>
+
+                      <p>
+                        {recommendation.reason ||
+                          "This game matches the experience you described."}
+                      </p>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
         )}
@@ -268,9 +195,15 @@ function FortunaPage() {
           </div>
 
           <div className="fortuna-results-grid">
-            {games.map((game) => (
-              <GameCard key={game.id} game={game} showLibraryStatus={false} />
-            ))}
+            {games.map((game) => {
+              if (!game || !game.id) {
+                return null;
+              }
+
+              return (
+                <GameCard key={game.id} game={game} showLibraryStatus={false} />
+              );
+            })}
           </div>
         </div>
 
@@ -300,21 +233,21 @@ function FortunaPage() {
 
   return (
     <div className="fortuna-page">
-      {/* ==========================================
+      {/* ========================================
           GLOBAL HEADER
-      ========================================== */}
+      ======================================== */}
 
       <Header searchInput={searchInput} updateSearchInput={updateSearchInput} />
 
-      {/* ==========================================
+      {/* ========================================
           FORTUNA EXPERIENCE
-      ========================================== */}
+      ======================================== */}
 
       <main className="fortuna-main">
         <div className="fortuna-shell">
-          {/* ========================================
+          {/* ======================================
               TOP BAR
-          ======================================== */}
+          ====================================== */}
 
           <header className="fortuna-topbar">
             <div className="fortuna-brand">
@@ -340,16 +273,12 @@ function FortunaPage() {
             )}
           </header>
 
-          {/* ========================================
+          {/* ======================================
               MAIN CONTENT
-          ======================================== */}
+          ====================================== */}
 
           <div className="fortuna-content">
             {safeMessages.length === 0 ? (
-              /* ======================================
-                 EMPTY / WELCOME STATE
-              ====================================== */
-
               <section className="fortuna-welcome">
                 <div className="fortuna-welcome-mark">
                   <span>✦</span>
@@ -371,26 +300,26 @@ function FortunaPage() {
                 </p>
               </section>
             ) : (
-              /* ======================================
-                 ACTIVE CONVERSATION
-              ====================================== */
-
               <section className="fortuna-conversation">
                 <div className="fortuna-message-list">
                   {safeTimeline.map((item, index) => {
-                    /* ==================================
-                       DISCOVERY BLOCK
-                    ================================== */
+                    // ==================================
+                    // DISCOVERY BLOCK
+                    // ==================================
 
                     if (item?.type === "discovery") {
                       return renderDiscoveryBlock(item, index);
                     }
 
-                    /* ==================================
-                       CHAT MESSAGE
-                    ================================== */
+                    // ==================================
+                    // CHAT MESSAGE
+                    // ==================================
 
                     if (item?.role !== "user" && item?.role !== "model") {
+                      return null;
+                    }
+
+                    if (typeof item.content !== "string") {
                       return null;
                     }
 
@@ -467,35 +396,13 @@ function FortunaPage() {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        sendMessage("Please try the discovery again.")
-                      }
+                      onClick={() => setInput(input || "")}
                       disabled={loading}
                     >
                       Try again
                     </button>
                   </div>
                 )}
-
-                {/* ==================================
-                    NO RESULTS
-                ================================== */}
-
-                {!loading &&
-                  intent?.readyForDiscovery === true &&
-                  safeMessages.length > 0 &&
-                  discoveryBlocks.length === 0 &&
-                  !error && (
-                    <div className="fortuna-no-results">
-                      <div className="fortuna-no-results-symbol">✦</div>
-
-                      <h3>I couldn't find the right matches yet.</h3>
-
-                      <p>
-                        Tell me what you want to change and I'll keep looking.
-                      </p>
-                    </div>
-                  )}
 
                 <div ref={messagesEndRef} className="fortuna-scroll-anchor" />
               </section>

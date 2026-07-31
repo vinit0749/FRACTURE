@@ -4,6 +4,26 @@ const BASE_URL =
 // ==============================================
 // FORTUNA CHAT
 // ==============================================
+//
+// Sends the user's conversation to FORTUNA.
+//
+// FORTUNA / Gemini is responsible for:
+// - Understanding the conversation
+// - Maintaining accumulated intent
+// - Deciding whether to continue
+// - Deciding whether preferences are being refined
+// - Deciding whether discovery should trigger
+//
+// The frontend does NOT decide whether discovery
+// should happen.
+//
+// FORTUNA returns:
+//
+// discoveryAction:
+// - "continue"
+// - "refine"
+// - "discover"
+// ==============================================
 
 export async function sendFortunaMessage(message, history = [], intent = null) {
   if (!message || typeof message !== "string") {
@@ -29,7 +49,7 @@ export async function sendFortunaMessage(message, history = [], intent = null) {
     },
 
     body: JSON.stringify({
-      message,
+      message: message.trim(),
       history,
       intent: intent || {},
     }),
@@ -45,11 +65,11 @@ export async function sendFortunaMessage(message, history = [], intent = null) {
 
   const data = await response.json();
 
-  // ==========================================
+  // ============================================
   // VALIDATE FORTUNA RESPONSE
-  // ==========================================
+  // ============================================
 
-  if (!data || typeof data !== "object") {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
     throw new Error("FORTUNA returned an invalid response.");
   }
 
@@ -57,38 +77,97 @@ export async function sendFortunaMessage(message, history = [], intent = null) {
     throw new Error("FORTUNA returned an empty response.");
   }
 
-  return data;
+  // ============================================
+  // VALIDATE DISCOVERY ACTION
+  // ============================================
+  //
+  // FORTUNA / Gemini is the sole decision-maker.
+  //
+  // The frontend trusts the backend decision.
+  //
+  // Valid values:
+  //
+  // continue
+  // refine
+  // discover
+  // ============================================
+
+  if (!["continue", "refine", "discover"].includes(data.discoveryAction)) {
+    throw new Error("FORTUNA returned an invalid discovery action.");
+  }
+
+  // ============================================
+  // VALIDATE INTENT
+  // ============================================
+
+  if (
+    !data.intent ||
+    typeof data.intent !== "object" ||
+    Array.isArray(data.intent)
+  ) {
+    throw new Error("FORTUNA returned an invalid intent.");
+  }
+
+  return {
+    reply: data.reply,
+    discoveryAction: data.discoveryAction,
+    intent: data.intent,
+    replacePreferences:
+      typeof data.replacePreferences === "boolean"
+        ? data.replacePreferences
+        : false,
+  };
 }
 
 // ==============================================
 // FORTUNA DISCOVERY
 // ==============================================
 //
-// FORTUNA is responsible for:
-// - Understanding the user's taste
-// - Choosing the best games
-// - Explaining why each game fits
+// This function executes the discovery pipeline
+// AFTER FORTUNA has decided:
 //
-// RAWG is responsible only for:
-// - Retrieving the actual game data
-// - Providing game IDs
-// - Providing images
-// - Providing ratings
-// - Providing genres
-// - Providing release dates
+// discoveryAction === "discover"
 //
-// The full conversation is sent so FORTUNA
-// can make recommendations based on everything
-// the user said, not only the final structured intent.
+// The frontend does not independently decide
+// whether discovery is appropriate.
+//
+// Flow:
+//
+// FORTUNA
+//    ↓
+// discoveryAction: "discover"
+//    ↓
+// useFortuna.js
+//    ↓
+// discoverFortunaGames()
+//    ↓
+// FORTUNA Discovery Service
+//    ↓
+// Gemini selects games
+//    ↓
+// RAWG retrieves games
+//
+// `previousRecommendations` allows FDS to:
+// - Avoid previously shown games
+// - Use previous games as taste signals
+// - Find fresh games for "more" requests
 // ==============================================
 
-export async function discoverFortunaGames(intent, history = []) {
-  if (!intent || typeof intent !== "object") {
+export async function discoverFortunaGames(
+  intent,
+  history = [],
+  previousRecommendations = [],
+) {
+  if (!intent || typeof intent !== "object" || Array.isArray(intent)) {
     throw new Error("A valid FORTUNA discovery intent is required.");
   }
 
   if (!Array.isArray(history)) {
     throw new Error("FORTUNA conversation history must be an array.");
+  }
+
+  if (!Array.isArray(previousRecommendations)) {
+    throw new Error("FORTUNA previous recommendations must be an array.");
   }
 
   const response = await fetch(`${BASE_URL}/fortuna/discover`, {
@@ -101,6 +180,7 @@ export async function discoverFortunaGames(intent, history = []) {
     body: JSON.stringify({
       intent,
       history,
+      previousRecommendations,
     }),
   });
 
@@ -114,12 +194,31 @@ export async function discoverFortunaGames(intent, history = []) {
 
   const data = await response.json();
 
-  // ==========================================
+  // ============================================
   // VALIDATE DISCOVERY RESPONSE
-  // ==========================================
+  // ============================================
 
-  if (!data || typeof data !== "object") {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
     throw new Error("FORTUNA returned an invalid discovery response.");
+  }
+
+  // ============================================
+  // VALIDATE RESULTS
+  // ============================================
+
+  if (!Array.isArray(data.results)) {
+    throw new Error("FORTUNA returned invalid discovery results.");
+  }
+
+  // ============================================
+  // VALIDATE RECOMMENDATIONS
+  // ============================================
+
+  if (
+    data.recommendations !== undefined &&
+    !Array.isArray(data.recommendations)
+  ) {
+    throw new Error("FORTUNA returned invalid recommendation data.");
   }
 
   return data;

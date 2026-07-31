@@ -1,353 +1,309 @@
 import { getGames } from "./fracture.js";
 
 // ==============================================
-// OPENROUTER
-// ==============================================
-
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-
-// ==============================================
-// FORTUNA DISCOVERY MODEL ROUTING
+// FORTUNA — FORTUNA DISCOVERY SERVICE (FDS)
 // ==============================================
 //
 // FDS = Fortuna Discovery Service
 //
-// FDS is responsible for:
-// - Understanding complete user intent
-// - Ranking game recommendations
-// - Selecting exact game titles
-// - Providing personalized recommendation reasons
+// Responsibilities:
+// - Select the best game recommendations
+// - Use Gemini to understand the user's current taste
+// - Rank recommendations by relevance
+// - Generate personalized reasons
+// - Avoid previously shown games
+// - Respect current preferences and exclusions
+// - Retrieve the selected games from RAWG
 //
-// FS handles conversational discovery.
-// FDS handles the final recommendation decision.
+// FDS does NOT:
+// - Maintain conversation state
+// - Decide whether discovery should happen
+// - Decide when discovery should trigger
+// - Ask the user questions
 //
-// FDS intentionally uses OpenRouter's dynamic free-model
-// router instead of manually cycling through individual
-// models.
+// FORTUNA / FS is responsible for deciding WHEN
+// discovery should happen.
 //
-// OpenRouter is responsible for selecting an available
-// compatible model and handling provider fallback.
+// FDS is only called AFTER FORTUNA decides:
 //
+// discoveryAction: "discover"
+//
+// Flow:
+//
+// User conversation
+//       ↓
+// Fortuna Service (FS)
+//       ↓
+// Gemini decides discovery is appropriate
+//       ↓
+// Fortuna Discovery Service (FDS)
+//       ↓
+// Gemini selects best game titles
+//       ↓
+// RAWG retrieves those games
+//       ↓
+// Final discovery results
+//
+// IMPORTANT:
+//
+// FDS should never independently decide whether the
+// user wants recommendations.
+//
+// If this service is called, discovery has already
+// been requested by FORTUNA.
+//
+// ==============================================
+
+// ==============================================
+// GEMINI CONFIG
+// ==============================================
+
+const GEMINI_API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models";
 
 const FORTUNA_DISCOVERY_MODEL =
-  process.env.FORTUNA_DISCOVERY_MODEL || "openrouter/free";
-
-// ==============================================
-// OPENROUTER CONFIG
-// ==============================================
-
-const OPENROUTER_SITE_URL =
-  process.env.OPENROUTER_SITE_URL ||
-  "https://fracture-game-discovery.vercel.app";
-
-const OPENROUTER_APP_NAME =
-  process.env.OPENROUTER_APP_NAME || "FRACTURE - Game Discovery";
-
-// ==============================================
-// REQUEST CONFIG
-// ==============================================
+  process.env.FORTUNA_DISCOVERY_MODEL || "gemini-3.1-flash-lite";
 
 const FORTUNA_DISCOVERY_REQUEST_TIMEOUT = 60000;
 
 const MAX_RECOMMENDATIONS = 4;
 
 // ==============================================
-// FORTUNA RECOMMENDATION INSTRUCTION
+// FDS SYSTEM INSTRUCTION
 // ==============================================
 
 const FORTUNA_RECOMMENDATION_INSTRUCTION = `
-You are FORTUNA, the intelligent game discovery expert inside FRACTURE.
+You are FORTUNA's recommendation engine inside FRACTURE.
 
-You are the recommendation brain of FRACTURE.
+The user has already decided to discover games.
 
-Your job is to understand the user's COMPLETE gaming preferences and choose the strongest game titles for them.
+Your job is to select the best real games for the user's CURRENT taste.
 
-RAWG IS NOT THE RECOMMENDATION BRAIN.
+You do NOT decide whether discovery should happen.
+You do NOT ask questions.
+You do NOT continue the conversation.
+You do NOT search RAWG.
 
-RAWG is only used AFTER you select the games.
+The application will retrieve your selected titles from RAWG afterward.
 
-The application will use RAWG only to retrieve metadata, images, ratings, release dates, genres, and other information for the exact games YOU choose.
+==================================================
+CORE PRINCIPLES
+==================================================
 
-Therefore, YOU must decide which games are the best matches.
+1. Understand the user's CURRENT preferences from the provided intent and conversation.
 
-==================================
-CORE RESPONSIBILITY
-==================================
+2. Match the actual experience the user wants, not just broad genres.
 
-Read the COMPLETE conversation.
+3. Prioritize specific gameplay mechanics over generic genre labels.
 
-Read the structured preferences.
+4. Respect explicit dislikes, exclusions, and rejected games.
 
-Understand the actual gaming EXPERIENCE the user wants.
+5. Use the latest clarified preference when preferences conflict.
 
-Then choose up to 4 real, currently released games that genuinely match the user's preferences.
+6. Use reference games as taste signals, not automatic recommendations.
 
-Do not simply recommend popular games.
+7. If previous games are provided, do not repeat them.
 
-Do not recommend games merely because they share a genre.
+8. If the conversation asks for "more", "another batch", "similar", or "something different", use the previous games and conversation as context.
 
-Do not produce generic genre lists.
+9. Recommend only real, released, standalone games.
 
-Do not randomly choose famous games.
+10. Do not recommend DLC, expansions, unreleased games, or invented titles.
 
-Think about the COMPLETE combination of preferences.
+11. Prefer strong matches over popular games.
 
-Strong preferences matter more than weak preferences.
+12. Two excellent matches are better than four weak matches.
 
-Negative preferences must be respected.
+13. Return between 1 and 4 recommendations.
 
-If the user wants a linear game, avoid primarily open-world games.
+14. Rank recommendations from strongest match to weakest match.
 
-If the user wants an open-world game, avoid primarily linear games.
+15. Each recommendation reason must be specific and concise.
 
-If the user wants single-player, avoid multiplayer-focused games.
+==================================================
+MATCHING PRIORITY
+==================================================
 
-If the user dislikes Soulslike difficulty, do not recommend Soulslike games as primary matches.
+Use this priority order:
 
-If the user wants a medieval RPG, prioritize games that genuinely fit that setting.
+1. Explicit current requirements
+2. Explicit dislikes and exclusions
+3. Specific gameplay mechanics
+4. Latest clarified preferences
+5. Desired gameplay experience
+6. Core gameplay loop
+7. Positive reference games
+8. Setting
+9. World structure
+10. Genre
+11. Combat
+12. Exploration
+13. Progression
+14. Player freedom
+15. Story
+16. Atmosphere
+17. Difficulty
+18. Multiplayer
+19. Platform
 
-==================================
-USE THE ENTIRE CONVERSATION
-==================================
+Specific gameplay requirements are more important than broad labels.
 
-The latest user message is NOT the only source of information.
+Examples:
 
-Use everything the user has told FORTUNA.
+"parry-heavy combat"
+means parrying should be a meaningful part of combat.
 
-Pay attention to:
+"melee-focused"
+means melee should be central to gameplay.
 
-- Genre
-- Subgenre
-- Gameplay style
-- Core gameplay loop
-- Exploration
-- World size
-- Open world vs linear
-- World density
-- Side quests
-- Quest quality
-- Story importance
-- Narrative quality
-- Character writing
-- World-building
-- Atmosphere
-- Setting
-- Fantasy
-- Sci-fi
-- Cyberpunk
-- Horror
-- Post-apocalyptic
-- Historical settings
-- Medieval settings
-- Combat style
-- Melee combat
-- Ranged combat
-- Stealth
-- Magic
-- Character progression
-- RPG systems
-- Builds
-- Loot
-- Player freedom
-- Choice and consequence
-- Difficulty
-- Relaxing vs challenging
-- Single-player
-- Multiplayer
-- Co-op
-- Competitive multiplayer
-- Platform
-- Visual style
-- Pacing
-- Immersion
-- Replayability
-- Games the user explicitly likes
-- Games the user explicitly dislikes
-- Features the user wants
-- Features the user wants to avoid
+"open-world freedom"
+means meaningful exploration and player freedom.
 
-==================================
+"hack and slash"
+means fast, combo-oriented melee combat.
+
+"stealth-focused"
+means stealth should be a meaningful gameplay option.
+
+Do not reduce specific requirements into generic genres.
+
+==================================================
 REFERENCE GAMES
-==================================
+==================================================
 
-If the user explicitly mentions a game they like, use it as a clue.
+Only treat explicitly liked games as positive references.
 
-Do not automatically recommend the same game.
+If the user says:
 
-Understand WHY that game matters to the user.
+"I like Sekiro because of the parrying."
 
-For example:
+Then:
 
-"I loved The Witcher 3 because of the side quests."
+- Sekiro is a positive reference.
+- Parry-focused combat is a strong preference.
 
-This may indicate:
+If the user dislikes a referenced game:
 
-- Strong side stories
-- Memorable characters
-- Narrative depth
-- World-building
-- Exploration
-- A living world
+- Do not recommend it.
+- Do not treat it as a positive reference.
 
-Use the underlying preference when selecting recommendations.
+A game mentioned casually is not automatically a positive reference.
 
-If the user explicitly mentions a game negatively, treat it as a negative preference.
+==================================================
+PREVIOUSLY SHOWN GAMES
+==================================================
 
-Do not recommend rejected games as primary matches.
+Previously shown games are provided separately.
 
-==================================
-RELEASE STATUS
-==================================
+Never repeat a previously shown game unless the user explicitly asks for it again.
 
-Only recommend games that are currently released and playable.
+If the user asks for:
 
-Do not recommend:
+- more games
+- another batch
+- more like these
+- similar games
+- something similar
 
-- Unreleased games
-- Upcoming games
-- Announced games
-- Rumored games
+then:
 
-The user should realistically be able to play every game you recommend.
+1. Use previous games as taste signals.
+2. Learn what connects those games.
+3. Find NEW games that fit the same desired experience.
+4. Never simply repeat the previous titles.
 
-==================================
-RANKING
-==================================
+If a previously shown game was explicitly disliked, never recommend it.
 
-Rank recommendations from strongest match to weakest match.
+==================================================
+CONVERSATION CONTEXT
+==================================================
 
-Rank 1 must be the strongest overall match.
+Use the recent conversation to understand context.
 
-Do not fill all 4 positions with weak recommendations.
+Resolve phrases such as:
 
-If only 2 or 3 games are genuinely strong matches, return only those.
+"these"
+"them"
+"more"
+"another"
+"something similar"
+"something different"
 
-Quality is more important than quantity.
+using the surrounding conversation.
 
-==================================
-PERSONALIZED REASONS
-==================================
+The accumulated intent is the primary preference state.
 
-Every recommendation must include a concise, personalized reason.
+The conversation provides additional context, especially for:
 
-The reason must explain why THIS game fits THIS user's request.
+- recent preference changes
+- recommendation feedback
+- rejected games
+- requests for similar games
+- requests for something completely different
 
-Keep each reason under 35 words.
+==================================================
+QUALITY
+==================================================
 
-Be concise.
+Recommend games that genuinely fit.
 
-Do not explain your reasoning process.
+Do not recommend a game only because it is:
 
-Do not include analysis.
+- popular
+- highly rated
+- from the same genre
+- made by the same developer
+- superficially similar
 
-Do not include chain-of-thought.
+A recommendation should match the experience the user actually described.
 
-Bad:
+Return 1 to 4 strong matches.
 
-"Great RPG with an amazing story."
+Rank the strongest match first.
 
-Good:
+Each reason must be under 30 words.
 
-"You wanted a tightly focused RPG with deep lore and environmental storytelling, and this is a strong match because much of its world-building is discovered through exploration and details hidden throughout the world."
-
-Each reason should be specific and different.
-
-Do not repeat the same generic reason for multiple games.
-
-==================================
-TITLE ACCURACY
-==================================
-
-Return the official, commonly recognized title of each game.
-
-Avoid:
-
-- Misspellings
-- Invented titles
-- Fake sequels
-- Unreleased games
-- DLC titles when the user is clearly asking for standalone games
-- Random editions unless the edition itself is the relevant game
-
-The application will search RAWG using the title you provide.
-
-Therefore, title accuracy is extremely important.
-
-==================================
-IMPORTANT
-==================================
-
-You are selecting GAME TITLES.
-
-You do NOT need:
-
-- RAWG IDs
-- Image URLs
-- Ratings
-- Release dates
-- Platform metadata
-- RAWG data
-
-The application will retrieve those later.
-
-Only recommend real games.
-
-==================================
+==================================================
 OUTPUT
-==================================
+==================================================
 
 Return ONLY valid JSON.
 
-The JSON must have exactly this structure:
+Use exactly this structure:
 
 {
   "recommendations": [
     {
       "rank": 1,
       "title": "Game Title",
-      "reason": "Why this game specifically matches the user's preferences."
+      "reason": "Specific reason this game fits the user's preferences."
     }
   ]
 }
 
-Rules:
+The top-level object must contain ONLY:
 
-- Return between 1 and 4 recommendations.
-- The top-level object must contain ONLY "recommendations".
-- "recommendations" must be an array.
-- Each recommendation must contain ONLY "rank", "title", and "reason".
-- rank must be a number.
-- title must be a string.
-- reason must be a string.
-- Keep each reason under 35 words.
-- Be concise.
-- Do not explain your reasoning process.
-- Do not include analysis.
-- Do not include chain-of-thought.
-- Only recommend real, currently released games.
-- Only recommend games that the user can realistically play now.
-- Do not include RAWG IDs.
-- Do not include image URLs.
-- Do not include ratings.
-- Do not include release dates.
-- Do not include platform metadata.
-- Do not include any fields other than rank, title, and reason.
-- Do not return Markdown.
-- Do not return code fences.
-- Do not return commentary.
-- Do not return an empty recommendations array.
+- recommendations
+
+Each recommendation must contain ONLY:
+
+- rank
+- title
+- reason
+
+No Markdown.
+No code fences.
+No commentary.
+No analysis.
+No chain-of-thought.
 `;
 
 // ==============================================
-// HELPERS
+// NORMALIZE TEXT
 // ==============================================
 
 function normalize(value) {
-  if (typeof value !== "string") {
-    return "";
-  }
-
-  return value.trim().toLowerCase();
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
 // ==============================================
@@ -429,24 +385,102 @@ function normalizeRecommendations(recommendations) {
     })
     .filter(Boolean);
 
-  const unique = uniqueByTitle(normalized);
-
-  return unique
+  return uniqueByTitle(normalized)
     .sort((a, b) => a.rank - b.rank)
     .slice(0, MAX_RECOMMENDATIONS)
     .map((recommendation, index) => ({
-      ...recommendation,
-
       rank: index + 1,
+      title: recommendation.title,
+      reason: recommendation.reason,
     }));
 }
 
 // ==============================================
-// BUILD CONVERSATION CONTEXT
+// NORMALIZE PREVIOUSLY SHOWN GAMES
 // ==============================================
 
-function buildConversationContext(history = [], intent = {}) {
-  const safeHistory = Array.isArray(history)
+function normalizePreviouslyShownGames(previousRecommendations = []) {
+  if (!Array.isArray(previousRecommendations)) {
+    return [];
+  }
+
+  return previousRecommendations
+    .map((recommendation) => {
+      if (!recommendation) {
+        return null;
+      }
+
+      const title =
+        typeof recommendation.title === "string"
+          ? recommendation.title.trim()
+          : typeof recommendation.name === "string"
+            ? recommendation.name.trim()
+            : "";
+
+      const reason =
+        typeof recommendation.reason === "string"
+          ? recommendation.reason.trim()
+          : typeof recommendation.fortunaReason === "string"
+            ? recommendation.fortunaReason.trim()
+            : "";
+
+      if (!title) {
+        return null;
+      }
+
+      return {
+        title,
+        reason,
+      };
+    })
+    .filter(Boolean);
+}
+
+// ==============================================
+// FILTER PREVIOUSLY SHOWN GAMES
+// ==============================================
+
+function filterPreviouslyShownGames(
+  recommendations = [],
+  previousRecommendations = [],
+) {
+  const previousTitles = new Set(
+    normalizePreviouslyShownGames(previousRecommendations).map((game) =>
+      normalizeTitle(game.title),
+    ),
+  );
+
+  return recommendations.filter(
+    (recommendation) =>
+      !previousTitles.has(normalizeTitle(recommendation.title)),
+  );
+}
+
+// ==============================================
+// BUILD COMPACT FDS CONTEXT
+// ==============================================
+//
+// FDS intentionally receives a compact context.
+//
+// FS already maintains the accumulated intent.
+// Therefore FDS does not need the entire conversation.
+//
+// Recent conversation is only used for:
+// - "more like these"
+// - "similar"
+// - recommendation feedback
+// - recent preference changes
+//
+// Keeping this compact reduces Gemini token usage.
+//
+// ==============================================
+
+function buildDiscoveryContext(
+  history = [],
+  intent = {},
+  previousRecommendations = [],
+) {
+  const conversation = Array.isArray(history)
     ? history
         .filter(
           (item) =>
@@ -465,14 +499,15 @@ function buildConversationContext(history = [], intent = {}) {
           content: item.content.trim(),
         }))
         .filter((item) => item.content)
+        .slice(-8)
     : [];
 
+  const previouslyShownGames = normalizePreviouslyShownGames(
+    previousRecommendations,
+  );
+
   return {
-    conversation: safeHistory,
-
-    structuredPreferences: {
-      readyForDiscovery: Boolean(intent?.readyForDiscovery),
-
+    preferences: {
       genres: Array.isArray(intent?.genres) ? intent.genres : [],
 
       platforms: Array.isArray(intent?.platforms) ? intent.platforms : [],
@@ -501,11 +536,15 @@ function buildConversationContext(history = [], intent = {}) {
         ? intent.referenceGames
         : [],
     },
+
+    conversation,
+
+    previouslyShownGames,
   };
 }
 
 // ==============================================
-// PARSE AI JSON SAFELY
+// PARSE GEMINI RESPONSE
 // ==============================================
 
 function parseRecommendationResponse(responseText) {
@@ -515,131 +554,39 @@ function parseRecommendationResponse(responseText) {
 
   let cleaned = responseText.trim();
 
-  // ============================================
-  // REMOVE MARKDOWN FENCES
-  // ============================================
-
-  if (cleaned.startsWith("```")) {
-    cleaned = cleaned
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
-  }
-
-  // ============================================
-  // DIRECT JSON PARSE
-  // ============================================
+  cleaned = cleaned
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 
   try {
-    const parsed = JSON.parse(cleaned);
-
-    return parsed;
-  } catch (error) {
-    console.warn(
-      "FORTUNA direct JSON parse failed. Attempting truncated JSON recovery...",
-    );
+    return JSON.parse(cleaned);
+  } catch {
+    // Continue recovery.
   }
 
-  // ============================================
-  // TRUNCATED JSON RECOVERY
-  // ============================================
-  //
-  // Free models may occasionally stop generation
-  // before completing the full JSON response.
-  //
-  // Recover ONLY fully completed recommendation
-  // objects from the response.
-  //
-  // Example:
-  //
-  // {
-  //   "recommendations": [
-  //     {
-  //       "rank": 1,
-  //       "title": "Game",
-  //       "reason": "Complete reason."
-  //     },
-  //     {
-  //       "rank": 2,
-  //       "title": "Another Game",
-  //       "reason": "Truncated...
-  //
-  // The first complete recommendation is recovered.
-  // The incomplete recommendation is discarded.
-  // ============================================
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
 
-  const recommendationMatches = [
-    ...cleaned.matchAll(
-      /\{\s*"rank"\s*:\s*(\d+)\s*,\s*"title"\s*:\s*"((?:\\.|[^"\\])*)"\s*,\s*"reason"\s*:\s*"((?:\\.|[^"\\])*)"\s*\}/g,
-    ),
-  ];
-
-  if (recommendationMatches.length > 0) {
-    const recommendations = recommendationMatches
-      .map((match) => {
-        try {
-          return {
-            rank: Number(match[1]),
-
-            title: JSON.parse(`"${match[2]}"`),
-
-            reason: JSON.parse(`"${match[3]}"`),
-          };
-        } catch (error) {
-          console.warn(
-            "FORTUNA failed to recover one recommendation object:",
-            error,
-          );
-
-          return null;
-        }
-      })
-      .filter(Boolean);
-
-    if (recommendations.length > 0) {
-      console.warn(
-        `FORTUNA recovered ${recommendations.length} complete recommendation(s) from truncated JSON.`,
-      );
-
-      return {
-        recommendations,
-      };
+  if (start !== -1 && end > start) {
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      // Continue recovery.
     }
   }
-
-  // ============================================
-  // FAILED RECOVERY
-  // ============================================
-
-  console.error(
-    "FORTUNA recommendation JSON could not be parsed or recovered.",
-  );
-
-  console.error("FORTUNA recommendation raw response:", responseText);
 
   throw new Error("FORTUNA returned invalid recommendation data.");
 }
 
 // ==============================================
-// OPENROUTER REQUEST
-// ==============================================
-//
-// FDS uses OpenRouter's dynamic free-model router.
-//
-// Instead of manually trying:
-//
-// 120B → openrouter/free → 20B
-//
-// FDS makes one request to:
-//
-// openrouter/free
-//
-// OpenRouter handles model/provider fallback.
+// GEMINI REQUEST
 // ==============================================
 
-async function requestOpenRouter(messages) {
-  if (!process.env.OPENROUTER_API_KEY) {
-    throw new Error("OPENROUTER_API_KEY is not configured.");
+async function requestGemini(prompt) {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not configured.");
   }
 
   const controller = new AbortController();
@@ -648,45 +595,47 @@ async function requestOpenRouter(messages) {
     controller.abort();
   }, FORTUNA_DISCOVERY_REQUEST_TIMEOUT);
 
-  try {
-    console.log(
-      `FORTUNA FDS requesting dynamic model routing: ${FORTUNA_DISCOVERY_MODEL}`,
-    );
+  const url =
+    `${GEMINI_API_URL}/${FORTUNA_DISCOVERY_MODEL}:generateContent` +
+    `?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
 
-    const response = await fetch(OPENROUTER_API_URL, {
+  try {
+    const response = await fetch(url, {
       method: "POST",
 
       headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-
         "Content-Type": "application/json",
-
-        "HTTP-Referer": OPENROUTER_SITE_URL,
-
-        "X-Title": OPENROUTER_APP_NAME,
       },
 
       signal: controller.signal,
 
       body: JSON.stringify({
-        model: FORTUNA_DISCOVERY_MODEL,
-
-        messages,
-
-        temperature: 0.2,
-
-        max_tokens: 2000,
-
-        response_format: {
-          type: "json_object",
+        systemInstruction: {
+          parts: [
+            {
+              text: FORTUNA_RECOMMENDATION_INSTRUCTION,
+            },
+          ],
         },
 
-        reasoning: {
-          effort: "low",
-        },
+        contents: [
+          {
+            role: "user",
 
-        provider: {
-          allow_fallbacks: true,
+            parts: [
+              {
+                text: prompt,
+              },
+            ],
+          },
+        ],
+
+        generationConfig: {
+          temperature: 0.35,
+
+          maxOutputTokens: 300,
+
+          responseMimeType: "application/json",
         },
       }),
     });
@@ -698,78 +647,35 @@ async function requestOpenRouter(messages) {
     try {
       data = JSON.parse(responseText);
     } catch {
-      console.error(
-        "FORTUNA FDS returned a non-JSON OpenRouter response:",
-        responseText,
+      throw new Error(
+        `Gemini returned an invalid response (${response.status}).`,
       );
-
-      const error = new Error(
-        `OpenRouter returned an invalid response (${response.status}).`,
-      );
-
-      error.status = response.status;
-
-      throw error;
     }
-
-    // ==========================================
-    // OPENROUTER ERROR
-    // ==========================================
 
     if (!response.ok) {
-      const errorMessage =
+      const error = new Error(
         data?.error?.message ||
-        `OpenRouter request failed with status ${response.status}.`;
-
-      const error = new Error(errorMessage);
+          `Gemini request failed with status ${response.status}.`,
+      );
 
       error.status = response.status;
-
-      error.code = data?.error?.code;
-
+      error.code = data?.error?.status;
       error.raw = data;
-
-      console.error(
-        "FORTUNA FDS OpenRouter error:",
-        JSON.stringify(data, null, 2),
-      );
 
       throw error;
     }
-
-    // ==========================================
-    // SUCCESS
-    // ==========================================
-
-    console.log("FORTUNA FDS dynamic model request succeeded.");
 
     return data;
   } catch (error) {
-    // ==========================================
-    // TIMEOUT
-    // ==========================================
-
     if (error?.name === "AbortError") {
       const timeoutError = new Error(
-        "FORTUNA discovery request timed out while waiting for the AI model.",
+        "FORTUNA discovery request timed out while waiting for Gemini.",
       );
 
       timeoutError.code = "timeout";
 
-      console.error(
-        "FORTUNA FDS request timed out after",
-        FORTUNA_DISCOVERY_REQUEST_TIMEOUT,
-        "ms.",
-      );
-
       throw timeoutError;
     }
-
-    // ==========================================
-    // OTHER ERROR
-    // ==========================================
-
-    console.error("FORTUNA FDS request failed:", error);
 
     throw error;
   } finally {
@@ -778,140 +684,94 @@ async function requestOpenRouter(messages) {
 }
 
 // ==============================================
-// ASK FORTUNA TO CHOOSE GAMES
+// FORTUNA GAME SELECTION
+// ==============================================
+//
+// IMPORTANT:
+//
+// FDS does NOT decide whether discovery should happen.
+//
+// FS has already decided that.
+//
+// FDS only answers:
+//
+// "Which games best match this user right now?"
+//
 // ==============================================
 
-async function selectGamesWithFortuna(intent, history = []) {
-  const context = buildConversationContext(history, intent);
-
-  const userPrompt = `
-The following is the user's complete FORTUNA discovery context.
-
-CONVERSATION:
-${JSON.stringify(context.conversation, null, 2)}
-
-STRUCTURED PREFERENCES:
-${JSON.stringify(context.structuredPreferences, null, 2)}
-
-You are now making the FINAL GAME RECOMMENDATIONS.
-
-Use the user's complete conversation and structured preferences.
-
-Choose the strongest currently released games that match the user's COMPLETE desired experience.
-
-The AI is the recommendation brain.
-
-RAWG will only retrieve the exact game titles you select after this response.
-
-Think carefully about:
-
-1. What the user explicitly wants.
-2. What the user strongly prefers.
-3. What the user explicitly dislikes.
-4. Why reference games were mentioned.
-5. Which preferences are most important.
-6. Whether each game genuinely matches the complete experience.
-
-Do not recommend a game merely because it belongs to the requested genre.
-
-Return ONLY a valid JSON object.
-
-The JSON object MUST have exactly this structure:
-
-{
-  "recommendations": [
-    {
-      "rank": 1,
-      "title": "Game Title",
-      "reason": "Why this game specifically matches the user's preferences."
-    }
-  ]
-}
-
-Rules:
-
-- Return between 1 and 4 recommendations.
-- The top-level object must contain ONLY "recommendations".
-- "recommendations" must be an array.
-- Each recommendation must contain ONLY "rank", "title", and "reason".
-- rank must be a number.
-- title must be a string.
-- reason must be a string.
-- Keep each reason under 35 words.
-- Be concise.
-- Do not explain your reasoning process.
-- Do not include analysis.
-- Do not include chain-of-thought.
-- Only recommend real, currently released games.
-- Only recommend games that the user can realistically play now.
-- Do not include RAWG IDs.
-- Do not include image URLs.
-- Do not include ratings.
-- Do not include release dates.
-- Do not include platform metadata.
-- Do not include any fields other than rank, title, and reason.
-- Do not return Markdown.
-- Do not return code fences.
-- Do not return commentary.
-- Do not return an empty recommendations array.
-`;
-
-  const completion = await requestOpenRouter([
-    {
-      role: "system",
-
-      content: FORTUNA_RECOMMENDATION_INSTRUCTION,
-    },
-
-    {
-      role: "user",
-
-      content: userPrompt,
-    },
-  ]);
-
-  // ============================================
-  // LOG COMPLETION METADATA ONLY
-  // ============================================
-
-  console.log("FORTUNA discovery completion metadata:", {
-    model: completion?.model,
-
-    provider: completion?.provider,
-
-    finishReason: completion?.choices?.[0]?.finish_reason,
-
-    nativeFinishReason: completion?.choices?.[0]?.native_finish_reason,
-  });
-
-  const responseMessage = completion?.choices?.[0]?.message;
-
-  console.log(
-    "FORTUNA discovery message:",
-    JSON.stringify(responseMessage, null, 2),
+async function selectGamesWithFortuna(
+  intent,
+  history = [],
+  previousRecommendations = [],
+) {
+  const context = buildDiscoveryContext(
+    history,
+    intent,
+    previousRecommendations,
   );
 
-  const responseText = responseMessage?.content;
+  const previouslyShownTitles = context.previouslyShownGames.map(
+    (game) => game.title,
+  );
 
-  if (!responseText || !responseText.trim()) {
-    console.error("FORTUNA returned an empty recommendation response.");
+  const userPrompt = `
+Select the strongest game matches for the user's current preferences.
 
-    console.error(
-      "FORTUNA full completion:",
-      JSON.stringify(completion, null, 2),
-    );
+PREFERENCES:
+${JSON.stringify(context.preferences)}
 
+RECENT CONTEXT:
+${JSON.stringify(context.conversation)}
+
+PREVIOUSLY SHOWN:
+${JSON.stringify(previouslyShownTitles)}
+
+Rules:
+- Match the specific experience first.
+- Respect dislikes and exclusions.
+- Use recent conversation context when relevant.
+- If previous games exist, use them as taste signals.
+- Return new titles only.
+- Never repeat previously shown games.
+- Recommend only real released standalone games.
+- Prefer strong matches over popularity.
+- Return 1 to 4 recommendations.
+- Return only the required JSON object.
+`;
+
+  const completion = await requestGemini(userPrompt);
+
+  const responseText =
+    completion?.candidates?.[0]?.content?.parts
+      ?.map((part) => part?.text || "")
+      .join("")
+      .trim() || "";
+
+  if (!responseText) {
     throw new Error("FORTUNA returned an empty recommendation response.");
   }
 
   const parsedResponse = parseRecommendationResponse(responseText);
 
-  const recommendations = normalizeRecommendations(
-    parsedResponse.recommendations,
+  let recommendations = normalizeRecommendations(
+    parsedResponse?.recommendations,
   );
 
+  recommendations = filterPreviouslyShownGames(
+    recommendations,
+    previousRecommendations,
+  );
+
+  recommendations = recommendations.map((recommendation, index) => ({
+    rank: index + 1,
+    title: recommendation.title,
+    reason: recommendation.reason,
+  }));
+
   if (recommendations.length === 0) {
-    throw new Error("FORTUNA could not find suitable game recommendations.");
+    throw new Error(
+      "FORTUNA could not find suitable new game recommendations.",
+    );
   }
 
   return recommendations;
@@ -925,7 +785,6 @@ async function searchRawgGame(title) {
   const params = new URLSearchParams();
 
   params.set("search", title);
-
   params.set("page_size", "10");
 
   const data = await getGames(params.toString());
@@ -938,9 +797,7 @@ async function searchRawgGame(title) {
 
   const normalizedRequestedTitle = normalizeTitle(title);
 
-  // ============================================
-  // EXACT TITLE MATCH
-  // ============================================
+  // Exact title match first.
 
   const exactMatch = games.find(
     (game) => normalizeTitle(game.name) === normalizedRequestedTitle,
@@ -950,9 +807,7 @@ async function searchRawgGame(title) {
     return exactMatch;
   }
 
-  // ============================================
-  // TITLE CONTAINS MATCH
-  // ============================================
+  // Then allow confident partial matches.
 
   const containsMatch = games.find((game) => {
     const normalizedGameTitle = normalizeTitle(game.name);
@@ -967,22 +822,14 @@ async function searchRawgGame(title) {
     return containsMatch;
   }
 
-  // ============================================
-  // FALLBACK
-  // ============================================
+  // Never blindly accept RAWG's first result.
 
-  return games[0];
+  return null;
 }
 
 // ==============================================
 // RETRIEVE AI-SELECTED GAMES FROM RAWG
 // ==============================================
-//
-// All RAWG searches run in parallel.
-//
-// Promise.allSettled() ensures one failed
-// lookup does not break the entire discovery.
-//
 
 async function retrieveRecommendedGames(recommendations) {
   if (!Array.isArray(recommendations) || recommendations.length === 0) {
@@ -995,7 +842,7 @@ async function retrieveRecommendedGames(recommendations) {
 
       if (!game) {
         throw new Error(
-          `RAWG could not retrieve FORTUNA recommendation: ${recommendation.title}`,
+          `RAWG could not confidently retrieve recommendation: ${recommendation.title}`,
         );
       }
 
@@ -1028,48 +875,61 @@ async function retrieveRecommendedGames(recommendations) {
     );
   });
 
-  // ==========================================
-  // PRESERVE FORTUNA RANK ORDER
-  // ==========================================
-
   return results.sort((a, b) => a.fortunaRank - b.fortunaRank);
 }
 
 // ==============================================
 // FORTUNA DISCOVERY
 // ==============================================
+//
+// This function is called ONLY after FS decides:
+//
+// discoveryAction === "discover"
+//
+// FDS does not independently decide whether
+// discovery should happen.
+//
+// ==============================================
 
-export async function discoverGamesFromIntent(intent, history = []) {
+export async function discoverGamesFromIntent(
+  intent,
+  history = [],
+  options = {},
+) {
   if (!intent || typeof intent !== "object" || Array.isArray(intent)) {
     throw new Error("A valid FORTUNA intent is required.");
   }
 
-  // ============================================
-  // NOT READY
-  // ============================================
-
-  if (intent.readyForDiscovery !== true) {
-    return {
-      count: 0,
-
-      results: [],
-
-      recommendations: [],
-
-      readyForDiscovery: false,
-    };
-  }
+  const previousRecommendations = Array.isArray(
+    options?.previousRecommendations,
+  )
+    ? options.previousRecommendations
+    : [];
 
   // ============================================
   // STEP 1
-  // FORTUNA AI SELECTS THE GAMES
+  // ============================================
+  //
+  // Gemini selects the best titles.
+  //
+  // FS has already decided that discovery should
+  // happen, so there is NO second discovery
+  // decision here.
+  //
   // ============================================
 
-  const fortunaRecommendations = await selectGamesWithFortuna(intent, history);
+  const fortunaRecommendations = await selectGamesWithFortuna(
+    intent,
+    history,
+    previousRecommendations,
+  );
 
   // ============================================
   // STEP 2
-  // RAWG RETRIEVES THE AI-SELECTED TITLES
+  // ============================================
+  //
+  // RAWG retrieves the exact selected titles.
+  //
   // ============================================
 
   const games = await retrieveRecommendedGames(fortunaRecommendations);
@@ -1086,12 +946,14 @@ export async function discoverGamesFromIntent(intent, history = []) {
 
       recommendations: fortunaRecommendations,
 
-      readyForDiscovery: true,
+      readyForDiscovery: intent.readyForDiscovery === true,
+
+      discoveryTriggered: true,
     };
   }
 
   // ============================================
-  // FINAL RESPONSE
+  // FINAL RESULT
   // ============================================
 
   return {
@@ -1101,6 +963,8 @@ export async function discoverGamesFromIntent(intent, history = []) {
 
     recommendations: fortunaRecommendations,
 
-    readyForDiscovery: true,
+    readyForDiscovery: intent.readyForDiscovery === true,
+
+    discoveryTriggered: true,
   };
 }

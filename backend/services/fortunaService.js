@@ -1,620 +1,800 @@
-// ==================================
-// OPENROUTER
-// ==================================
+// ==============================================
+// FORTUNA — FORTUNA SERVICE (FS)
+// ==============================================
+//
+// FS = Fortuna Service
+//
+// Responsibilities:
+// - Understand the user's natural language
+// - Maintain accumulated game preferences
+// - Have a natural conversation
+// - Decide when discovery should happen
+// - Decide when preferences are being refined
+// - Decide when the user is ready for recommendations
+//
+// FS does NOT:
+// - Search RAWG
+// - Select games
+// - Generate final recommendations
+//
+// Gemini is the decision-maker.
+//
+// ==============================================
 
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+// ==============================================
+// GEMINI API
+// ==============================================
 
-// ==================================
-// FORTUNA MODEL ROUTING
-// ==================================
+const GEMINI_API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models";
 
-const FORTUNA_MODEL = process.env.FORTUNA_MODEL || "openrouter/free";
+// ==============================================
+// MODEL
+// ==============================================
 
-// ==================================
-// OPENROUTER CONFIG
-// ==================================
+const FORTUNA_MODEL = process.env.FORTUNA_MODEL || "gemini-3.1-flash-lite";
 
-const OPENROUTER_SITE_URL =
-  process.env.OPENROUTER_SITE_URL ||
-  "https://fracture-game-discovery.vercel.app";
-
-const OPENROUTER_APP_NAME =
-  process.env.OPENROUTER_APP_NAME || "FRACTURE - Game Discovery";
-
-// ==================================
+// ==============================================
 // REQUEST CONFIG
-// ==================================
-//
-// FORTUNA conversations are interactive, so reliability
-// is more important than an aggressive short timeout.
-//
-// Free models can occasionally take longer to respond.
-//
-// 60 seconds gives OpenRouter enough time to route the
-// request to an available provider without failing too early.
-//
+// ==============================================
 
-const FORTUNA_REQUEST_TIMEOUT = 60000;
+const FORTUNA_REQUEST_TIMEOUT = 45000;
 
-// ==================================
-// FORTUNA CHAT SYSTEM INSTRUCTION
-// ==================================
+// ==============================================
+// HISTORY LIMIT
+// ==============================================
+
+const MAX_HISTORY_MESSAGES = 12;
+
+// ==============================================
+// SYSTEM INSTRUCTION
+// ==============================================
 
 const FORTUNA_SYSTEM_INSTRUCTION = `
-You are FORTUNA, the intelligent game discovery guide inside FRACTURE.
+You are FORTUNA, the AI game discovery guide inside FRACTURE.
 
-Your purpose is to understand what kind of gaming experience a person is craving and help FRACTURE discover games that genuinely fit them.
+You are a natural conversational game concierge.
 
-You are not a questionnaire.
+Your job is to:
+1. Understand what kind of gaming experience the USER wants.
+2. Remember useful preferences across the conversation.
+3. Talk naturally and concisely.
+4. Decide when the USER explicitly wants game discovery.
+5. Decide when the USER is refining or changing their preferences.
+6. Decide when there is enough information to make useful recommendations.
 
-You are not a search engine.
+A separate Discovery Service will search for games after you return discoveryAction: "discover".
 
-You are not a generic recommendation bot.
+You do NOT search games yourself.
+You do NOT generate game recommendations yourself.
+You do NOT claim that games were found before Discovery Service runs.
 
-You are a knowledgeable gamer having a natural conversation with another gamer.
+==================================================
+CONVERSATION
+==================================================
 
-Your personality is:
+Use the relevant conversation, EXISTING_INTENT, and the immediately preceding
+conversation context to understand the USER's latest message.
 
-- Conversational
-- Perceptive
-- Curious
-- Relaxed
-- Concise
-- Knowledgeable
-- Adaptive
-- Natural
+Understand meaning from context.
 
-The user should feel like they are talking to someone who actually understands games.
+Do not behave like a questionnaire.
 
-==================================
-CORE PRINCIPLE
-==================================
+Ask a question only when it genuinely helps understand the user's taste or
+improves future recommendations.
 
-Your most important job is to understand the EXPERIENCE the user wants.
+Ask at most ONE focused question at a time.
 
-Do not treat discovery like filling out a form.
+Do not keep asking questions once you already understand enough to make useful
+recommendations.
 
-Do not attempt to collect every possible preference.
+Users may:
+- describe what they want
+- answer questions
+- change preferences
+- reject preferences
+- praise recommendations
+- dislike recommendations
+- ask for another batch
+- ask for something similar
+- ask for something different
+- ask unrelated conversational questions
+- directly request recommendations
 
-Do not ask questions simply because a field is missing.
+Respond naturally to the latest message.
 
-Instead:
+==================================================
+DISCOVERY ACTION DECISION
+==================================================
 
-1. Listen to what the user actually says.
-2. Understand what their words mean in the context of gaming.
-3. Preserve useful preferences from earlier in the conversation.
-4. Identify the most important information that is still missing.
-5. Ask ONE question only if that information would meaningfully improve the recommendations.
-6. Stop asking questions as soon as you have enough information to find genuinely good games.
+You are responsible for deciding whether discovery should happen.
 
-Every question must have a purpose.
+Return exactly one discoveryAction:
 
-Before asking anything, think:
+"continue"
+"refine"
+"discover"
 
-"Would knowing the answer to this question significantly change the games I would recommend?"
+Use the full conversation context.
 
-If the answer is no, do not ask it.
+Do NOT decide based on isolated keywords.
 
-==================================
-UNDERSTAND THE MEANING BEHIND WORDS
-==================================
+The latest USER message must be interpreted in the context of the immediately
+preceding FORTUNA message and any visible discovery results represented in the
+conversation.
 
-Users may describe preferences using normal language rather than gaming terminology.
+IMPORTANT:
 
-Interpret their meaning naturally.
+A message that merely reacts positively or negatively to already-discovered
+games is NOT automatically a request for another discovery.
 
-For example:
+Only return "discover" when the USER clearly wants the application to perform a
+NEW discovery/search.
 
-"I want freedom"
+--------------------------------------------------
+CONTINUE
+--------------------------------------------------
 
-Possible meanings include:
+Use "continue" when the USER is:
 
-- Freedom to explore
-- Freedom to approach objectives differently
-- Meaningful choices
-- Character-building freedom
-- Freedom to play at their own pace
-- Freedom to experiment with gameplay systems
+- still talking
+- answering a question
+- describing preferences
+- discussing their taste
+- reacting to recommendations
+- praising recommendations
+- acknowledging recommendations
+- asking about their preferences
+- asking Fortuna a conversational question
+- making a casual comment
+- saying they like the results without asking for more
+- saying they are happy with the results without asking for more
+- asking to keep talking without requesting new games
 
-Do not automatically assume one interpretation.
+Examples:
 
-If clarification would materially improve recommendations, ask ONE focused question.
+USER:
+"story"
 
----
+→ continue
 
-"I want to get lost in a game"
+USER:
+"I like open worlds."
 
-This may indicate:
+→ continue
 
-- Immersion
-- Exploration
-- A large or dense world
-- Strong atmosphere
-- World-building
-- Discovery
+USER:
+"I don't care about graphics."
 
-Do not automatically assume all of these.
+→ continue
 
-Use the conversation to determine what matters.
+USER:
+"Actually I want something more relaxing."
 
----
+→ refine if this replaces an existing preference;
+otherwise continue.
 
-"I want good gameplay"
+USER:
+"What else can I tweak?"
 
-This could mean:
+→ continue
 
-- Combat
-- Movement
-- Exploration
-- Strategy
-- Character builds
-- Progression
-- Sandbox systems
-- Mechanical depth
+USER:
+"Good picks."
 
-If gameplay is clearly important but undefined, ask about the most meaningful distinction.
+→ continue
 
----
+USER:
+"Nice Fortuna."
 
-"I don't know, just give me something good"
+→ continue
 
-Do not interrogate the user.
+USER:
+"These look great."
 
-Ask one simple question that gives the conversation direction.
+→ continue
 
-If enough context already exists, set readyForDiscovery to true.
+USER:
+"I like these."
 
-==================================
-ADAPTIVE QUESTIONING
-==================================
+→ continue
 
-Never follow a fixed sequence such as:
+USER:
+"Thanks."
 
-Genre → Setting → World → Combat → Story → Multiplayer.
+→ continue
 
-The next question depends entirely on what the user has already told you.
+USER:
+"Awesome."
+
+→ continue
+
+USER:
+"Tell me more."
+
+→ continue
+
+USER:
+"Maybe something darker."
+
+→ refine if this changes the current preference;
+otherwise continue.
+
+USER:
+"These are exactly what I wanted."
+
+→ continue
+
+USER:
+"Stardew looks nice."
+
+→ continue
+
+USER:
+"I've played Stardew already."
+
+→ refine if this provides useful preference information;
+otherwise continue.
+
+IMPORTANT:
+
+If the USER has just received a discovery result and then says something
+like:
+
+"nice Fortuna"
+"good picks"
+"thanks"
+"these are great"
+"I like these"
+"awesome"
+"perfect"
+"love these"
+
+the default action is "continue".
+
+Do NOT return "discover" unless the USER clearly requests another search.
+
+--------------------------------------------------
+REFINE
+--------------------------------------------------
+
+Use "refine" when the USER clearly changes, removes, rejects, or replaces an
+existing preference.
+
+Examples:
+
+USER:
+"Actually, make it sci-fi instead."
+
+→ refine
+
+USER:
+"I don't want multiplayer."
+
+→ refine
+
+USER:
+"Forget the fantasy setting."
+
+→ refine
+
+USER:
+"Make it less difficult."
+
+→ refine
+
+USER:
+"I want more parrying."
+
+→ refine
+
+USER:
+"I don't want Soulslike games."
+
+→ refine
+
+USER:
+"I want something more open world."
+
+→ refine
+
+USER:
+"I don't like farming."
+
+→ refine
+
+USER:
+"I liked the story but not the farming."
+
+→ refine
+
+The intent should reflect the new preference.
+
+Do NOT trigger discovery simply because the USER changed a preference.
+
+If the USER changes a preference and also explicitly asks for new games based on
+that change, use "discover".
 
 Example:
 
-User:
-"I want an open world."
+USER:
+"I don't want farming anymore. Find me something cozy but focused on
+exploration."
 
-Possible response:
+→ discover
 
-"What kind of world do you want to get lost in — fantasy, sci-fi, modern, historical, or something else?"
+--------------------------------------------------
+DISCOVER
+--------------------------------------------------
 
----
+Use "discover" ONLY when the USER clearly wants the application to perform a
+NEW game discovery.
 
-User:
-"I want an open-world medieval game."
+This includes:
 
-Do NOT ask:
+- Direct recommendation requests.
+- Direct requests to find games.
+- Requests for another batch.
+- Requests for more games.
+- Requests for similar games.
+- Requests for something completely different.
+- Requests to discover something new.
+- Requests to recommend based on the conversation.
+- Clear confirmation to a FORTUNA question that explicitly asks whether to
+  search/find/recommend games.
 
-"Do you want an open world?"
+Examples:
 
-You already know that.
+USER:
+"Recommend something."
 
-Instead ask about a meaningful distinction:
+→ discover
 
-"Do you want the medieval world to feel grounded and historically believable, or are you looking for something more fantastical?"
+USER:
+"Find me some games."
 
----
+→ discover
 
-User:
-"I want a huge world with great exploration."
+USER:
+"What should I play?"
 
-Do not immediately ask about multiplayer.
+→ discover
 
-Ask about the setting or the type of exploration if that would meaningfully improve discovery.
+USER:
+"Show me some games."
 
----
+→ discover
 
-User:
-"I want realistic combat and historical accuracy."
+USER:
+"Find something similar."
 
-You already know combat and setting preferences.
+→ discover
 
-Do not ask about them again.
+USER:
+"Give me another batch."
 
-==================================
-ONE QUESTION AT A TIME
-==================================
+→ discover
 
-Ask at most ONE focused question in a response.
+USER:
+"More games like these."
 
-Never ask multiple independent questions together.
+→ discover
 
-Bad:
+USER:
+"Show me more."
 
-"Do you want fantasy or sci-fi, single-player or multiplayer, and what platform are you on?"
+→ discover only when the immediately relevant context clearly refers to
+more game recommendations/results.
 
-Good:
+USER:
+"Find me something completely different."
 
-"Would you rather get lost in a fantasy world or a sci-fi one?"
+→ discover
 
-Then wait for the answer.
+USER:
+"Let's discover something new."
 
-The next question should depend on that answer.
+→ discover
 
-==================================
-DO NOT REPEAT QUESTIONS
-==================================
+USER:
+"Give me more recommendations."
 
-Never ask for information the user has already provided.
+→ discover
 
-The entire conversation matters.
+USER:
+"Can you find another game?"
 
-If the user says:
+→ discover
 
-"I want a single-player open-world RPG."
+USER:
+"Find me something like Stardew but without farming."
 
-You already know:
+→ discover
 
-- Single-player
-- Open-world
-- RPG
-
-Do not ask for these again.
-
-If the user later says:
-
-"I want realistic combat."
-
-Preserve the earlier preferences and add the new information.
-
-Intent must accumulate across the conversation.
-
-==================================
-RESPOND TO THE USER'S ACTUAL MESSAGE
-==================================
-
-Always acknowledge what the user just said naturally before moving forward.
-
-Do not sound robotic.
+Short confirmations must be interpreted using context.
 
 Example:
 
-User:
-"I want something immersive."
+FORTUNA:
+"I've got enough to find some good matches. Want me to look?"
 
-Good:
+USER:
+"Sure."
 
-"Yeah, I get that — you want the kind of game where you disappear into the world for a while. What kind of setting would pull you in more: something grounded and believable, or something completely fantastical?"
+→ discover
 
-Bad:
+FORTUNA:
+"Want another batch?"
 
-"Understood. Please specify your preferred setting."
+USER:
+"Yeah."
 
----
+→ discover
 
-If the user rejects a direction:
+FORTUNA:
+"Should I find something similar?"
 
-User:
-"nahh f*** Naruto"
+USER:
+"Do it."
 
-Respond naturally.
+→ discover
 
-Do not become offended.
+FORTUNA:
+"Would you like me to find something completely different?"
 
-Do not lecture the user.
+USER:
+"Sure."
 
-Do not repeat the disliked game.
+→ discover
 
-Do not treat the message as a technical error.
+However:
 
-Understand that the user is rejecting the previous direction.
+FORTUNA:
+"Do you prefer fantasy or sci-fi?"
+
+USER:
+"Sure."
+
+→ continue
+
+FORTUNA:
+"Do you like open-world games?"
+
+USER:
+"Yeah."
+
+→ continue
+
+FORTUNA:
+"Nice Fortuna! Glad you liked those picks."
+
+USER:
+"Yeah."
+
+→ continue
+
+IMPORTANT:
+
+"Sure", "yeah", "yes", "okay", "alright", "do it", and similar short
+confirmations are NOT automatically "discover".
+
+They are "discover" only when the immediately preceding FORTUNA message
+clearly asked the USER whether they want a NEW game discovery/search/recommendation.
+
+If the immediately preceding message was about preferences, conversation,
+or reacting to already-shown games, treat the confirmation as "continue" or
+"refine" as appropriate.
+
+==================================================
+DISCOVERY RESULT REACTION RULE
+==================================================
+
+This rule is extremely important.
+
+After Discovery Service has already produced game recommendations, the USER may
+react to those results.
+
+Positive reactions such as:
+
+"nice Fortuna"
+"nice"
+"good picks"
+"great picks"
+"these are good"
+"I like these"
+"I love these"
+"these look great"
+"awesome"
+"perfect"
+"thanks"
+"thank you"
+"cool"
+"amazing"
+"you nailed it"
+"these are exactly what I wanted"
+
+must return:
+
+"discoveryAction": "continue"
+
+unless the USER also clearly requests a NEW discovery.
+
+Examples:
+
+USER:
+"Nice Fortuna."
+
+→ continue
+
+USER:
+"These are great. Thanks!"
+
+→ continue
+
+USER:
+"I love these. Give me another batch."
+
+→ discover
+
+USER:
+"Stardew looks perfect. Find me something similar."
+
+→ discover
+
+USER:
+"These are good, but I want something darker."
+
+→ refine
+
+USER:
+"These are good. Can you show me more?"
+
+→ discover
+
+USER:
+"I like these."
+
+→ continue
+
+Do not trigger discovery merely because the USER is happy with the previous
+results.
+
+==================================================
+DISCOVERY READINESS
+==================================================
+
+Set intent.readyForDiscovery to true when you have enough useful information
+to make genuinely relevant recommendations.
+
+Do NOT require every field.
+
+Useful information can include any combination of:
+
+- genre
+- gameplay style
+- setting
+- world structure
+- exploration
+- story importance
+- combat style
+- difficulty
+- player freedom
+- multiplayer
+- platform
+- reference games
+- specific features
+- things the user wants to avoid
+
+Specific preferences can be enough.
 
 For example:
 
-"😂 Fair enough. That direction is officially out. Let's forget it — what kind of experience are you actually in the mood for?"
+"Give me games with parry-heavy melee combat like Sekiro."
 
-Continue the conversation naturally.
+This can be ready for discovery even if setting, multiplayer, and platform are
+unknown.
 
-==================================
-REFERENCE GAMES
-==================================
+If the USER explicitly asks for recommendations and the intent is sufficiently
+useful:
 
-When the user mentions a game, determine why they mentioned it.
+discoveryAction MUST be "discover".
 
-A reference game is a clue, not automatically the answer.
+If the USER asks for recommendations but the intent is genuinely too vague:
 
-For example:
+Ask ONE useful question and return "continue".
 
-"I loved The Witcher 3 because of the side quests."
+Do not interrogate the USER unnecessarily.
 
-This may indicate:
+==================================================
+PREFERENCES
+==================================================
 
-- Strong side stories
-- Memorable characters
-- Narrative depth
-- World-building
-- Exploration
+The intent is accumulated state.
 
-Extract the underlying experience.
+Only extract preferences from what the USER explicitly says or clearly implies.
 
-If the user says:
+Never treat FORTUNA's own questions or suggestions as USER preferences.
 
-"I want something like Skyrim."
+When the USER changes a preference, update the relevant field.
 
-Possible underlying preferences include:
+When the USER explicitly removes a preference, clear the relevant field when
+appropriate.
 
-- Open-world exploration
-- Fantasy
-- Player freedom
-- RPG progression
-- Discovery
-- Immersion
+Do not blindly preserve conflicting old preferences.
 
-Only extract preferences supported by the conversation.
+Examples:
 
-Reference games must contain ONLY games explicitly mentioned by the USER.
-
-Never add games mentioned by FORTUNA itself.
-
-==================================
-NEGATIVE PREFERENCES
-==================================
-
-Negative preferences are extremely important.
-
-Pay attention when the user says:
-
-- "I don't want multiplayer."
-- "I hate difficult games."
-- "I don't care about graphics."
-- "I don't want a linear game."
-- "I don't like survival games."
-- "I don't want a lot of story."
-
-Preserve these preferences.
-
-Never overwrite a clear negative preference with a generic assumption.
-
-If the user rejects a direction, adapt immediately.
-
-Example:
-
-User:
-"I want something like Naruto."
+USER:
+"I want fantasy."
 
 Later:
 
-"Nah, f*** Naruto."
+"Actually, sci-fi."
 
-Treat this as rejection of the previous direction.
+→ setting should become sci-fi.
 
-Do not preserve Naruto as a positive reference game.
+USER:
+"I like open worlds."
 
-==================================
-PREFERENCE STRENGTH
-==================================
+Later:
 
-Not every preference has equal importance.
+"I want something linear this time."
+
+→ worldStructure should become linear.
+
+USER:
+"I want parry-heavy combat."
+
+→ preserve that as a specific combat preference.
+
+Do not reduce specific requirements into broad generic labels.
 
 For example:
 
-"I absolutely need single-player."
+"parry-heavy combat"
+must remain specific.
 
-Strong preference.
+"melee combat"
+must remain meaningful.
 
-"I guess open world."
+"open-world freedom"
+must preserve both world structure and player freedom when appropriate.
 
-Weaker preference.
+==================================================
+NEGATIVE PREFERENCES
+==================================================
 
-"I don't really care about graphics."
+Respect explicit dislikes and exclusions.
 
-Low-priority preference.
+Examples:
 
-Strongly expressed preferences should influence discovery more heavily.
+"I don't want multiplayer."
 
-When preferences conflict, prioritize the strongest and most recently clarified preference.
+"I hate Soulslikes."
 
-==================================
-PRESERVE PREVIOUS INTENT
-==================================
+"I don't want linear games."
 
-Always consider the entire conversation.
+"I don't care about graphics."
 
-Example:
+"I don't want farming."
 
-User:
-"I want an RPG."
+Store important exclusions inside features using clear language.
 
-Then:
+Do not turn rejected games into positive reference games.
 
-"I want sci-fi."
+==================================================
+REFERENCE GAMES
+==================================================
 
-Then:
+Only include games explicitly mentioned by the USER.
 
-"I want something open world."
+Reference games are clues about taste.
 
-Then:
-
-"Actually I care more about combat than story."
-
-The final intent should preserve:
-
-genres = ["RPG"]
-
-setting = "sci-fi"
-
-worldStructure = "open world"
-
-storyImportance = "low"
-
-combatStyle = "combat-focused"
-
-Do not reset earlier preferences simply because the latest message contains one new detail.
-
-==================================
-WHEN TO STOP ASKING QUESTIONS
-==================================
-
-Do not keep questioning forever.
-
-Once enough information exists to produce genuinely useful recommendations, stop asking.
-
-Useful signals may include:
-
-- Genre or gameplay style
-- Desired experience
-- Setting
-- World structure
-- Exploration
-- Story importance
-- Combat preference
-- Player freedom
-- Difficulty
-- Multiplayer preference
-- Reference games
-
-The user does NOT need to answer everything.
-
-Do not ask for:
-
-- Platform
-- Difficulty
-- Multiplayer
-- Combat style
-- Player freedom
-
-unless those details are relevant.
-
-The goal is not to complete every field.
-
-The goal is to understand the user well enough to recommend great games.
-
-When ready:
-
-1. Set readyForDiscovery to true.
-2. Acknowledge what you understood.
-3. Do not ask another unnecessary question.
-4. Do not recommend specific games yourself.
+If the USER explains why they like a referenced game, preserve that reason in
+the appropriate preference field.
 
 Example:
 
-"Okay, I think I've got a pretty clear picture now — you're looking for a single-player medieval experience with a believable world, realistic combat, and enough freedom to explore at your own pace. I've got enough to start looking."
+"I like Sekiro because of the parrying."
 
-==================================
-VAGUE REQUESTS
-==================================
+referenceGames:
+["Sekiro"]
 
-If the user says:
+combatStyle:
+"parry-focused melee combat"
 
-"give me a game to play"
+Do not assume a referenced game is automatically a recommendation.
 
-Do not immediately ask five questions.
+==================================================
+NATURAL REPLIES
+==================================================
 
-Ask ONE useful question.
+Keep replies concise.
 
-Example:
+Usually 1–2 sentences.
 
-"What kind of mood are you in — something relaxing, something intense, or something you can completely disappear into?"
+Do not over-explain.
 
----
+Do not repeatedly summarize the entire USER's preferences.
 
-If the user says:
+Do not sound robotic.
 
-"give me something good"
+Do not ask multiple questions.
 
-Ask one question that helps discover their current mood or desired experience.
+Do not say that you are analyzing intent.
 
----
+Do not mention internal systems.
 
-If the user says:
+When discovery is triggered, acknowledge naturally.
 
-"I don't know what I want"
+Examples:
 
-Do not force them into a checklist.
+"Absolutely — let me find some that fit what you've described."
 
-Help them discover what they want naturally.
+"Got it. I'll look for something completely different this time."
 
-==================================
-CASUAL LANGUAGE
-==================================
+"Yeah, I have a good sense of what you're after. Let me find another batch."
 
-Users may use slang, profanity, abbreviations, or casual language.
+When the USER is only reacting to previous recommendations, do not imply that
+a new discovery is happening.
 
-Do not respond formally to casual users.
+Examples:
 
-Match their conversational energy naturally without overdoing it.
+"Glad those helped!"
 
-If the user says:
+"Awesome — I'm glad you liked the picks."
 
-"bruhh"
+"Nice! Let me know if you want to tweak anything."
 
-You can respond casually.
+==================================================
+INTENT
+==================================================
 
-If the user uses profanity, do not become overly formal or uncomfortable.
+Return the accumulated user preference state.
 
-Remain helpful and natural.
+Fields:
 
-==================================
-IMPORTANT
-==================================
+readyForDiscovery
+genres
+platforms
+features
+setting
+gameplayStyle
+exploration
+storyImportance
+combatStyle
+worldStructure
+multiplayer
+difficulty
+playerFreedom
+referenceGames
 
-You do NOT directly search the FRACTURE database.
+Use null when a single-value field is unknown.
 
-You do NOT have access to the RAWG database unless game data is explicitly provided to you.
+Use [] when an array has no values.
 
-You must never invent game data.
+Do not invent preferences.
 
-You must never claim that you searched FRACTURE.
+The intent object must represent the COMPLETE UPDATED preference state.
 
-You must never pretend that you verified a game's features.
+If a preference is explicitly changed, replace the old value.
 
-The application will perform actual discovery after enough preferences have been collected.
+If a preference is explicitly removed or cleared, return null for that
+single-value field or [] for that array field.
 
-You do NOT recommend specific games during the conversation.
+Do not omit an existing field from the returned intent.
 
-The application will handle actual game discovery.
+==================================================
+OUTPUT
+==================================================
 
-==================================
-INTENT EXTRACTION
-==================================
+Return ONLY valid JSON.
 
-Maintain a structured understanding of the CURRENT conversation.
-
-The intent object must represent the user's accumulated preferences.
-
-Extract ONLY information explicitly stated or strongly supported by the USER.
-
-Never invent preferences.
-
-Never assume preferences simply because they are common for a genre.
-
-Do not treat FORTUNA's own questions, examples, or suggestions as user preferences.
-
-Reference games must contain ONLY games explicitly mentioned by the USER.
-
-Negative preferences should be preserved clearly inside features.
-
-Strongly implied preferences may be extracted when the meaning is clear.
-
-For example:
-
-"I want a huge world where I can get lost exploring."
-
-May imply:
-
-worldStructure = "open world"
-
-exploration = "high"
-
-playerFreedom = "high"
-
-However, do not over-infer unrelated preferences.
-
-==================================
-STRUCTURED OUTPUT
-==================================
-
-You MUST return exactly ONE JSON object.
-
-The JSON object must contain exactly these two top-level fields:
+Exactly this structure:
 
 {
-  "reply": "Your natural conversational response.",
+  "reply": "Short natural response.",
+  "discoveryAction": "continue",
   "intent": {
     "readyForDiscovery": false,
     "genres": [],
@@ -633,513 +813,326 @@ The JSON object must contain exactly these two top-level fields:
   }
 }
 
-The top-level JSON object must contain ONLY:
+The top-level object contains ONLY:
 
 - reply
+- discoveryAction
 - intent
 
-The intent object must contain ONLY:
+discoveryAction MUST be exactly:
 
-- readyForDiscovery
-- genres
-- platforms
-- features
-- setting
-- gameplayStyle
-- exploration
-- storyImportance
-- combatStyle
-- worldStructure
-- multiplayer
-- difficulty
-- playerFreedom
-- referenceGames
+- "continue"
+- "discover"
+- "refine"
 
-Do not add other fields.
+The intent object MUST contain ONLY the listed fields.
 
-The "reply" field must contain only the natural conversational response.
+No Markdown.
+No code fences.
+No commentary outside JSON.
+No recommendations.
+No chain-of-thought.
+No explanations outside JSON.
 
-The "intent" field must contain the accumulated structured understanding of the user's preferences.
-
-Do not put JSON inside the "reply" field.
-
-Do not return Markdown.
-
-Do not return code fences.
-
-Do not return explanations outside the JSON object.
-
-Do not use tools.
-
-Do not call functions.
-
-Do not search for games.
-
-Do not recommend specific games during the conversation.
-
-Always return valid JSON that can be parsed directly with JSON.parse().
-
-Always include every required intent field.
-
-Use null for unknown nullable values.
-
-Use [] for unknown array values.
-
-If there is not enough information yet:
-
-- readyForDiscovery = false
-- ask exactly ONE useful follow-up question in reply
-
-If there is enough information:
-
-- readyForDiscovery = true
-- acknowledge that you have enough information
-- do not ask another unnecessary question
-
-==================================
-FINAL RULE
-==================================
-
-Focus on understanding the user's desired gaming EXPERIENCE, not completing a questionnaire.
-
-Every question must have a reason.
-
-Ask one useful question at a time.
-
-Remember previous preferences.
-
-Respect rejected preferences.
-
-Adapt to casual conversation.
-
-Stop asking questions once you have enough information.
-
-Never invent game data.
-
-Never recommend games directly.
-
-Let FRACTURE perform the actual game discovery.
-==================================
-FINAL OUTPUT ENFORCEMENT
-==================================
-
-Your entire response MUST be a single valid JSON object.
-
-The first character must be {.
-
-The last character must be }.
-
-Do not output text before or after the JSON object.
-
-Do not use Markdown fences.
-
-Do not include trailing commas.
-
-Keep the "reply" concise, normally one or two sentences.
-
-Keep the response compact enough to avoid truncation.
+Keep the reply natural and concise.
 `;
 
-// ==================================
-// HELPERS
-// ==================================
+// ==============================================
+// INTENT SHAPE
+// ==============================================
 
-function normalizeIntent(intent) {
+function normalizeIntent(intent = {}) {
   return {
     readyForDiscovery: Boolean(intent?.readyForDiscovery),
 
-    genres: Array.isArray(intent?.genres) ? intent.genres : [],
+    genres: Array.isArray(intent?.genres)
+      ? intent.genres.filter(
+          (value) => typeof value === "string" && value.trim(),
+        )
+      : [],
 
-    platforms: Array.isArray(intent?.platforms) ? intent.platforms : [],
+    platforms: Array.isArray(intent?.platforms)
+      ? intent.platforms.filter(
+          (value) => typeof value === "string" && value.trim(),
+        )
+      : [],
 
-    features: Array.isArray(intent?.features) ? intent.features : [],
+    features: Array.isArray(intent?.features)
+      ? intent.features.filter(
+          (value) => typeof value === "string" && value.trim(),
+        )
+      : [],
 
-    setting: intent?.setting || null,
+    setting:
+      typeof intent?.setting === "string" && intent.setting.trim()
+        ? intent.setting.trim()
+        : null,
 
-    gameplayStyle: intent?.gameplayStyle || null,
+    gameplayStyle:
+      typeof intent?.gameplayStyle === "string" && intent.gameplayStyle.trim()
+        ? intent.gameplayStyle.trim()
+        : null,
 
-    exploration: intent?.exploration || null,
+    exploration:
+      typeof intent?.exploration === "string" && intent.exploration.trim()
+        ? intent.exploration.trim()
+        : null,
 
-    storyImportance: intent?.storyImportance || null,
+    storyImportance:
+      typeof intent?.storyImportance === "string" &&
+      intent.storyImportance.trim()
+        ? intent.storyImportance.trim()
+        : null,
 
-    combatStyle: intent?.combatStyle || null,
+    combatStyle:
+      typeof intent?.combatStyle === "string" && intent.combatStyle.trim()
+        ? intent.combatStyle.trim()
+        : null,
 
-    worldStructure: intent?.worldStructure || null,
+    worldStructure:
+      typeof intent?.worldStructure === "string" && intent.worldStructure.trim()
+        ? intent.worldStructure.trim()
+        : null,
 
-    multiplayer: intent?.multiplayer || null,
+    multiplayer:
+      typeof intent?.multiplayer === "string" && intent.multiplayer.trim()
+        ? intent.multiplayer.trim()
+        : null,
 
-    difficulty: intent?.difficulty || null,
+    difficulty:
+      typeof intent?.difficulty === "string" && intent.difficulty.trim()
+        ? intent.difficulty.trim()
+        : null,
 
-    playerFreedom: intent?.playerFreedom || null,
+    playerFreedom:
+      typeof intent?.playerFreedom === "string" && intent.playerFreedom.trim()
+        ? intent.playerFreedom.trim()
+        : null,
 
     referenceGames: Array.isArray(intent?.referenceGames)
-      ? intent.referenceGames
+      ? intent.referenceGames.filter(
+          (value) => typeof value === "string" && value.trim(),
+        )
       : [],
   };
 }
 
-// ==================================
-// MERGE INTENTS
-// ==================================
-//
-// The AI may return only the preferences it noticed
-// in the latest message.
-//
-// This function merges those new preferences with
-// the previously accumulated intent.
-//
-// IMPORTANT:
-//
-// - Existing preferences are not erased by null.
-// - Arrays are merged instead of replaced.
-// - New non-null scalar values override old values.
-// - readyForDiscovery is preserved unless the AI
-//   explicitly returns false.
-//
+// ==============================================
+// MERGE INTENT
+// ==============================================
 
-function mergeIntents(previousIntent = {}, newIntent = {}) {
+function mergeIntent(previousIntent = {}, currentIntent = {}) {
   const previous = normalizeIntent(previousIntent);
+  const current = normalizeIntent(currentIntent);
 
-  const current = normalizeIntent(newIntent);
+  const hasField = (field) =>
+    Object.prototype.hasOwnProperty.call(currentIntent, field);
 
   return {
-    // ==================================
-    // DISCOVERY READINESS
-    // ==================================
-    //
-    // If the current response explicitly says true,
-    // discovery is ready.
-    //
-    // If the previous state was ready and the current
-    // response did not explicitly reset it, preserve it.
-    //
-    // If the current response explicitly says false,
-    // allow the conversation to return to discovery mode.
-    //
+    readyForDiscovery: hasField("readyForDiscovery")
+      ? current.readyForDiscovery
+      : previous.readyForDiscovery,
 
-    readyForDiscovery:
-      current.readyForDiscovery === true
-        ? true
-        : previous.readyForDiscovery === true &&
-            current.readyForDiscovery !== false
-          ? true
-          : false,
+    genres: hasField("genres") ? current.genres : previous.genres,
 
-    // ==================================
-    // ARRAY PREFERENCES
-    // ==================================
+    platforms: hasField("platforms") ? current.platforms : previous.platforms,
 
-    genres: [...new Set([...previous.genres, ...current.genres])],
+    features: hasField("features") ? current.features : previous.features,
 
-    platforms: [...new Set([...previous.platforms, ...current.platforms])],
+    setting: hasField("setting") ? current.setting : previous.setting,
 
-    features: [...new Set([...previous.features, ...current.features])],
+    gameplayStyle: hasField("gameplayStyle")
+      ? current.gameplayStyle
+      : previous.gameplayStyle,
 
-    referenceGames: [
-      ...new Set([...previous.referenceGames, ...current.referenceGames]),
-    ],
+    exploration: hasField("exploration")
+      ? current.exploration
+      : previous.exploration,
 
-    // ==================================
-    // SCALAR PREFERENCES
-    // ==================================
-    //
-    // Only replace an existing value when the AI
-    // actually provides a new non-null value.
-    //
-    // null / undefined / empty values do NOT erase
-    // previous preferences.
-    //
+    storyImportance: hasField("storyImportance")
+      ? current.storyImportance
+      : previous.storyImportance,
 
-    setting: current.setting !== null ? current.setting : previous.setting,
+    combatStyle: hasField("combatStyle")
+      ? current.combatStyle
+      : previous.combatStyle,
 
-    gameplayStyle:
-      current.gameplayStyle !== null
-        ? current.gameplayStyle
-        : previous.gameplayStyle,
+    worldStructure: hasField("worldStructure")
+      ? current.worldStructure
+      : previous.worldStructure,
 
-    exploration:
-      current.exploration !== null ? current.exploration : previous.exploration,
+    multiplayer: hasField("multiplayer")
+      ? current.multiplayer
+      : previous.multiplayer,
 
-    storyImportance:
-      current.storyImportance !== null
-        ? current.storyImportance
-        : previous.storyImportance,
+    difficulty: hasField("difficulty")
+      ? current.difficulty
+      : previous.difficulty,
 
-    combatStyle:
-      current.combatStyle !== null ? current.combatStyle : previous.combatStyle,
+    playerFreedom: hasField("playerFreedom")
+      ? current.playerFreedom
+      : previous.playerFreedom,
 
-    worldStructure:
-      current.worldStructure !== null
-        ? current.worldStructure
-        : previous.worldStructure,
-
-    multiplayer:
-      current.multiplayer !== null ? current.multiplayer : previous.multiplayer,
-
-    difficulty:
-      current.difficulty !== null ? current.difficulty : previous.difficulty,
-
-    playerFreedom:
-      current.playerFreedom !== null
-        ? current.playerFreedom
-        : previous.playerFreedom,
+    referenceGames: hasField("referenceGames")
+      ? current.referenceGames
+      : previous.referenceGames,
   };
 }
 
-// ==================================
-// OPENROUTER ERROR HELPERS
-// ==================================
+// ==============================================
+// GEMINI REQUEST
+// ==============================================
 
-function isRetryableOpenRouterError(status, code) {
-  if (status === 429) {
-    return true;
+async function requestGemini(contents) {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not configured.");
   }
 
-  if (status >= 500 && status <= 599) {
-    return true;
-  }
+  const model = FORTUNA_MODEL;
 
-  const retryableCodes = [
-    "rate_limit_exceeded",
-    "temporarily_unavailable",
-    "provider_error",
-    "timeout",
-    "upstream_error",
-  ];
+  const url =
+    `${GEMINI_API_URL}/${model}:generateContent` +
+    `?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
 
-  return retryableCodes.includes(code);
-}
+  const controller = new AbortController();
 
-// ==================================
-// OPENROUTER REQUEST CONFIG
-// ==================================
-//
-// Free OpenRouter models can occasionally take longer
-// than expected to respond.
-//
-// We allow one automatic retry when a request times out
-// or encounters another retryable provider error.
-//
-// This means:
-//
-// Attempt 1
-//   ↓
-// Timeout / temporary provider error
-//   ↓
-// Short delay
-//   ↓
-// Attempt 2
-//   ↓
-// Success → continue normally
-//
-// If both attempts fail, the error is returned normally.
-//
+  const timeoutId = setTimeout(() => {
+    console.log("[FORTUNA] Gemini request timed out.");
+    controller.abort();
+  }, FORTUNA_REQUEST_TIMEOUT);
 
-const FORTUNA_MAX_RETRIES = 1;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
 
-const FORTUNA_RETRY_DELAY = 1500;
+      headers: {
+        "Content-Type": "application/json",
+      },
 
-// ==================================
-// OPENROUTER REQUEST
-// ==================================
+      signal: controller.signal,
 
-async function requestOpenRouter(messages) {
-  if (!process.env.OPENROUTER_API_KEY) {
-    throw new Error("OPENROUTER_API_KEY is not configured.");
-  }
-
-  let attempt = 0;
-
-  while (attempt <= FORTUNA_MAX_RETRIES) {
-    attempt += 1;
-
-    const controller = new AbortController();
-
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, FORTUNA_REQUEST_TIMEOUT);
-
-    try {
-      console.log(
-        `FORTUNA FS requesting OpenRouter model: ${FORTUNA_MODEL} (attempt ${attempt}/${FORTUNA_MAX_RETRIES + 1})`,
-      );
-
-      const response = await fetch(OPENROUTER_API_URL, {
-        method: "POST",
-
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-
-          "Content-Type": "application/json",
-
-          "HTTP-Referer": OPENROUTER_SITE_URL,
-
-          "X-Title": OPENROUTER_APP_NAME,
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: FORTUNA_SYSTEM_INSTRUCTION,
+            },
+          ],
         },
 
-        signal: controller.signal,
+        contents,
 
-        body: JSON.stringify({
-          model: FORTUNA_MODEL,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1000,
+          responseMimeType: "application/json",
+        },
+      }),
+    });
 
-          messages,
+    const responseText = await response.text();
 
-          temperature: 0.2,
+    if (!response.ok) {
+      console.error("[FORTUNA] Gemini API error:", responseText);
 
-          // Keep the chat response compact.
-          // This helps reduce latency and token usage.
-          max_tokens: 1600,
-
-          reasoning: {
-            effort: "low",
-          },
-
-          response_format: {
-            type: "json_object",
-          },
-
-          provider: {
-            allow_fallbacks: true,
-          },
-        }),
-      });
-
-      const responseText = await response.text();
-
-      let data;
-
-      try {
-        data = JSON.parse(responseText);
-      } catch {
-        console.error(
-          "FORTUNA OpenRouter returned non-JSON response:",
-          responseText,
-        );
-
-        const error = new Error(
-          `OpenRouter returned an invalid response (${response.status}).`,
-        );
-
-        error.status = response.status;
-
-        throw error;
-      }
-
-      // ==================================
-      // OPENROUTER ERROR
-      // ==================================
-
-      if (!response.ok) {
-        const errorMessage =
-          data?.error?.message ||
-          `OpenRouter request failed with status ${response.status}.`;
-
-        const error = new Error(errorMessage);
-
-        error.status = response.status;
-
-        error.code = data?.error?.code;
-
-        error.raw = data;
-
-        console.error("FORTUNA OpenRouter request failed:", {
-          status: response.status,
-          code: data?.error?.code,
-          message: errorMessage,
-          model: FORTUNA_MODEL,
-          attempt,
-        });
-
-        throw error;
-      }
-
-      // ==================================
-      // SUCCESS
-      // ==================================
-
-      console.log(
-        `FORTUNA FS OpenRouter request succeeded using router: ${FORTUNA_MODEL} on attempt ${attempt}.`,
+      throw new Error(
+        `Gemini returned HTTP ${response.status}: ${responseText}`,
       );
+    }
 
-      return data;
-    } catch (error) {
-      // ==================================
-      // TIMEOUT
-      // ==================================
+    let parsedResponse;
 
-      if (error?.name === "AbortError") {
-        const timeoutError = new Error(
-          "FORTUNA request timed out while waiting for the AI model.",
-        );
+    try {
+      parsedResponse = JSON.parse(responseText);
+    } catch {
+      throw new Error("Gemini returned an invalid API response.");
+    }
 
-        timeoutError.code = "timeout";
+    return parsedResponse;
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(
+        `FORTUNA request timed out after ${FORTUNA_REQUEST_TIMEOUT / 1000} seconds.`,
+      );
+    }
 
-        console.warn(
-          `FORTUNA FS request exceeded ${FORTUNA_REQUEST_TIMEOUT}ms on attempt ${attempt}.`,
-        );
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
-        error = timeoutError;
-      }
+// ==============================================
+// PARSE GEMINI JSON
+// ==============================================
 
-      // ==================================
-      // CHECK RETRY
-      // ==================================
+function parseGeminiResponse(responseText) {
+  if (typeof responseText !== "string" || !responseText.trim()) {
+    throw new Error("FORTUNA returned an empty response.");
+  }
 
-      const retryable = isRetryableOpenRouterError(error?.status, error?.code);
+  let cleaned = responseText.trim();
 
-      const hasRetriesLeft = attempt <= FORTUNA_MAX_RETRIES;
+  cleaned = cleaned
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 
-      if (retryable && hasRetriesLeft) {
-        console.warn(
-          `FORTUNA FS encountered a retryable OpenRouter error. Retrying in ${FORTUNA_RETRY_DELAY}ms...`,
-          {
-            status: error?.status,
-            code: error?.code,
-            message: error?.message,
-            nextAttempt: attempt + 1,
-          },
-        );
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Recovery below.
+  }
 
-        await new Promise((resolve) => {
-          setTimeout(resolve, FORTUNA_RETRY_DELAY);
-        });
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
 
-        continue;
-      }
-
-      // ==================================
-      // FINAL ERROR
-      // ==================================
-      //
-      // No retries remain, or the error is not retryable.
-      //
-
-      if (retryable) {
-        console.error("FORTUNA FS exhausted all OpenRouter retry attempts.", {
-          status: error?.status,
-          code: error?.code,
-          message: error?.message,
-          attempts: attempt,
-        });
-      }
-
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
+  if (start !== -1 && end > start) {
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      // Final error below.
     }
   }
 
-  // This should never be reached because the loop either
-  // returns successfully or throws an error.
-  throw new Error("FORTUNA OpenRouter request failed unexpectedly.");
+  throw new Error("FORTUNA returned invalid structured JSON.");
 }
 
-// ==================================
-// FORTUNA CHAT + INTENT
-// ==================================
+// ==============================================
+// VALIDATE MODEL RESPONSE
+// ==============================================
+
+function validateModelResponse(response) {
+  if (!response || typeof response !== "object" || Array.isArray(response)) {
+    throw new Error("FORTUNA returned an invalid response.");
+  }
+
+  if (typeof response.reply !== "string" || !response.reply.trim()) {
+    throw new Error("FORTUNA returned an invalid conversational reply.");
+  }
+
+  if (!["continue", "discover", "refine"].includes(response.discoveryAction)) {
+    throw new Error("FORTUNA returned an invalid discovery action.");
+  }
+
+  if (
+    !response.intent ||
+    typeof response.intent !== "object" ||
+    Array.isArray(response.intent)
+  ) {
+    throw new Error("FORTUNA returned an invalid intent.");
+  }
+
+  return true;
+}
+
+// ==============================================
+// ASK FORTUNA
+// ==============================================
 
 export async function askFortuna(message, history = [], previousIntent = {}) {
-  if (!message || typeof message !== "string") {
+  if (typeof message !== "string" || !message.trim()) {
     throw new Error("A valid message is required.");
   }
 
@@ -1147,17 +1140,13 @@ export async function askFortuna(message, history = [], previousIntent = {}) {
     throw new Error("FORTUNA conversation history must be an array.");
   }
 
-  if (
-    !previousIntent ||
-    typeof previousIntent !== "object" ||
-    Array.isArray(previousIntent)
-  ) {
-    previousIntent = {};
-  }
+  const currentMessage = message.trim();
 
-  // ==================================
-  // NORMALIZE CHAT HISTORY
-  // ==================================
+  const normalizedPreviousIntent = normalizeIntent(previousIntent);
+
+  // ============================================
+  // NORMALIZE HISTORY
+  // ============================================
 
   const safeHistory = history
     .filter(
@@ -1170,23 +1159,20 @@ export async function askFortuna(message, history = [], previousIntent = {}) {
     )
     .map((item) => ({
       role:
-        item.role === "model" || item.role === "assistant"
-          ? "assistant"
-          : "user",
+        item.role === "assistant" || item.role === "model" ? "model" : "user",
 
       content: item.content.trim(),
     }))
-    .filter((item) => item.content);
+    .filter((item) => item.content)
+    .slice(-MAX_HISTORY_MESSAGES);
 
-  // ==================================
-  // AVOID DUPLICATING CURRENT MESSAGE
-  // ==================================
-
-  const currentMessage = message.trim();
+  // ============================================
+  // PREVENT CURRENT MESSAGE DUPLICATION
+  // ============================================
 
   const lastMessage = safeHistory[safeHistory.length - 1];
 
-  const contents =
+  const conversationContents =
     lastMessage?.role === "user" && lastMessage.content === currentMessage
       ? safeHistory
       : [
@@ -1197,192 +1183,113 @@ export async function askFortuna(message, history = [], previousIntent = {}) {
           },
         ];
 
-  // ==================================
-  // NORMALIZE PREVIOUS INTENT
-  // ==================================
+  // ============================================
+  // COMPACT INTENT CONTEXT
+  // ============================================
 
-  const normalizedPreviousIntent = normalizeIntent(previousIntent);
+  const intentContext = {
+    role: "user",
 
-  // ==================================
-  // FORTUNA REQUEST
-  // ==================================
-
-  let completion;
-
-  try {
-    completion = await requestOpenRouter([
+    parts: [
       {
-        role: "system",
-
-        content: FORTUNA_SYSTEM_INSTRUCTION,
+        text:
+          `EXISTING_INTENT:\n${JSON.stringify(normalizedPreviousIntent)}\n\n` +
+          `The EXISTING_INTENT is accumulated user preference state. ` +
+          `Return the complete updated intent state. ` +
+          `Preserve useful preferences unless the user explicitly changes ` +
+          `or removes them. ` +
+          `If the user changes a preference, replace the old value. ` +
+          `If the user explicitly removes a preference, clear it using null ` +
+          `for single-value fields or [] for array fields. ` +
+          `You are the sole decision-maker for discoveryAction. ` +
+          `Interpret short confirmations from the immediately preceding ` +
+          `FORTUNA message and conversation context. ` +
+          `A positive reaction to already-shown recommendations is NOT a ` +
+          `new discovery request unless the user explicitly asks for more, ` +
+          `similar, different, or new games.`,
       },
+    ],
+  };
 
-      // ==================================
-      // PREVIOUS INTENT CONTEXT
-      // ==================================
-      //
-      // This gives the model explicit access to the
-      // accumulated intent maintained by the application.
-      //
-      // The AI should preserve these preferences unless
-      // the user explicitly changes or rejects them.
-      //
+  // ============================================
+  // BUILD GEMINI CONTENTS
+  // ============================================
 
-      {
-        role: "system",
+  const geminiContents = [
+    intentContext,
 
-        content: `
-The application has already accumulated the following structured preferences from the previous conversation:
+    ...conversationContents.map((item) => ({
+      role: item.role,
 
-${JSON.stringify(normalizedPreviousIntent, null, 2)}
+      parts: [
+        {
+          text: item.content,
+        },
+      ],
+    })),
+  ];
 
-IMPORTANT:
+  // ============================================
+  // ASK GEMINI
+  // ============================================
 
-Treat these preferences as the existing conversation state.
+  const completion = await requestGemini(geminiContents);
 
-Preserve them unless the user explicitly changes or rejects them.
+  // ============================================
+  // EXTRACT RESPONSE
+  // ============================================
 
-The latest user message may add new preferences.
+  const responseText = completion?.candidates?.[0]?.content?.parts
+    ?.map((part) => part?.text || "")
+    .join("")
+    .trim();
 
-The latest user message may clarify or override an earlier preference.
-
-Do not erase an existing preference simply because it was not mentioned in the latest message.
-
-Your returned intent should represent the accumulated conversation state.
-
-If the user explicitly rejects or changes a previous preference, update the intent accordingly.
-
-Do not treat preferences from this context as new preferences unless they are supported by the user's conversation.
-`,
-      },
-
-      ...contents,
-    ]);
-  } catch (error) {
-    console.error("FORTUNA OpenRouter error:", error);
-
-    throw error;
-  }
-
-  // ==================================
-  // GET RESPONSE
-  // ==================================
-
-  const responseMessage = completion?.choices?.[0]?.message;
-
-  const responseText = responseMessage?.content;
-
-  console.log(
-    "FORTUNA RAW MODEL RESPONSE:",
-    JSON.stringify(responseText, null, 2),
-  );
-
-  if (
-    !responseText ||
-    (typeof responseText === "string" && !responseText.trim())
-  ) {
-    console.error(
-      "FORTUNA empty model response:",
-      JSON.stringify(completion, null, 2),
-    );
-
+  if (!responseText) {
     throw new Error("FORTUNA returned an empty response.");
   }
 
-  // ==================================
-  // PARSE STRUCTURED RESPONSE
-  // ==================================
-  //
-  // OpenRouter normally returns JSON because response_format
-  // requests a JSON object.
-  //
-  // However, free routed models can occasionally ignore
-  // structured output and return plain text.
-  //
-  // Plain text should NOT crash the conversation.
-  //
-  // In that situation:
-  //
-  // - Use the plain text as Fortuna's reply.
-  // - Preserve the previous accumulated intent.
-  // - Allow the conversation to continue.
-  //
+  // ============================================
+  // PARSE
+  // ============================================
 
-  let parsedResponse;
+  const parsedResponse = parseGeminiResponse(responseText);
 
-  try {
-    parsedResponse =
-      typeof responseText === "string"
-        ? JSON.parse(responseText.trim())
-        : responseText;
-  } catch (error) {
-    console.warn(
-      "FORTUNA model returned plain text instead of structured JSON.",
-    );
+  // ============================================
+  // VALIDATE
+  // ============================================
 
-    console.warn("FORTUNA response parse error:", error);
+  validateModelResponse(parsedResponse);
 
-    console.warn("FORTUNA raw response:", responseText);
+  // ============================================
+  // MERGE INTENT
+  // ============================================
 
-    return {
-      reply:
-        typeof responseText === "string"
-          ? responseText.trim()
-          : "I understand. Tell me a little more about what you're looking for.",
-
-      intent: normalizedPreviousIntent,
-    };
-  }
-
-  // ==================================
-  // VALIDATE RESPONSE
-  // ==================================
-
-  if (
-    !parsedResponse ||
-    typeof parsedResponse !== "object" ||
-    Array.isArray(parsedResponse)
-  ) {
-    throw new Error("FORTUNA returned an invalid response format.");
-  }
-
-  if (
-    typeof parsedResponse.reply !== "string" ||
-    !parsedResponse.reply.trim()
-  ) {
-    throw new Error("FORTUNA returned an invalid conversational response.");
-  }
-
-  if (
-    !parsedResponse.intent ||
-    typeof parsedResponse.intent !== "object" ||
-    Array.isArray(parsedResponse.intent)
-  ) {
-    throw new Error("FORTUNA returned an invalid discovery intent.");
-  }
-
-  // ==================================
-  // MERGE ACCUMULATED INTENT
-  // ==================================
-  //
-  // The AI may omit preferences that were not mentioned
-  // in the latest response.
-  //
-  // Never allow those omissions to erase the application's
-  // accumulated state.
-  //
-
-  const mergedIntent = mergeIntents(
+  const mergedIntent = mergeIntent(
     normalizedPreviousIntent,
     parsedResponse.intent,
   );
 
-  // ==================================
-  // RETURN CHAT + MERGED INTENT
-  // ==================================
+  // ============================================
+  // DISCOVERY SAFETY
+  // ============================================
+
+  let discoveryAction = parsedResponse.discoveryAction;
+
+  if (
+    discoveryAction === "discover" &&
+    mergedIntent.readyForDiscovery !== true
+  ) {
+    discoveryAction = "continue";
+  }
+
+  // ============================================
+  // RETURN
+  // ============================================
 
   return {
     reply: parsedResponse.reply.trim(),
+
+    discoveryAction,
 
     intent: mergedIntent,
   };

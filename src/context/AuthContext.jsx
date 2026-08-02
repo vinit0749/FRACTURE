@@ -1,10 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   GithubAuthProvider,
   GoogleAuthProvider,
   linkWithPopup,
   onAuthStateChanged,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -18,6 +21,7 @@ import {
   syncCloudUser,
   getCloudUserData,
   saveCloudUserProfile,
+  deleteCloudUserAccount,
 } from "../utils/cloudStorage";
 
 const AuthContext = createContext(null);
@@ -228,6 +232,81 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // ================================
+  // DELETE ACCOUNT
+  // ================================
+
+  const deleteAccount = async ({ password, providerId }) => {
+    if (!auth.currentUser) {
+      throw new Error("You must be signed in to delete your account.");
+    }
+
+    const currentUser = auth.currentUser;
+
+    try {
+      // ================================
+      // RE-AUTHENTICATE USER
+      // ================================
+
+      if (providerId === "password") {
+        if (!password) {
+          throw new Error("Please enter your password to continue.");
+        }
+
+        const credential = EmailAuthProvider.credential(
+          currentUser.email,
+          password,
+        );
+
+        await reauthenticateWithCredential(currentUser, credential);
+      } else if (providerId === "google.com") {
+        await reauthenticateWithPopup(currentUser, googleProvider);
+      } else if (providerId === "github.com") {
+        await reauthenticateWithPopup(currentUser, githubProvider);
+      } else {
+        throw new Error(
+          "Unable to determine your sign-in method. Please try again.",
+        );
+      }
+
+      console.log("User re-authenticated successfully.");
+
+      // ================================
+      // DELETE ACCOUNT FROM BACKEND
+      // ================================
+
+      await deleteCloudUserAccount();
+
+      // ================================
+      // CLEAR LOCAL USER DATA
+      // ================================
+
+      localStorage.removeItem("wishlist");
+
+      localStorage.removeItem("library");
+
+      // ================================
+      // REFRESH UI
+      // ================================
+
+      window.dispatchEvent(new Event("wishlistUpdated"));
+
+      window.dispatchEvent(new Event("libraryUpdated"));
+
+      // ================================
+      // SIGN OUT FROM FIREBASE
+      // ================================
+
+      await signOut(auth);
+
+      console.log("Account deleted successfully.");
+    } catch (error) {
+      console.error("Account deletion failed:", error);
+
+      throw error;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -240,6 +319,7 @@ export function AuthProvider({ children }) {
     unlinkGithub,
     updateUserProfile,
     logout,
+    deleteAccount,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

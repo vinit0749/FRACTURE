@@ -109,8 +109,12 @@ function SettingsMenu({ open }) {
   async function handleConfirmSignOut() {
     try {
       await logout();
+
       setShowSignOutModal(false);
       setPage("settings");
+
+      // Redirect to home after signing out
+      navigate("/");
     } catch (error) {
       console.error("Sign out failed:", error);
     }

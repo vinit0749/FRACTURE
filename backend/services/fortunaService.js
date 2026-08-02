@@ -1063,6 +1063,107 @@ async function requestGemini(contents) {
 }
 
 // ==============================================
+// GENERATE FORTUNA CONVERSATION TITLE
+// ==============================================
+//
+// Generates a short, human-friendly title for a
+// new FORTUNA conversation.
+//
+// This is called only when a conversation is
+// created, not on every chat message.
+//
+
+export async function generateFortunaTitle(history = [], intent = {}) {
+  if (!Array.isArray(history)) {
+    throw new Error("FORTUNA conversation history must be an array.");
+  }
+
+  if (!intent || typeof intent !== "object" || Array.isArray(intent)) {
+    throw new Error("FORTUNA conversation intent must be an object.");
+  }
+
+  const normalizedHistory = history
+    .filter(
+      (item) =>
+        item &&
+        typeof item.content === "string" &&
+        (item.role === "user" ||
+          item.role === "model" ||
+          item.role === "assistant"),
+    )
+    .map((item) => ({
+      role:
+        item.role === "assistant" || item.role === "model" ? "model" : "user",
+
+      content: item.content.trim(),
+    }))
+    .filter((item) => item.content)
+    .slice(-MAX_HISTORY_MESSAGES);
+
+  const normalizedIntent = normalizeIntent(intent);
+
+  const titleContents = [
+    {
+      role: "user",
+
+      parts: [
+        {
+          text: `
+Generate a short, natural title for this FORTUNA game discovery conversation.
+
+FULL CONVERSATION:
+${JSON.stringify(normalizedHistory)}
+
+ACCUMULATED DISCOVERY INTENT:
+${JSON.stringify(normalizedIntent)}
+
+TITLE RULES:
+- Return ONLY valid JSON.
+- Use exactly this structure:
+{
+  "title": "..."
+}
+- The title must be concise and human-friendly.
+- Maximum 60 characters.
+- Ideally 2–6 words.
+- Capture the main gaming preference or discovery goal.
+- Base the title on the FULL conversation and accumulated intent.
+- Do not simply copy any single user message.
+- Do not use quotation marks inside the title.
+- Do not mention FORTUNA, Gemini, AI, or FRACTURE.
+- Do not use generic titles like "Game Recommendations" if a more specific title can be created.
+- Do not invent preferences that are not present in the conversation or intent.
+`,
+        },
+      ],
+    },
+  ];
+
+  const completion = await requestGemini(titleContents);
+
+  const responseText = completion?.candidates?.[0]?.content?.parts
+    ?.map((part) => part?.text || "")
+    .join("")
+    .trim();
+
+  if (!responseText) {
+    throw new Error("FORTUNA title generation returned an empty response.");
+  }
+
+  const parsedResponse = parseGeminiResponse(responseText);
+
+  if (
+    !parsedResponse ||
+    typeof parsedResponse.title !== "string" ||
+    !parsedResponse.title.trim()
+  ) {
+    throw new Error("FORTUNA returned an invalid conversation title.");
+  }
+
+  return parsedResponse.title.trim().slice(0, 60);
+}
+
+// ==============================================
 // PARSE GEMINI JSON
 // ==============================================
 

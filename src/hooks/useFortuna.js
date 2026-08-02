@@ -1,72 +1,20 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { sendFortunaMessage, discoverFortunaGames } from "../api/fortuna.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
-// ==============================================
-// FORTUNA HOOK
-// ==============================================
-//
-// Responsibilities:
-//
-// - Maintain visible conversation timeline
-// - Maintain accumulated discovery intent
-// - Send conversation to Fortuna Service
-// - Trust Fortuna Service's discoveryAction
-// - Call Discovery Service only when FORTUNA decides
-// - Pass previously shown games to FDS
-// - Keep discovery results visible
-//
-// IMPORTANT:
-//
-// Gemini / FORTUNA is the decision-maker.
-//
-// The frontend does NOT:
-//
-// - Detect discovery requests
-// - Guess whether "yes" means discovery
-// - Guess whether "sure" means discovery
-// - Guess whether "more games" means discovery
-// - Decide whether the user is ready
-// - Decide when discovery should happen
-//
-// Flow:
-//
-// User message
-//      ↓
-// Fortuna Service / Gemini
-//      ↓
-// discoveryAction
-//      ↓
-// continue → conversation only
-// refine   → conversation only
-// discover → Discovery Service
-//      ↓
-// FDS / Gemini
-//      ↓
-// RAWG
-//      ↓
-// Discovery results
-//
-// ==============================================
+import {
+  sendFortunaMessage,
+  generateFortunaTitle,
+  discoverFortunaGames,
+  createFortunaConversation,
+  updateFortunaConversation,
+  getFortunaConversations,
+  getFortunaConversation,
+  deleteFortunaConversation,
+} from "../api/fortuna.js";
 
 // ==============================================
 // EXTRACT PREVIOUSLY SHOWN GAMES
-// ==============================================
-//
-// FDS needs to know which games have already been
-// shown so it can avoid repeating them.
-//
-// Discovery blocks are UI-only and are not sent as
-// normal FS conversation messages.
-//
-// Supports:
-//
-// 1. RAWG game objects
-//    { name: "Grand Theft Auto V" }
-//
-// 2. FORTUNA recommendation objects
-//    { title: "Grand Theft Auto V" }
-//
 // ==============================================
 
 function extractPreviousRecommendations(timeline = []) {
@@ -80,10 +28,6 @@ function extractPreviousRecommendations(timeline = []) {
     if (!item || item.type !== "discovery") {
       continue;
     }
-
-    // ============================================
-    // EXTRACT RAWG GAMES
-    // ============================================
 
     if (Array.isArray(item.games)) {
       for (const game of item.games) {
@@ -103,20 +47,14 @@ function extractPreviousRecommendations(timeline = []) {
             ? game.fortunaReason.trim()
             : "";
 
-        if (!title) {
-          continue;
+        if (title) {
+          previousRecommendations.push({
+            title,
+            reason,
+          });
         }
-
-        previousRecommendations.push({
-          title,
-          reason,
-        });
       }
     }
-
-    // ============================================
-    // EXTRACT FORTUNA RECOMMENDATIONS
-    // ============================================
 
     if (Array.isArray(item.recommendations)) {
       for (const recommendation of item.recommendations) {
@@ -138,21 +76,15 @@ function extractPreviousRecommendations(timeline = []) {
               ? recommendation.fortunaReason.trim()
               : "";
 
-        if (!title) {
-          continue;
+        if (title) {
+          previousRecommendations.push({
+            title,
+            reason,
+          });
         }
-
-        previousRecommendations.push({
-          title,
-          reason,
-        });
       }
     }
   }
-
-  // ============================================
-  // REMOVE DUPLICATES
-  // ============================================
 
   const seen = new Set();
 
@@ -175,20 +107,34 @@ function extractPreviousRecommendations(timeline = []) {
 
 export function useFortuna() {
   // ============================================
-  // CONVERSATION TIMELINE
+  // AUTHENTICATION
   // ============================================
-  //
-  // Contains:
-  //
-  // - User messages
-  // - FORTUNA messages
-  // - Discovery result blocks
-  //
-  // Discovery blocks remain visible in the UI
-  // but are excluded from FS chat history.
+
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
+
+  // ============================================
+  // CONVERSATION TIMELINE
   // ============================================
 
   const [timeline, setTimeline] = useState([]);
+
+  // ============================================
+  // PERSISTED CONVERSATION ID
+  // ============================================
+
+  const [conversationId, setConversationId] = useState(null);
+
+  // ============================================
+  // CONVERSATION HISTORY
+  // ============================================
+
+  const [conversations, setConversations] = useState([]);
+
+  // ============================================
+  // HISTORY LOADING
+  // ============================================
+
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
   // ============================================
   // INPUT
@@ -211,10 +157,6 @@ export function useFortuna() {
   // ============================================
   // DISCOVERY ATTEMPTED
   // ============================================
-  //
-  // true when FORTUNA decided to trigger
-  // Discovery Service for the current message.
-  // ============================================
 
   const [discoveryAttempted, setDiscoveryAttempted] = useState(false);
 
@@ -225,54 +167,278 @@ export function useFortuna() {
   const [error, setError] = useState(null);
 
   // ============================================
+  // HISTORY ERROR
+  // ============================================
+
+  const [historyError, setHistoryError] = useState(null);
+
+  // ============================================
+  // PERSIST CONVERSATION
+  // ============================================
+
+  async function persistConversation({ nextTimeline, nextIntent, title }) {
+    // ==========================================
+    // GUEST USERS
+    // ==========================================
+
+    if (authLoading || !isAuthenticated || !user) {
+      return null;
+    }
+
+    if (!Array.isArray(nextTimeline)) {
+      throw new Error("FORTUNA timeline must be an array.");
+    }
+
+    if (
+      !nextIntent ||
+      typeof nextIntent !== "object" ||
+      Array.isArray(nextIntent)
+    ) {
+      throw new Error("FORTUNA intent must be an object.");
+    }
+
+    // ==========================================
+    // CREATE NEW CONVERSATION
+    // ==========================================
+
+    if (!conversationId) {
+      const conversation = await createFortunaConversation({
+        title:
+          typeof title === "string" && title.trim()
+            ? title.trim()
+            : "New Discovery",
+
+        timeline: nextTimeline,
+
+        intent: nextIntent,
+      });
+
+      if (!conversation || !conversation._id) {
+        throw new Error("FORTUNA conversation was created without a valid ID.");
+      }
+
+      setConversationId(conversation._id);
+
+      // ========================================
+      // UPDATE SIDEBAR HISTORY
+      // ========================================
+
+      setConversations((previous) => {
+        const exists = previous.some(
+          (item) => String(item._id) === String(conversation._id),
+        );
+
+        if (exists) {
+          return previous.map((item) =>
+            String(item._id) === String(conversation._id) ? conversation : item,
+          );
+        }
+
+        return [conversation, ...previous];
+      });
+
+      return conversation;
+    }
+
+    // ==========================================
+    // UPDATE EXISTING CONVERSATION
+    // ==========================================
+
+    const conversation = await updateFortunaConversation(conversationId, {
+      ...(title !== undefined ? { title } : {}),
+      timeline: nextTimeline,
+      intent: nextIntent,
+    });
+
+    if (!conversation || !conversation._id) {
+      throw new Error(
+        "FORTUNA conversation update returned an invalid conversation.",
+      );
+    }
+
+    // ==========================================
+    // UPDATE SIDEBAR METADATA
+    // ==========================================
+
+    setConversations((previous) =>
+      previous.map((item) =>
+        String(item._id) === String(conversation._id)
+          ? {
+              ...item,
+              title: conversation.title,
+              createdAt: conversation.createdAt,
+              updatedAt: conversation.updatedAt,
+            }
+          : item,
+      ),
+    );
+
+    return conversation;
+  }
+
+  // ============================================
+  // LOAD CONVERSATION HISTORY
+  // ============================================
+
+  const loadConversations = useCallback(async () => {
+    if (authLoading) {
+      return [];
+    }
+
+    if (!isAuthenticated || !user) {
+      setConversations([]);
+      setHistoryError(null);
+      setIsHistoryLoading(false);
+
+      return [];
+    }
+
+    setIsHistoryLoading(true);
+    setHistoryError(null);
+
+    try {
+      const savedConversations = await getFortunaConversations();
+
+      if (!Array.isArray(savedConversations)) {
+        throw new Error("FORTUNA returned invalid conversation history.");
+      }
+
+      setConversations(savedConversations);
+
+      return savedConversations;
+    } catch (err) {
+      console.error("FORTUNA history loading error:", err);
+
+      setHistoryError(
+        err?.message || "Failed to load FORTUNA conversation history.",
+      );
+
+      return [];
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }, [authLoading, isAuthenticated, user]);
+
+  // ============================================
+  // LOAD SINGLE CONVERSATION
+  // ============================================
+
+  const loadConversation = useCallback(
+    async (id) => {
+      if (!id || typeof id !== "string") {
+        throw new Error("A valid FORTUNA conversation ID is required.");
+      }
+
+      if (authLoading || !isAuthenticated || !user) {
+        throw new Error("You must be signed in to access FORTUNA history.");
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const conversation = await getFortunaConversation(id);
+
+        if (
+          !conversation ||
+          typeof conversation !== "object" ||
+          Array.isArray(conversation)
+        ) {
+          throw new Error("FORTUNA returned an invalid conversation.");
+        }
+
+        const restoredTimeline = Array.isArray(conversation.timeline)
+          ? conversation.timeline
+          : [];
+
+        const restoredIntent =
+          conversation.intent &&
+          typeof conversation.intent === "object" &&
+          !Array.isArray(conversation.intent)
+            ? conversation.intent
+            : {};
+
+        setConversationId(conversation._id);
+
+        setTimeline(restoredTimeline);
+
+        setIntent(restoredIntent);
+
+        setInput("");
+
+        setDiscoveryAttempted(
+          restoredTimeline.some((item) => item && item.type === "discovery"),
+        );
+
+        return conversation;
+      } catch (err) {
+        console.error("FORTUNA conversation loading error:", err);
+
+        setError(err?.message || "Failed to load FORTUNA conversation.");
+
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [authLoading, isAuthenticated, user],
+  );
+
+  // ============================================
+  // DELETE CONVERSATION
+  // ============================================
+
+  const removeConversation = useCallback(
+    async (id) => {
+      if (!id || typeof id !== "string") {
+        throw new Error("A valid FORTUNA conversation ID is required.");
+      }
+
+      if (authLoading || !isAuthenticated || !user) {
+        throw new Error("You must be signed in to access FORTUNA history.");
+      }
+
+      await deleteFortunaConversation(id);
+
+      setConversations((previous) =>
+        previous.filter(
+          (conversation) => String(conversation._id) !== String(id),
+        ),
+      );
+
+      if (String(conversationId) === String(id)) {
+        setTimeline([]);
+        setIntent(null);
+        setConversationId(null);
+        setInput("");
+        setDiscoveryAttempted(false);
+        setError(null);
+      }
+    },
+    [authLoading, isAuthenticated, user, conversationId],
+  );
+
+  // ============================================
   // SEND MESSAGE
   // ============================================
 
   async function sendMessage(message = input) {
-    // ==========================================
-    // BASIC VALIDATION
-    // ==========================================
-
     if (typeof message !== "string" || !message.trim()) {
       return;
     }
-
-    const trimmedMessage = message.trim();
-
-    // ==========================================
-    // PREVENT DUPLICATE REQUESTS
-    // ==========================================
 
     if (isLoading) {
       return;
     }
 
-    // ==========================================
-    // RESET ERROR
-    // ==========================================
+    const trimmedMessage = message.trim();
 
     setError(null);
-
-    // ==========================================
-    // START LOADING
-    // ==========================================
-
     setIsLoading(true);
-
-    // ==========================================
-    // RESET DISCOVERY ATTEMPT STATE
-    // ==========================================
-
     setDiscoveryAttempted(false);
 
     // ==========================================
-    // BUILD FS CHAT HISTORY
-    // ==========================================
-    //
-    // Only actual conversation messages are sent.
-    //
-    // Discovery blocks are UI-only and therefore
-    // excluded from the FORTUNA conversation.
+    // BUILD FORTUNA CHAT HISTORY
     // ==========================================
 
     const chatHistory = timeline
@@ -289,22 +455,13 @@ export function useFortuna() {
       }));
 
     // ==========================================
-    // COLLECT PREVIOUSLY SHOWN GAMES
-    // ==========================================
-    //
-    // This is separate from chat history.
-    //
-    // FDS uses this to:
-    //
-    // - Avoid repeating games
-    // - Understand what was previously shown
-    // - Find new games for later discovery
+    // COLLECT PREVIOUS RECOMMENDATIONS
     // ==========================================
 
     const previousRecommendations = extractPreviousRecommendations(timeline);
 
     // ==========================================
-    // ADD USER MESSAGE TO TIMELINE
+    // ADD USER MESSAGE
     // ==========================================
 
     const userMessage = {
@@ -316,26 +473,11 @@ export function useFortuna() {
 
     setTimeline(updatedTimeline);
 
-    // ==========================================
-    // CLEAR INPUT
-    // ==========================================
-
     setInput("");
 
     try {
       // ========================================
-      // STEP 1
-      // ASK FORTUNA
-      // ========================================
-      //
-      // Gemini decides:
-      //
-      // continue
-      // refine
-      // discover
-      //
-      // The frontend does not interpret the
-      // user's message to make this decision.
+      // STEP 1: ASK FORTUNA
       // ========================================
 
       const fortunaResponse = await sendFortunaMessage(
@@ -343,10 +485,6 @@ export function useFortuna() {
         chatHistory,
         intent,
       );
-
-      // ========================================
-      // VALIDATE FORTUNA RESPONSE
-      // ========================================
 
       if (
         !fortunaResponse ||
@@ -364,7 +502,7 @@ export function useFortuna() {
       }
 
       // ========================================
-      // ADD FORTUNA RESPONSE TO TIMELINE
+      // ADD FORTUNA RESPONSE
       // ========================================
 
       const assistantMessage = {
@@ -377,7 +515,7 @@ export function useFortuna() {
       setTimeline(conversationWithReply);
 
       // ========================================
-      // SAVE ACCUMULATED INTENT
+      // UPDATE INTENT
       // ========================================
 
       const newIntent =
@@ -385,24 +523,77 @@ export function useFortuna() {
         typeof fortunaResponse.intent === "object" &&
         !Array.isArray(fortunaResponse.intent)
           ? fortunaResponse.intent
-          : intent;
+          : intent || {};
 
       setIntent(newIntent);
 
       // ========================================
-      // VALIDATE DISCOVERY ACTION
+      // DETERMINE WHETHER TITLE SHOULD
+      // BE GENERATED
       // ========================================
       //
-      // FORTUNA / Gemini is the sole decision-maker.
+      // The title is now generated by
+      // FORTUNA / Gemini.
       //
-      // Valid actions:
+      // We generate it once there is enough
+      // conversation context.
       //
-      // "continue"
-      // "refine"
-      // "discover"
+      // For a new conversation:
       //
-      // Invalid actions safely fall back to
-      // normal conversation.
+      // Message 1:
+      // Create "New Discovery"
+      //
+      // Message 2:
+      // Update conversation normally
+      //
+      // Message 3:
+      // Generate a meaningful Gemini title
+      //
+      // After that:
+      // Keep the existing title.
+      // ========================================
+
+      const userMessageCount = conversationWithReply.filter(
+        (item) =>
+          item &&
+          item.role === "user" &&
+          typeof item.content === "string" &&
+          item.content.trim(),
+      ).length;
+
+      let generatedTitle;
+
+      if (userMessageCount === 3 && isAuthenticated && user) {
+        generatedTitle = await generateFortunaTitle(
+          conversationWithReply,
+          newIntent,
+        );
+      }
+
+      // ========================================
+      // DETERMINE TITLE
+      // ========================================
+
+      const conversationTitle = generatedTitle || undefined;
+
+      // ========================================
+      // PERSIST CHAT MESSAGE
+      // ========================================
+
+      await persistConversation({
+        nextTimeline: conversationWithReply,
+
+        nextIntent: newIntent,
+
+        ...(conversationTitle
+          ? {
+              title: conversationTitle,
+            }
+          : {}),
+      });
+
+      // ========================================
+      // DETERMINE DISCOVERY ACTION
       // ========================================
 
       const validDiscoveryActions = ["continue", "refine", "discover"];
@@ -416,9 +607,6 @@ export function useFortuna() {
       // ========================================
       // CONTINUE
       // ========================================
-      //
-      // Normal conversation.
-      // ========================================
 
       if (discoveryAction === "continue") {
         return;
@@ -426,13 +614,6 @@ export function useFortuna() {
 
       // ========================================
       // REFINE
-      // ========================================
-      //
-      // User changed or refined preferences.
-      //
-      // FORTUNA has already updated the intent.
-      //
-      // Do NOT trigger discovery automatically.
       // ========================================
 
       if (discoveryAction === "refine") {
@@ -442,18 +623,10 @@ export function useFortuna() {
       // ========================================
       // DISCOVER
       // ========================================
-      //
-      // Only reach this point when FORTUNA
-      // explicitly returned "discover".
-      // ========================================
 
       if (discoveryAction !== "discover") {
         return;
       }
-
-      // ========================================
-      // VALIDATE DISCOVERY INTENT
-      // ========================================
 
       if (
         !newIntent ||
@@ -465,36 +638,10 @@ export function useFortuna() {
         );
       }
 
-      // ========================================
-      // MARK DISCOVERY ATTEMPT
-      // ========================================
-      //
-      // At this point:
-      //
-      // - Gemini decided "discover"
-      // - Fortuna Service validated readiness
-      // - Frontend is allowed to call FDS
-      // ========================================
-
       setDiscoveryAttempted(true);
 
       // ========================================
-      // STEP 2
-      // RUN DISCOVERY SERVICE
-      // ========================================
-      //
-      // FORTUNA already decided discovery should
-      // happen.
-      //
-      // FDS now:
-      //
-      // - Selects games
-      // - Ranks games
-      // - Generates reasons
-      // - Avoids previously shown games
-      //
-      // FDS does NOT decide whether discovery
-      // should happen.
+      // STEP 2: DISCOVERY SERVICE
       // ========================================
 
       const discoveryResponse = await discoverFortunaGames(
@@ -502,10 +649,6 @@ export function useFortuna() {
         conversationWithReply,
         previousRecommendations,
       );
-
-      // ========================================
-      // VALIDATE DISCOVERY RESPONSE
-      // ========================================
 
       if (
         !discoveryResponse ||
@@ -515,17 +658,9 @@ export function useFortuna() {
         throw new Error("FORTUNA returned an invalid discovery response.");
       }
 
-      // ========================================
-      // EXTRACT DISCOVERED GAMES
-      // ========================================
-
       const discoveredGames = Array.isArray(discoveryResponse.results)
         ? discoveryResponse.results
         : [];
-
-      // ========================================
-      // EXTRACT RECOMMENDATIONS
-      // ========================================
 
       const fortunaRecommendations = Array.isArray(
         discoveryResponse.recommendations,
@@ -536,20 +671,13 @@ export function useFortuna() {
       // ========================================
       // NO RESULTS
       // ========================================
-      //
-      // Discovery was genuinely triggered by
-      // FORTUNA, but no usable RAWG games were
-      // retrieved.
-      //
-      // Keep the conversation intact.
-      // ========================================
 
       if (discoveredGames.length === 0) {
         return;
       }
 
       // ========================================
-      // CREATE DISCOVERY MESSAGE
+      // CREATE DISCOVERY BLOCK
       // ========================================
 
       const discoveryMessage = {
@@ -569,30 +697,31 @@ export function useFortuna() {
       // ========================================
       // ADD DISCOVERY TO TIMELINE
       // ========================================
-      //
-      // Previous discovery blocks remain visible.
+
+      const finalTimeline = [...conversationWithReply, discoveryMessage];
+
+      setTimeline(finalTimeline);
+
+      // ========================================
+      // PERSIST DISCOVERY RESULT
       // ========================================
 
-      setTimeline((currentTimeline) => [...currentTimeline, discoveryMessage]);
+      await persistConversation({
+        nextTimeline: finalTimeline,
+
+        nextIntent: newIntent,
+      });
     } catch (err) {
-      // ========================================
-      // ERROR HANDLING
-      // ========================================
-
       console.error("FORTUNA error:", err);
 
       setError(err?.message || "FORTUNA is unavailable right now.");
     } finally {
-      // ========================================
-      // STOP LOADING
-      // ========================================
-
       setIsLoading(false);
     }
   }
 
   // ============================================
-  // RESET FORTUNA
+  // RESET / NEW DISCOVERY
   // ============================================
 
   function resetFortuna() {
@@ -602,6 +731,8 @@ export function useFortuna() {
 
     setIntent(null);
 
+    setConversationId(null);
+
     setDiscoveryAttempted(false);
 
     setError(null);
@@ -610,56 +741,64 @@ export function useFortuna() {
   }
 
   // ============================================
+  // INITIAL HISTORY LOAD
+  // ============================================
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (!isAuthenticated || !user) {
+      setConversations([]);
+      setHistoryError(null);
+
+      return;
+    }
+
+    loadConversations();
+  }, [authLoading, isAuthenticated, user, loadConversations]);
+
+  // ============================================
   // RETURN
   // ============================================
 
   return {
-    // ==========================================
-    // CONVERSATION
-    // ==========================================
-
+    // Current conversation
     timeline,
-
-    // ==========================================
-    // INPUT
-    // ==========================================
-
-    input,
-
-    setInput,
-
-    // ==========================================
-    // LOADING
-    // ==========================================
-
-    loading: isLoading,
-
-    isLoading,
-
-    // ==========================================
-    // INTENT
-    // ==========================================
-
+    conversationId,
     intent,
 
-    // ==========================================
-    // DISCOVERY STATE
-    // ==========================================
+    // Authentication
+    user,
+    isAuthenticated,
+    authLoading,
 
+    // History
+    conversations,
+    isHistoryLoading,
+    historyError,
+
+    loadConversations,
+    loadConversation,
+    removeConversation,
+
+    // Input
+    input,
+    setInput,
+
+    // Loading
+    loading: isLoading,
+    isLoading,
+
+    // Discovery
     discoveryAttempted,
 
-    // ==========================================
-    // ERROR
-    // ==========================================
-
+    // Errors
     error,
 
-    // ==========================================
-    // ACTIONS
-    // ==========================================
-
+    // Actions
     sendMessage,
-
     resetFortuna,
   };
 }

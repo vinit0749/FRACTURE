@@ -318,3 +318,26 @@ export async function updateUserProfile(
 
   return response.json();
 }
+
+// ==================================================
+// DELETE USER ACCOUNT
+// ==================================================
+
+export async function deleteUserAccount() {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${BASE_URL}/users/account`, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+
+    throw new Error(
+      errorData.message || `FRACTURE backend error ${response.status}`,
+    );
+  }
+
+  return response.json();
+}

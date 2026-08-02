@@ -30,6 +30,7 @@ import "./styles/settings.css";
 import "./styles/profile.css";
 import "./styles/auth.css";
 import "./styles/signout.css";
+import "./styles/deleteAccount.css";
 import "./styles/edit-profile.css";
 
 import "./index.css";

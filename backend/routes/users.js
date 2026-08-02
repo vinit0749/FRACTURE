@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import upload from "../middleware/upload.js";
 import authenticateToken from "../middleware/auth.js";
 import cloudinary from "../config/cloudinary.js";
+import admin, { isFirebaseAdminAvailable } from "../firebase-admin.js";
 import {
   usernameCheckLimiter,
   userWriteLimiter,
@@ -36,14 +37,75 @@ async function deleteCloudinaryProfilePhoto(publicId) {
 }
 
 // ================================
+// Delete user account
+// ================================
+
+router.delete(
+  "/account",
+  authenticateToken,
+  userWriteLimiter,
+  async (req, res) => {
+    try {
+      if (!isFirebaseAdminAvailable) {
+        return res.status(503).json({
+          message: "Authentication service is not configured.",
+        });
+      }
+
+      const firebaseUid = req.user.uid;
+
+      if (!firebaseUid) {
+        return res.status(400).json({
+          message: "Invalid authentication data.",
+        });
+      }
+
+      const user = await User.findOne({ firebaseUid });
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User account not found.",
+        });
+      }
+
+      // Save the Cloudinary public ID before deleting
+      // the MongoDB user document.
+      const photoPublicId = user.photoPublicId;
+
+      // Delete the Firebase Authentication account.
+      await admin.auth().deleteUser(firebaseUid);
+
+      // Delete the MongoDB user document.
+      await User.deleteOne({ firebaseUid });
+
+      // Delete the custom Cloudinary profile picture.
+      if (photoPublicId) {
+        await deleteCloudinaryProfilePhoto(photoPublicId);
+      }
+
+      return res.status(200).json({
+        message: "Account deleted successfully.",
+      });
+    } catch (error) {
+      console.error("Delete account error:", error);
+
+      return res.status(500).json({
+        message: "Failed to delete account.",
+      });
+    }
+  },
+);
+
+// ================================
 // Get or create user
 // ================================
 
 router.post("/sync", authenticateToken, userWriteLimiter, async (req, res) => {
   try {
-    const { displayName, photoURL, username } = req.body;
     const firebaseUid = req.user.uid;
     const email = req.user.email;
+
+    const { displayName = "", photoURL = "", username = "" } = req.body;
 
     if (!firebaseUid || !email) {
       return res.status(400).json({
@@ -51,37 +113,100 @@ router.post("/sync", authenticateToken, userWriteLimiter, async (req, res) => {
       });
     }
 
+    // ==================================
+    // FIND EXISTING MONGODB USER
+    // ==================================
+
     let user = await User.findOne({ firebaseUid });
 
+    // ==================================
+    // CREATE MONGODB USER IF MISSING
+    // ==================================
+
     if (!user) {
-      user = await User.create({
+      console.log(
+        `MongoDB user not found for Firebase UID ${firebaseUid}. Creating user...`,
+      );
+
+      const normalizedUsername = username
+        ? username.toLowerCase().trim()
+        : undefined;
+
+      const userData = {
         firebaseUid,
         email,
-        displayName: displayName || "",
-        photoURL: photoURL || "",
+        displayName: displayName.trim(),
+        photoURL,
         photoPublicId: "",
-        username: username ? username.toLowerCase().trim() : "",
+        useProviderPhoto: true,
         wishlist: [],
         library: [],
-      });
-    } else {
-      user.email = email;
-      user.displayName = displayName || "";
+      };
 
+      if (normalizedUsername) {
+        userData.username = normalizedUsername;
+      }
+
+      user = await User.create(userData);
+
+      console.log(
+        `MongoDB user created successfully for Firebase UID ${firebaseUid}.`,
+      );
+    }
+
+    // ==================================
+    // UPDATE EXISTING USER
+    // ==================================
+    else {
+      user.email = email;
+
+      if (typeof displayName === "string") {
+        user.displayName = displayName.trim();
+      }
+
+      // Only update provider photo when the user
+      // does not have a custom Cloudinary photo.
+      if (user.useProviderPhoto && photoURL) {
+        user.photoURL = photoURL;
+      }
+
+      // Only set username if MongoDB does not
+      // already have one.
       if (username && !user.username) {
         user.username = username.toLowerCase().trim();
       }
 
-      if (user.useProviderPhoto && !user.photoURL) {
-        user.photoURL = photoURL || "";
-      }
-
       await user.save();
+
+      console.log(
+        `MongoDB user synced successfully for Firebase UID ${firebaseUid}.`,
+      );
     }
+
+    // ==================================
+    // RETURN USER
+    // ==================================
 
     return res.status(200).json(user);
   } catch (error) {
     console.error("User sync error:", error);
+
+    // Handle duplicate username
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Username is already taken.",
+      });
+    }
+
+    // Handle Mongoose validation errors
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Invalid user data.",
+        errors: Object.values(error.errors).map(
+          (validationError) => validationError.message,
+        ),
+      });
+    }
 
     return res.status(500).json({
       message: "Failed to sync user.",

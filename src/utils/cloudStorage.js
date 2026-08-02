@@ -5,6 +5,7 @@ import {
   updateUserLibrary,
   updateUserProfile,
   checkUsernameAvailability,
+  deleteUserAccount,
 } from "../api/fracture";
 
 /* ===============================
@@ -90,5 +91,19 @@ export async function saveCloudUserProfile(
     return null;
   }
 
-  return updateUserProfile(firebaseUid, displayName, photoFile, removePhoto, username);
+  return updateUserProfile(
+    firebaseUid,
+    displayName,
+    photoFile,
+    removePhoto,
+    username,
+  );
+}
+
+/* ===============================
+    DELETE ACCOUNT
+================================ */
+
+export async function deleteCloudUserAccount() {
+  return deleteUserAccount();
 }

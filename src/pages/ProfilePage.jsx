@@ -10,12 +10,14 @@ import {
   Pencil,
   User,
   ArrowLeft,
+  Trash2,
 } from "lucide-react";
 
 import Header from "../components/Layout/Header";
 import Carousel from "../components/Common/Carousel";
 import GameCard from "../components/Explore/GameCard";
 import SignOutModal from "../components/Common/SignOutModal";
+import DeleteAccountModal from "../components/Common/DeleteAccountModal";
 import EditProfileModal from "../components/Common/EditProfileModal";
 
 import { useAuth } from "../context/AuthContext";
@@ -28,10 +30,11 @@ import {
 import "../styles/profile.css";
 
 function ProfilePage() {
-  const { user, logout, updateUserProfile } = useAuth();
+  const { user, logout, deleteAccount, updateUserProfile } = useAuth();
   const navigate = useNavigate();
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
@@ -111,8 +114,6 @@ function ProfilePage() {
           <section className="profile-section">
             <div className="profile-section-heading">
               <div>
-                <div className="profile-card-eyebrow">ACCOUNT DETAILS</div>
-
                 <h2>Account Information</h2>
               </div>
             </div>
@@ -163,8 +164,6 @@ function ProfilePage() {
           <section className="profile-section">
             <div className="profile-section-heading">
               <div>
-                <div className="profile-card-eyebrow">YOUR PROGRESS</div>
-
                 <h2>Gaming Status</h2>
               </div>
             </div>
@@ -215,8 +214,6 @@ function ProfilePage() {
           <section className="profile-section profile-collection-section">
             <div className="profile-section-heading profile-collection-heading">
               <div>
-                <div className="profile-card-eyebrow">YOUR COLLECTION</div>
-
                 <h2>Your Games</h2>
               </div>
             </div>
@@ -291,8 +288,18 @@ function ProfilePage() {
 
           <section className="profile-actions-section">
             <Link to="/" className="profile-action-button">
-              <ArrowLeft size={17} /> Back to Explore
+              <ArrowLeft size={17} />
+              Back to Explore
             </Link>
+
+            <button
+              type="button"
+              className="profile-action-button profile-delete-button"
+              onClick={() => setShowDeleteAccountModal(true)}
+            >
+              <Trash2 size={17} />
+              Delete Account
+            </button>
 
             <button
               type="button"
@@ -327,6 +334,18 @@ function ProfilePage() {
         onConfirm={async () => {
           await logout();
           setShowSignOutModal(false);
+          navigate("/");
+        }}
+      />
+
+      <DeleteAccountModal
+        open={showDeleteAccountModal}
+        user={user}
+        onClose={() => setShowDeleteAccountModal(false)}
+        onConfirm={async (verificationData) => {
+          await deleteAccount(verificationData);
+          setShowDeleteAccountModal(false);
+          navigate("/");
         }}
       />
     </>

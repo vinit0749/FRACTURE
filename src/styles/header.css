@@ -632,7 +632,28 @@
     width: 42px;
     height: 42px;
   }
+
+  /* Keep Fortuna entry compact without changing its layout */
+
+  .fortuna-header-entry {
+    gap: 6px;
+    padding: 0 10px 0 8px;
+  }
+
+  .fortuna-header-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.82rem;
+  }
+
+  .fortuna-header-label {
+    font-size: 0.82rem;
+  }
 }
+
+/* ==================================================
+   TABLET
+================================================== */
 
 @media (max-width: 992px) {
   .header-container {
@@ -674,7 +695,17 @@
     border-left: none;
     padding-left: 0;
   }
+
+  /* Fortuna stays exactly as a normal header entry */
+
+  .fortuna-header-entry {
+    align-self: center;
+  }
 }
+
+/* ==================================================
+   MOBILE
+================================================== */
 
 @media (max-width: 768px) {
   .site-header {
@@ -715,7 +746,21 @@
     width: 42px;
     height: 42px;
   }
+
+  /* Fortuna */
+
+  .fortuna-header-entry {
+    max-width: 100%;
+  }
+
+  .fortuna-header-label {
+    font-size: 0.82rem;
+  }
 }
+
+/* ==================================================
+   SMALL MOBILE
+================================================== */
 
 @media (max-width: 480px) {
   .header-container {
@@ -752,5 +797,23 @@
     width: 40px;
     height: 40px;
     border-radius: 12px;
+  }
+
+  /* Fortuna */
+
+  .fortuna-header-entry {
+    height: 42px;
+    padding: 0 10px 0 8px;
+    gap: 7px;
+  }
+
+  .fortuna-header-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.82rem;
+  }
+
+  .fortuna-header-label {
+    font-size: 0.8rem;
   }
 }

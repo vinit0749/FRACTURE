@@ -1,40 +1,40 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
-export const generalApiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 100,
+const defaultOptions = {
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
     message: "Too many requests. Please try again later.",
   },
-});
+};
 
-export const usernameCheckLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+function createLimiter(options = {}) {
+  return rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    ...defaultOptions,
+    ...options,
+  });
+}
+
+export const generalApiLimiter = createLimiter();
+
+export const usernameCheckLimiter = createLimiter({
   limit: 30,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
   message: {
     message: "Too many username checks. Please try again later.",
   },
 });
 
-export const userWriteLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export const userWriteLimiter = createLimiter({
   limit: 60,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
   message: {
     message: "Too many requests. Please try again later.",
   },
 });
 
-export const profileUpdateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export const profileUpdateLimiter = createLimiter({
   limit: 20,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
   message: {
     message: "Too many profile updates. Please try again later.",
   },
@@ -44,12 +44,33 @@ export const profileUpdateLimiter = rateLimit({
 // Profile Picture Upload Limiter
 // ================================
 
-export const profileUploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export const profileUploadLimiter = createLimiter({
   limit: 10,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
   message: {
     message: "Too many profile picture uploads. Please try again later.",
   },
+});
+
+export const fortunaChatLimiter = createLimiter({
+  limit: 20,
+  message: {
+    message: "Too many FORTUNA requests. Please try again later.",
+  },
+  keyGenerator: (req) => req.user?.uid || ipKeyGenerator(req),
+});
+
+export const fortunaDiscoveryLimiter = createLimiter({
+  limit: 15,
+  message: {
+    message: "Too many FORTUNA discovery requests. Please try again later.",
+  },
+  keyGenerator: (req) => req.user?.uid || ipKeyGenerator(req),
+});
+
+export const fortunaHistoryLimiter = createLimiter({
+  limit: 60,
+  message: {
+    message: "Too many FORTUNA history requests. Please try again later.",
+  },
+  keyGenerator: (req) => req.user?.uid || ipKeyGenerator(req),
 });

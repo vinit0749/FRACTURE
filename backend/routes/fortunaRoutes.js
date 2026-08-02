@@ -9,8 +9,22 @@ import { discoverGamesFromIntent } from "../services/fortunaDiscoveryService.js"
 
 import FortunaConversation from "../models/fortunaConversation.js";
 import authenticateToken from "../middleware/auth.js";
+import {
+  fortunaChatLimiter,
+  fortunaDiscoveryLimiter,
+  fortunaHistoryLimiter,
+} from "../middleware/rateLimit.js";
 
 const router = express.Router();
+
+const MAX_CHAT_MESSAGE_LENGTH = 2000;
+const MAX_HISTORY_LENGTH = 24;
+const MAX_TIMELINE_LENGTH = 40;
+const MAX_PREVIOUS_RECOMMENDATIONS = 12;
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
 
 // ==============================================
 // FORTUNA CHAT
@@ -39,65 +53,82 @@ const router = express.Router();
 //
 // ==============================================
 
-router.post("/chat", async (req, res) => {
-  try {
-    const { message, history = [], intent = {} } = req.body;
+router.post(
+  "/chat",
+  authenticateToken,
+  fortunaChatLimiter,
+  async (req, res) => {
+    try {
+      const { message, history = [], intent = {} } = req.body;
 
-    // ============================================
-    // VALIDATE MESSAGE
-    // ============================================
+      // ============================================
+      // VALIDATE MESSAGE
+      // ============================================
 
-    if (typeof message !== "string" || !message.trim()) {
-      return res.status(400).json({
-        message: "A valid message is required.",
+      if (typeof message !== "string" || !message.trim()) {
+        return res.status(400).json({
+          message: "A valid message is required.",
+        });
+      }
+
+      if (message.trim().length > MAX_CHAT_MESSAGE_LENGTH) {
+        return res.status(400).json({
+          message: "Your message is too long.",
+        });
+      }
+
+      // ============================================
+      // VALIDATE HISTORY
+      // ============================================
+
+      if (!Array.isArray(history)) {
+        return res.status(400).json({
+          message: "Conversation history must be an array.",
+        });
+      }
+
+      if (history.length > MAX_HISTORY_LENGTH) {
+        return res.status(400).json({
+          message: "Conversation history is too long.",
+        });
+      }
+
+      // ============================================
+      // VALIDATE INTENT
+      // ============================================
+
+      if (!isPlainObject(intent)) {
+        return res.status(400).json({
+          message: "FORTUNA intent must be an object.",
+        });
+      }
+
+      // ============================================
+      // ASK FORTUNA
+      // ============================================
+
+      const fortunaResponse = await askFortuna(message, history, intent);
+
+      // ============================================
+      // RETURN FORTUNA RESPONSE
+      // ============================================
+
+      return res.json({
+        reply: fortunaResponse.reply,
+
+        discoveryAction: fortunaResponse.discoveryAction,
+
+        intent: fortunaResponse.intent,
+      });
+    } catch (error) {
+      console.error("FORTUNA chat route error:", error);
+
+      return res.status(500).json({
+        message: "The AI service could not process your request right now.",
       });
     }
-
-    // ============================================
-    // VALIDATE HISTORY
-    // ============================================
-
-    if (!Array.isArray(history)) {
-      return res.status(400).json({
-        message: "Conversation history must be an array.",
-      });
-    }
-
-    // ============================================
-    // VALIDATE INTENT
-    // ============================================
-
-    if (!intent || typeof intent !== "object" || Array.isArray(intent)) {
-      return res.status(400).json({
-        message: "FORTUNA intent must be an object.",
-      });
-    }
-
-    // ============================================
-    // ASK FORTUNA
-    // ============================================
-
-    const fortunaResponse = await askFortuna(message, history, intent);
-
-    // ============================================
-    // RETURN FORTUNA RESPONSE
-    // ============================================
-
-    return res.json({
-      reply: fortunaResponse.reply,
-
-      discoveryAction: fortunaResponse.discoveryAction,
-
-      intent: fortunaResponse.intent,
-    });
-  } catch (error) {
-    console.error("FORTUNA chat route error:", error);
-
-    return res.status(500).json({
-      message: error?.message || "FORTUNA is unavailable right now.",
-    });
-  }
-});
+  },
+);
 
 // ==============================================
 // GENERATE FORTUNA CONVERSATION TITLE
@@ -131,62 +162,72 @@ router.post("/chat", async (req, res) => {
 //
 // ==============================================
 
-router.post("/title", async (req, res) => {
-  try {
-    const { history = [], intent = {} } = req.body;
+router.post(
+  "/title",
+  authenticateToken,
+  fortunaChatLimiter,
+  async (req, res) => {
+    try {
+      const { history = [], intent = {} } = req.body;
 
-    // ============================================
-    // VALIDATE HISTORY
-    // ============================================
+      // ============================================
+      // VALIDATE HISTORY
+      // ============================================
 
-    if (!Array.isArray(history)) {
-      return res.status(400).json({
-        message: "FORTUNA conversation history must be an array.",
+      if (!Array.isArray(history)) {
+        return res.status(400).json({
+          message: "FORTUNA conversation history must be an array.",
+        });
+      }
+
+      // ============================================
+      // VALIDATE INTENT
+      // ============================================
+
+      if (!isPlainObject(intent)) {
+        return res.status(400).json({
+          message: "FORTUNA intent must be an object.",
+        });
+      }
+
+      // ============================================
+      // REQUIRE CONVERSATION CONTEXT
+      // ============================================
+
+      if (history.length === 0) {
+        return res.status(400).json({
+          message: "FORTUNA requires conversation context to generate a title.",
+        });
+      }
+
+      if (history.length > MAX_HISTORY_LENGTH) {
+        return res.status(400).json({
+          message: "Conversation history is too long.",
+        });
+      }
+
+      // ============================================
+      // GENERATE CONTEXTUAL TITLE
+      // ============================================
+
+      const title = await generateFortunaTitle(history, intent);
+
+      // ============================================
+      // RETURN TITLE
+      // ============================================
+
+      return res.status(200).json({
+        title,
+      });
+    } catch (error) {
+      console.error("FORTUNA title generation error:", error);
+
+      return res.status(500).json({
+        message: "FORTUNA could not generate a conversation title right now.",
       });
     }
-
-    // ============================================
-    // VALIDATE INTENT
-    // ============================================
-
-    if (!intent || typeof intent !== "object" || Array.isArray(intent)) {
-      return res.status(400).json({
-        message: "FORTUNA intent must be an object.",
-      });
-    }
-
-    // ============================================
-    // REQUIRE CONVERSATION CONTEXT
-    // ============================================
-
-    if (history.length === 0) {
-      return res.status(400).json({
-        message: "FORTUNA requires conversation context to generate a title.",
-      });
-    }
-
-    // ============================================
-    // GENERATE CONTEXTUAL TITLE
-    // ============================================
-
-    const title = await generateFortunaTitle(history, intent);
-
-    // ============================================
-    // RETURN TITLE
-    // ============================================
-
-    return res.status(200).json({
-      title,
-    });
-  } catch (error) {
-    console.error("FORTUNA title generation error:", error);
-
-    return res.status(500).json({
-      message:
-        error?.message || "FORTUNA could not generate a conversation title.",
-    });
-  }
-});
+  },
+);
 
 // ==============================================
 // FORTUNA DISCOVERY
@@ -207,62 +248,73 @@ router.post("/title", async (req, res) => {
 //
 // ==============================================
 
-router.post("/discover", async (req, res) => {
-  try {
-    const { intent, history = [], previousRecommendations = [] } = req.body;
+router.post(
+  "/discover",
+  authenticateToken,
+  fortunaDiscoveryLimiter,
+  async (req, res) => {
+    try {
+      const { intent, history = [], previousRecommendations = [] } = req.body;
 
-    // ============================================
-    // VALIDATE INTENT
-    // ============================================
+      // ============================================
+      // VALIDATE INTENT
+      // ============================================
 
-    if (!intent || typeof intent !== "object" || Array.isArray(intent)) {
-      return res.status(400).json({
-        message: "A valid FORTUNA discovery intent is required.",
+      if (!isPlainObject(intent)) {
+        return res.status(400).json({
+          message: "A valid FORTUNA discovery intent is required.",
+        });
+      }
+
+      // ============================================
+      // VALIDATE HISTORY
+      // ============================================
+
+      if (!Array.isArray(history)) {
+        return res.status(400).json({
+          message: "FORTUNA conversation history must be an array.",
+        });
+      }
+
+      // ============================================
+      // VALIDATE PREVIOUS RECOMMENDATIONS
+      // ============================================
+
+      if (!Array.isArray(previousRecommendations)) {
+        return res.status(400).json({
+          message: "Previous recommendations must be an array.",
+        });
+      }
+
+      if (previousRecommendations.length > MAX_PREVIOUS_RECOMMENDATIONS) {
+        return res.status(400).json({
+          message: "Previous recommendations are too large.",
+        });
+      }
+
+      // ============================================
+      // RUN DISCOVERY
+      // ============================================
+
+      const discovery = await discoverGamesFromIntent(intent, history, {
+        explicitDiscovery: true,
+        previousRecommendations,
+      });
+
+      // ============================================
+      // RETURN DISCOVERY
+      // ============================================
+
+      return res.json(discovery);
+    } catch (error) {
+      console.error("FORTUNA discovery route error:", error);
+
+      return res.status(500).json({
+        message: "FORTUNA could not discover games right now.",
       });
     }
-
-    // ============================================
-    // VALIDATE HISTORY
-    // ============================================
-
-    if (!Array.isArray(history)) {
-      return res.status(400).json({
-        message: "FORTUNA conversation history must be an array.",
-      });
-    }
-
-    // ============================================
-    // VALIDATE PREVIOUS RECOMMENDATIONS
-    // ============================================
-
-    if (!Array.isArray(previousRecommendations)) {
-      return res.status(400).json({
-        message: "Previous recommendations must be an array.",
-      });
-    }
-
-    // ============================================
-    // RUN DISCOVERY
-    // ============================================
-
-    const discovery = await discoverGamesFromIntent(intent, history, {
-      explicitDiscovery: true,
-      previousRecommendations,
-    });
-
-    // ============================================
-    // RETURN DISCOVERY
-    // ============================================
-
-    return res.json(discovery);
-  } catch (error) {
-    console.error("FORTUNA discovery route error:", error);
-
-    return res.status(500).json({
-      message: error?.message || "FORTUNA could not discover games right now.",
-    });
-  }
-});
+  },
+);
 
 // ==============================================
 // FORTUNA HISTORY
@@ -287,227 +339,259 @@ router.post("/discover", async (req, res) => {
 //
 // ==============================================
 
-router.get("/history", authenticateToken, async (req, res) => {
-  try {
-    const firebaseUid = req.user.uid;
+router.get(
+  "/history",
+  authenticateToken,
+  fortunaHistoryLimiter,
+  async (req, res) => {
+    try {
+      const firebaseUid = req.user.uid;
 
-    const conversations = await FortunaConversation.find({
-      firebaseUid,
-    })
-      .select("_id title createdAt updatedAt")
-      .sort({
-        updatedAt: -1,
+      const conversations = await FortunaConversation.find({
+        firebaseUid,
       })
-      .lean();
+        .select("_id title createdAt updatedAt")
+        .sort({
+          updatedAt: -1,
+        })
+        .lean();
 
-    return res.status(200).json({
-      conversations,
-    });
-  } catch (error) {
-    console.error("FORTUNA history fetch error:", error);
+      return res.status(200).json({
+        conversations,
+      });
+    } catch (error) {
+      console.error("FORTUNA history fetch error:", error);
 
-    return res.status(500).json({
-      message: "Failed to fetch FORTUNA conversation history.",
-    });
-  }
-});
+      return res.status(500).json({
+        message: "Failed to fetch FORTUNA conversation history.",
+      });
+    }
+  },
+);
 
 // ==============================================
 // GET SINGLE FORTUNA CONVERSATION
 // ==============================================
 
-router.get("/history/:conversationId", authenticateToken, async (req, res) => {
-  try {
-    const { conversationId } = req.params;
+router.get(
+  "/history/:conversationId",
+  authenticateToken,
+  fortunaHistoryLimiter,
+  async (req, res) => {
+    try {
+      const { conversationId } = req.params;
 
-    const firebaseUid = req.user.uid;
+      const firebaseUid = req.user.uid;
 
-    if (!mongoose.Types.ObjectId.isValid(conversationId)) {
-      return res.status(400).json({
-        message: "Invalid FORTUNA conversation ID.",
+      if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+        return res.status(400).json({
+          message: "Invalid FORTUNA conversation ID.",
+        });
+      }
+
+      const conversation = await FortunaConversation.findOne({
+        _id: conversationId,
+        firebaseUid,
+      }).lean();
+
+      if (!conversation) {
+        return res.status(404).json({
+          message: "FORTUNA conversation not found.",
+        });
+      }
+
+      return res.status(200).json({
+        conversation,
+      });
+    } catch (error) {
+      console.error("FORTUNA conversation fetch error:", error);
+
+      return res.status(500).json({
+        message: "Failed to fetch FORTUNA conversation.",
       });
     }
-
-    const conversation = await FortunaConversation.findOne({
-      _id: conversationId,
-      firebaseUid,
-    }).lean();
-
-    if (!conversation) {
-      return res.status(404).json({
-        message: "FORTUNA conversation not found.",
-      });
-    }
-
-    return res.status(200).json({
-      conversation,
-    });
-  } catch (error) {
-    console.error("FORTUNA conversation fetch error:", error);
-
-    return res.status(500).json({
-      message: "Failed to fetch FORTUNA conversation.",
-    });
-  }
-});
+  },
+);
 
 // ==============================================
 // CREATE FORTUNA CONVERSATION
 // ==============================================
 
-router.post("/history", authenticateToken, async (req, res) => {
-  try {
-    const firebaseUid = req.user.uid;
+router.post(
+  "/history",
+  authenticateToken,
+  fortunaHistoryLimiter,
+  async (req, res) => {
+    try {
+      const firebaseUid = req.user.uid;
 
-    const { title, timeline, intent } = req.body;
+      const { title, timeline, intent } = req.body;
 
-    // ==========================================
-    // VALIDATE TIMELINE
-    // ==========================================
+      // ==========================================
+      // VALIDATE TIMELINE
+      // ==========================================
 
-    if (!Array.isArray(timeline)) {
-      return res.status(400).json({
-        message: "FORTUNA conversation timeline must be an array.",
-      });
-    }
-
-    // ==========================================
-    // CREATE CONVERSATION
-    // ==========================================
-
-    const conversation = await FortunaConversation.create({
-      firebaseUid,
-
-      title:
-        typeof title === "string" && title.trim()
-          ? title.trim()
-          : "New Discovery",
-
-      timeline,
-
-      intent:
-        intent && typeof intent === "object" && !Array.isArray(intent)
-          ? intent
-          : {},
-    });
-
-    return res.status(201).json({
-      conversation,
-    });
-  } catch (error) {
-    console.error("FORTUNA conversation creation error:", error);
-
-    return res.status(500).json({
-      message: "Failed to create FORTUNA conversation.",
-    });
-  }
-});
-
-// ==============================================
-// UPDATE FORTUNA CONVERSATION
-// ==============================================
-
-router.put("/history/:conversationId", authenticateToken, async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-
-    const firebaseUid = req.user.uid;
-
-    // ==========================================
-    // VALIDATE CONVERSATION ID
-    // ==========================================
-
-    if (!mongoose.Types.ObjectId.isValid(conversationId)) {
-      return res.status(400).json({
-        message: "Invalid FORTUNA conversation ID.",
-      });
-    }
-
-    const { title, timeline, intent } = req.body;
-
-    const updateData = {};
-
-    // ==========================================
-    // UPDATE TITLE
-    // ==========================================
-
-    if (typeof title === "string" && title.trim()) {
-      updateData.title = title.trim();
-    }
-
-    // ==========================================
-    // UPDATE TIMELINE
-    // ==========================================
-
-    if (timeline !== undefined) {
       if (!Array.isArray(timeline)) {
         return res.status(400).json({
           message: "FORTUNA conversation timeline must be an array.",
         });
       }
 
-      updateData.timeline = timeline;
-    }
-
-    // ==========================================
-    // UPDATE INTENT
-    // ==========================================
-
-    if (intent !== undefined) {
-      if (!intent || typeof intent !== "object" || Array.isArray(intent)) {
+      if (timeline.length > MAX_TIMELINE_LENGTH) {
         return res.status(400).json({
-          message: "FORTUNA conversation intent must be an object.",
+          message: "FORTUNA conversation timeline is too large.",
         });
       }
 
-      updateData.intent = intent;
-    }
+      // ==========================================
+      // CREATE CONVERSATION
+      // ==========================================
 
-    // ==========================================
-    // VALIDATE UPDATE
-    // ==========================================
-
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({
-        message: "No valid conversation data was provided.",
-      });
-    }
-
-    // ==========================================
-    // UPDATE CONVERSATION
-    // ==========================================
-
-    const conversation = await FortunaConversation.findOneAndUpdate(
-      {
-        _id: conversationId,
+      const conversation = await FortunaConversation.create({
         firebaseUid,
-      },
-      {
-        $set: updateData,
-      },
-      {
-        new: true,
-        runValidators: true,
-      },
-    ).lean();
 
-    if (!conversation) {
-      return res.status(404).json({
-        message: "FORTUNA conversation not found.",
+        title:
+          typeof title === "string" && title.trim()
+            ? title.trim()
+            : "New Discovery",
+
+        timeline,
+
+        intent:
+          intent && typeof intent === "object" && !Array.isArray(intent)
+            ? intent
+            : {},
+      });
+
+      return res.status(201).json({
+        conversation,
+      });
+    } catch (error) {
+      console.error("FORTUNA conversation creation error:", error);
+
+      return res.status(500).json({
+        message: "Failed to create FORTUNA conversation.",
       });
     }
+  },
+);
 
-    return res.status(200).json({
-      conversation,
-    });
-  } catch (error) {
-    console.error("FORTUNA conversation update error:", error);
+// ==============================================
+// UPDATE FORTUNA CONVERSATION
+// ==============================================
 
-    return res.status(500).json({
-      message: "Failed to update FORTUNA conversation.",
-    });
-  }
-});
+router.put(
+  "/history/:conversationId",
+  authenticateToken,
+  fortunaHistoryLimiter,
+  async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+
+      const firebaseUid = req.user.uid;
+
+      // ==========================================
+      // VALIDATE CONVERSATION ID
+      // ==========================================
+
+      if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+        return res.status(400).json({
+          message: "Invalid FORTUNA conversation ID.",
+        });
+      }
+
+      const { title, timeline, intent } = req.body;
+
+      const updateData = {};
+
+      // ==========================================
+      // UPDATE TITLE
+      // ==========================================
+
+      if (typeof title === "string" && title.trim()) {
+        updateData.title = title.trim();
+      }
+
+      // ==========================================
+      // UPDATE TIMELINE
+      // ==========================================
+
+      if (timeline !== undefined) {
+        if (!Array.isArray(timeline)) {
+          return res.status(400).json({
+            message: "FORTUNA conversation timeline must be an array.",
+          });
+        }
+
+        if (timeline.length > MAX_TIMELINE_LENGTH) {
+          return res.status(400).json({
+            message: "FORTUNA conversation timeline is too large.",
+          });
+        }
+
+        updateData.timeline = timeline;
+      }
+
+      // ==========================================
+      // UPDATE INTENT
+      // ==========================================
+
+      if (intent !== undefined) {
+        if (!isPlainObject(intent)) {
+          return res.status(400).json({
+            message: "FORTUNA conversation intent must be an object.",
+          });
+        }
+
+        updateData.intent = intent;
+      }
+
+      // ==========================================
+      // VALIDATE UPDATE
+      // ==========================================
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({
+          message: "No valid conversation data was provided.",
+        });
+      }
+
+      // ==========================================
+      // UPDATE CONVERSATION
+      // ==========================================
+
+      const conversation = await FortunaConversation.findOneAndUpdate(
+        {
+          _id: conversationId,
+          firebaseUid,
+        },
+        {
+          $set: updateData,
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      ).lean();
+
+      if (!conversation) {
+        return res.status(404).json({
+          message: "FORTUNA conversation not found.",
+        });
+      }
+
+      return res.status(200).json({
+        conversation,
+      });
+    } catch (error) {
+      console.error("FORTUNA conversation update error:", error);
+
+      return res.status(500).json({
+        message: "Failed to update FORTUNA conversation.",
+      });
+    }
+  },
+);
 
 // ==============================================
 // DELETE FORTUNA CONVERSATION
@@ -516,6 +600,7 @@ router.put("/history/:conversationId", authenticateToken, async (req, res) => {
 router.delete(
   "/history/:conversationId",
   authenticateToken,
+  fortunaHistoryLimiter,
   async (req, res) => {
     try {
       const { conversationId } = req.params;

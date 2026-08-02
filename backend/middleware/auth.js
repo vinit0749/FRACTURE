@@ -15,7 +15,7 @@ function authenticateToken(req, res, next) {
     });
   }
 
-  const idToken = authHeader.split("Bearer ")[1];
+  const idToken = authHeader.substring("Bearer ".length).trim();
 
   admin
     .auth()
@@ -25,6 +25,7 @@ function authenticateToken(req, res, next) {
       next();
     })
     .catch(() => {
+      console.warn("Firebase ID token verification failed.");
       res.status(401).json({
         message: "Invalid or expired token. Please sign in again.",
       });

@@ -13,10 +13,16 @@ const app = express();
 
 const PORT = process.env.PORT || 5000;
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173")
+app.set("trust proxy", 1);
+
+const configuredOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+const allowedOrigins = configuredOrigins.length
+  ? configuredOrigins
+  : ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"];
 
 // ================================
 // Security Headers (Helmet)
@@ -33,8 +39,12 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:"],
         fontSrc: ["'self'", "data:"],
-        connectSrc: ["'self'"],
-        frameSrc: ["'self'"],
+        connectSrc: ["'self'", "https:"],
+        frameSrc: [
+          "'self'",
+          "https://www.youtube.com",
+          "https://www.youtube-nocookie.com",
+        ],
         formAction: ["'self'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
@@ -50,7 +60,17 @@ app.use(
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 204,
   }),
 );
 

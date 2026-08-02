@@ -62,11 +62,14 @@ export async function sendFortunaMessage(message, history = [], intent = null) {
     throw new Error("FORTUNA intent must be an object or null.");
   }
 
+  const token = await getFortunaAuthToken();
+
   const response = await fetch(`${BASE_URL}/fortuna/chat`, {
     method: "POST",
 
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
 
     body: JSON.stringify({
@@ -171,11 +174,14 @@ export async function generateFortunaTitle(history = [], intent = {}) {
     throw new Error("FORTUNA intent must be an object.");
   }
 
+  const token = await getFortunaAuthToken();
+
   const response = await fetch(`${BASE_URL}/fortuna/title`, {
     method: "POST",
 
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
 
     body: JSON.stringify({
@@ -260,11 +266,14 @@ export async function discoverFortunaGames(
     throw new Error("FORTUNA previous recommendations must be an array.");
   }
 
+  const token = await getFortunaAuthToken();
+
   const response = await fetch(`${BASE_URL}/fortuna/discover`, {
     method: "POST",
 
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
 
     body: JSON.stringify({

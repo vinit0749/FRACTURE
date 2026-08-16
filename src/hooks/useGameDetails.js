@@ -4,7 +4,6 @@ import {
   fetchGameDetails,
   fetchGameScreenshots,
   fetchGameTrailer,
-  fetchSimilarGames,
 } from "../api/fracture";
 
 export default function useGameDetails(id) {
@@ -23,64 +22,62 @@ export default function useGameDetails(id) {
       setLoading(true);
       setError("");
 
+      // ==========================================
+      // GAME DETAILS
+      // ==========================================
+
       const gameData = await fetchGameDetails(id);
 
       setGame(gameData);
+
+      // ==========================================
+      // SCREENSHOTS + TRAILER
+      // ==========================================
 
       const [shots, trailerData] = await Promise.all([
         fetchGameScreenshots(id),
         fetchGameTrailer(gameData.name),
       ]);
 
-      setScreenshots(shots.results || []);
-      setTrailer(trailerData.trailer || null);
+      setScreenshots(shots?.results || []);
+      setTrailer(trailerData?.trailer || null);
 
-      /* ================= SIMILAR GAMES ================= */
+      // ==========================================
+      // SIMILAR GAMES
+      // ==========================================
+      //
+      // IGDB provides an actual `similar_games`
+      // relationship for games.
+      //
+      // We no longer generate "similar" games by:
+      // - matching genres
+      // - matching developers
+      // - adding random popular games
+      //
+      // This gives us genuine IGDB similarity data.
+      // ==========================================
 
-      const genreIds = gameData.genres?.map((genre) => genre.id).join(",");
-
-      const developerId = gameData.developers?.[0]?.id;
-
-      const requests = [];
-
-      // Same Genres
-      if (genreIds) {
-        requests.push(fetchSimilarGames(`genres=${genreIds}&page_size=20`));
-      }
-
-      // Same Developer
-      if (developerId) {
-        requests.push(
-          fetchSimilarGames(`developers=${developerId}&page_size=20`),
-        );
-      }
-
-      // Popular Games
-      requests.push(fetchSimilarGames(`ordering=-added&page_size=20`));
-
-      const results = await Promise.all(requests);
+      const similar = Array.isArray(gameData.similar_games)
+        ? gameData.similar_games
+        : [];
 
       const uniqueGames = new Map();
 
-      results.forEach((response) => {
-        response.results?.forEach((game) => {
-          if (game.id !== gameData.id) {
-            uniqueGames.set(game.id, game);
-          }
-        });
+      similar.forEach((similarGame) => {
+        if (similarGame && similarGame.id && similarGame.id !== gameData.id) {
+          uniqueGames.set(similarGame.id, similarGame);
+        }
       });
 
-      const shuffled = [...uniqueGames.values()]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 6);
-
-      setSimilarGames(shuffled);
+      setSimilarGames([...uniqueGames.values()].slice(0, 6));
     } catch (err) {
       console.error(err);
+
       setGame(null);
       setScreenshots([]);
       setTrailer(null);
       setSimilarGames([]);
+
       setError("We couldn't load this game right now. Please try again.");
     } finally {
       setLoading(false);

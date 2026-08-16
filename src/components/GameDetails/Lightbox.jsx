@@ -44,3 +44,4 @@ function Lightbox({ image, close }) {
 }
 
 export default Lightbox;
+

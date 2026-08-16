@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import useGameAutocomplete from "../../hooks/useGameAutocomplete";
-import SearchAutocomplete from "../Common/SearchAutocomplete";
 
 function ExploreToolbar({
   genres = [],
@@ -23,9 +22,43 @@ function ExploreToolbar({
   const [activeDropdown, setActiveDropdown] = useState(null);
   const toolbarRef = useRef(null);
 
-  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  useGameAutocomplete(searchInput);
 
-  const { suggestions } = useGameAutocomplete(searchInput);
+  const visiblePlatforms = platforms
+    .filter((p) =>
+      [
+        "PC (Microsoft Windows)",
+        "Mac",
+        "Linux",
+        "PlayStation 5",
+        "PlayStation 4",
+        "PlayStation 3",
+        "PlayStation 2",
+        "PlayStation",
+        "PlayStation Vita",
+        "PlayStation Portable",
+        "Xbox Series X|S",
+        "Xbox One",
+        "Xbox 360",
+        "Xbox",
+        "Nintendo Switch 2",
+        "Nintendo Switch",
+        "Wii U",
+        "Wii",
+        "Nintendo 3DS",
+        "Nintendo DS",
+        "Nintendo 64",
+        "Game Boy Advance",
+        "Game Boy Color",
+        "Game Boy",
+        "Android",
+        "iOS",
+      ].includes(p.name),
+    )
+    .map((p) => ({
+      ...p,
+      displayName: p.name === "PC (Microsoft Windows)" ? "PC" : p.name,
+    }));
 
   const toggleDropdown = (dropdown) => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
@@ -57,6 +90,18 @@ function ExploreToolbar({
     };
   }, []);
 
+  /*
+   * The first filter is only shown on the normal Explore section.
+   *
+   * Dedicated pages such as:
+   * - Top Rated
+   * - Trending
+   * - New Releases
+   *
+   * already define their own collection.
+   */
+  const showCollectionFilter = section === "popular";
+
   return (
     <div className="explore-toolbar" ref={toolbarRef}>
       <div className="explore-search">
@@ -84,35 +129,53 @@ function ExploreToolbar({
       </div>
 
       <div className="explore-controls">
-        {/* SORT ONLY ON HOME PAGE */}
-        {section === "explore" && (
+        {/* ============================================
+            1. COLLECTION FILTER
+            ============================================ */}
+
+        {showCollectionFilter && (
           <div
             className={`custom-dropdown ${
-              activeDropdown === "sort" ? "active" : ""
+              activeDropdown === "collection" ? "active" : ""
             }`}
           >
             <button
               className="dropdown-btn"
-              onClick={() => toggleDropdown("sort")}
+              onClick={() => toggleDropdown("collection")}
               aria-haspopup="listbox"
-              aria-expanded={activeDropdown === "sort"}
-              aria-label="Sort options"
-              onKeyDown={(event) => handleDropdownKeyDown(event, "sort")}
+              aria-expanded={activeDropdown === "collection"}
+              aria-label="Game collection"
+              onKeyDown={(event) => handleDropdownKeyDown(event, "collection")}
             >
-              <span id="sort-label">
+              <span id="collection-label">
                 {sort === "-added"
                   ? "Popular"
                   : sort === "-rating"
                     ? "Top Rated"
                     : sort === "-released"
-                      ? "Newest"
-                      : "Name (A-Z)"}
+                      ? "New Releases"
+                      : sort === "trending"
+                        ? "Trending"
+                        : "All Games"}
               </span>
 
               <ChevronDown size={18} />
             </button>
 
             <div className="dropdown-menu">
+              <div
+                className={`dropdown-option ${
+                  sort === "all" ? "selected" : ""
+                }`}
+                onClick={() => {
+                  setSort("all");
+                  setPage(1);
+                  setActiveDropdown(null);
+                }}
+              >
+                All Games
+              </div>
+
               <div
                 className={`dropdown-option ${
                   sort === "-added" ? "selected" : ""
@@ -128,15 +191,15 @@ function ExploreToolbar({
 
               <div
                 className={`dropdown-option ${
-                  sort === "-rating" ? "selected" : ""
+                  sort === "trending" ? "selected" : ""
                 }`}
                 onClick={() => {
-                  setSort("-rating");
+                  setSort("trending");
                   setPage(1);
                   setActiveDropdown(null);
                 }}
               >
-                Top Rated
+                Trending
               </div>
 
               <div
@@ -149,26 +212,16 @@ function ExploreToolbar({
                   setActiveDropdown(null);
                 }}
               >
-                Newest
-              </div>
-
-              <div
-                className={`dropdown-option ${
-                  sort === "name" ? "selected" : ""
-                }`}
-                onClick={() => {
-                  setSort("name");
-                  setPage(1);
-                  setActiveDropdown(null);
-                }}
-              >
-                Name (A-Z)
+                New Releases
               </div>
             </div>
           </div>
         )}
 
-        {/* GENRES */}
+        {/* ============================================
+            2. GENRES
+            ============================================ */}
+
         <div
           className={`custom-dropdown ${
             activeDropdown === "genre" ? "active" : ""
@@ -184,7 +237,8 @@ function ExploreToolbar({
           >
             <span id="genre-label">
               {genre
-                ? genres.find((g) => g.slug === genre)?.name
+                ? genres.find((g) => String(g.id) === String(genre))?.name ||
+                  "All Genres"
                 : "All Genres"}
             </span>
 
@@ -207,10 +261,10 @@ function ExploreToolbar({
               <div
                 key={g.id}
                 className={`dropdown-option ${
-                  genre === g.slug ? "selected" : ""
+                  String(genre) === String(g.id) ? "selected" : ""
                 }`}
                 onClick={() => {
-                  setGenre(g.slug);
+                  setGenre(String(g.id));
                   setPage(1);
                   setActiveDropdown(null);
                 }}
@@ -221,7 +275,10 @@ function ExploreToolbar({
           </div>
         </div>
 
-        {/* PLATFORMS */}
+        {/* ============================================
+            3. PLATFORMS
+            ============================================ */}
+
         <div
           className={`custom-dropdown ${
             activeDropdown === "platform" ? "active" : ""
@@ -237,7 +294,8 @@ function ExploreToolbar({
           >
             <span id="platform-label">
               {platform
-                ? platforms.find((p) => p.id === Number(platform))?.name
+                ? platforms.find((p) => String(p.id) === String(platform))
+                    ?.name || "All Platforms"
                 : "All Platforms"}
             </span>
 
@@ -256,11 +314,11 @@ function ExploreToolbar({
               All Platforms
             </div>
 
-            {platforms.map((p) => (
+            {visiblePlatforms.map((p) => (
               <div
                 key={p.id}
                 className={`dropdown-option ${
-                  platform === String(p.id) ? "selected" : ""
+                  String(platform) === String(p.id) ? "selected" : ""
                 }`}
                 onClick={() => {
                   setPlatform(String(p.id));
@@ -268,12 +326,13 @@ function ExploreToolbar({
                   setActiveDropdown(null);
                 }}
               >
-                {p.name}
+                {p.displayName}
               </div>
             ))}
           </div>
         </div>
 
+        {/* RESET IS A BUTTON, NOT A FILTER */}
         <button id="reset-filters" className="reset-btn" onClick={resetFilters}>
           Reset
         </button>

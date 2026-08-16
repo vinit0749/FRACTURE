@@ -63,9 +63,7 @@ export default function useGames({
         const cached = gamesCache.get(cacheKey);
 
         setGames(cached.results);
-
         setTotalPages?.(cached.totalPages);
-
         setLoading(false);
 
         return;
@@ -75,50 +73,105 @@ export default function useGames({
 
       params.append("page", page);
 
-      params.append("page_size", 40);
+      // Keep 20 games visible per FRACTURE page.
+      params.append("page_size", 20);
+
+      /* =====================================================
+         SEARCH
+         ===================================================== */
 
       if (search) {
         params.append("search", search.trim().toLowerCase());
         params.append("search_exact", false);
       }
 
-      let ordering = sort;
+      /* =====================================================
+         COLLECTION / ORDERING
+         ===================================================== */
+
+      let ordering = "";
 
       if (section === "top-rated") {
         ordering = "-rating";
-      }
-
-      if (section === "trending") {
+      } else if (section === "trending") {
         ordering = "-added";
 
         const today = new Date();
+        const threeYearsAgo = new Date();
 
-        const oneYearAgo = new Date();
-
-        oneYearAgo.setFullYear(today.getFullYear() - 1);
+        threeYearsAgo.setFullYear(today.getFullYear() - 3);
 
         params.append(
           "dates",
-          `${oneYearAgo.toISOString().split("T")[0]},${today.toISOString().split("T")[0]}`,
+          `${threeYearsAgo.toISOString().split("T")[0]},${
+            today.toISOString().split("T")[0]
+          }`,
         );
-      }
-
-      if (section === "new-releases") {
+      } else if (section === "new-releases") {
         ordering = "-released";
 
         const today = new Date();
-
         const oneYearAgo = new Date();
 
         oneYearAgo.setFullYear(today.getFullYear() - 1);
 
         params.append(
           "dates",
-          `${oneYearAgo.toISOString().split("T")[0]},${today.toISOString().split("T")[0]}`,
+          `${oneYearAgo.toISOString().split("T")[0]},${
+            today.toISOString().split("T")[0]
+          }`,
         );
+      } else {
+        /* =====================================================
+           HOME EXPLORE COLLECTION
+           ===================================================== */
+
+        if (sort === "-added") {
+          ordering = "-added";
+        } else if (sort === "-rating") {
+          ordering = "-rating";
+        } else if (sort === "-released") {
+          ordering = "-released";
+
+          const today = new Date();
+          const oneYearAgo = new Date();
+
+          oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+          params.append(
+            "dates",
+            `${oneYearAgo.toISOString().split("T")[0]},${
+              today.toISOString().split("T")[0]
+            }`,
+          );
+        } else if (sort === "trending") {
+          ordering = "-added";
+
+          const today = new Date();
+          const threeYearsAgo = new Date();
+
+          threeYearsAgo.setFullYear(today.getFullYear() - 3);
+
+          params.append(
+            "dates",
+            `${threeYearsAgo.toISOString().split("T")[0]},${
+              today.toISOString().split("T")[0]
+            }`,
+          );
+        } else if (sort === "all") {
+          ordering = "";
+        } else {
+          ordering = sort || "";
+        }
       }
 
-      params.append("ordering", ordering);
+      if (ordering) {
+        params.append("ordering", ordering);
+      }
+
+      /* =====================================================
+         FILTERS
+         ===================================================== */
 
       if (genre) {
         params.append("genres", genre);
@@ -128,20 +181,54 @@ export default function useGames({
         params.append("platforms", platform);
       }
 
+      /* =====================================================
+         FETCH
+         ===================================================== */
+
       const data = await fetchGames(`&${params.toString()}`);
 
-      const totalPages = 100;
-
-      setTotalPages?.(100);
-
       let results = data.results || [];
+
       results = results.filter(isSafeGame);
+
+      /* =====================================================
+         SEARCH RANKING
+         ===================================================== */
 
       if (search) {
         results = rankSearchResults(results, search);
       }
 
+      /* =====================================================
+         DISPLAY LIMIT
+         ===================================================== */
+
       results = results.slice(0, 20);
+
+      /* =====================================================
+         PAGINATION
+         ===================================================== */
+
+      /*
+       * IGDB has a maximum practical offset of 10,000.
+       *
+       * FRACTURE intentionally exposes only the first
+       * 100 pages instead of attempting to paginate through
+       * the entire IGDB catalogue.
+       *
+       * 100 pages × 20 games = 2,000 accessible games.
+       */
+
+      const totalPages = Math.min(
+        100,
+        Math.max(1, Math.ceil((data.count || 0) / 20)),
+      );
+
+      setTotalPages?.(totalPages);
+
+      /* =====================================================
+         CACHE
+         ===================================================== */
 
       gamesCache.set(cacheKey, {
         results,

@@ -5,6 +5,38 @@ import { isSafeGame } from "../utils/gameFilter";
 let carouselCache = null;
 let carouselPromise = null;
 
+const CAROUSEL_SIZE = 20;
+const FETCH_SIZE = 40;
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function isUsableGame(game) {
+  return (
+    Boolean(game) &&
+    isSafeGame(game) &&
+    Boolean(game.background_image) &&
+    Boolean(game.released)
+  );
+}
+
+function uniqueGames(games) {
+  return [
+    ...new Map(
+      (games || []).filter(isUsableGame).map((game) => [game.id, game]),
+    ).values(),
+  ];
+}
+
+function takeGames(games) {
+  return uniqueGames(games).slice(0, CAROUSEL_SIZE);
+}
+
+/* ============================================================
+   HOOK
+   ============================================================ */
+
 export default function useHomeCarousels() {
   const [trending, setTrending] = useState(carouselCache?.trending || []);
 
@@ -17,77 +49,130 @@ export default function useHomeCarousels() {
   const [loading, setLoading] = useState(!carouselCache);
   const [error, setError] = useState("");
 
+  /* ==========================================================
+     INITIAL LOAD
+     ========================================================== */
+
   useEffect(() => {
     if (carouselCache) {
       applyData(carouselCache);
-      setError("");
       return;
     }
 
     loadCarousels();
   }, []);
 
-  async function loadCarousels() {
-    setLoading(true);
-    setError("");
+  /* ==========================================================
+     LOAD
+     ========================================================== */
 
-    // Prevent duplicate calls
+  async function loadCarousels() {
     if (carouselPromise) {
       const data = await carouselPromise;
-
       applyData(data);
-
       return;
     }
 
+    setLoading(true);
+    setError("");
+
     carouselPromise = (async () => {
       try {
+        console.log("FRACTURE Home: loading carousels");
+
+        /* ====================================================
+           1. TRENDING
+
+           EXACT SAME DATASET AS TRENDING PAGE
+
+           - added / popularity ordering
+           - games from the last 3 years
+           ==================================================== */
+
         const today = new Date();
 
-        const lastYear = new Date();
+        const threeYearsAgo = new Date();
 
-        lastYear.setFullYear(today.getFullYear() - 1);
+        threeYearsAgo.setFullYear(today.getFullYear() - 3);
 
-        const formatDate = (date) => date.toISOString().split("T")[0];
+        const trendingData = await fetchGames(
+          `&ordering=-added&page_size=${FETCH_SIZE}&dates=${
+            threeYearsAgo.toISOString().split("T")[0]
+          },${today.toISOString().split("T")[0]}`,
+        );
 
-        const trendingParams = `ordering=-added&page_size=20&dates=${formatDate(lastYear)},${formatDate(today)}`;
+        const trending = takeGames(trendingData?.results);
 
-        const topRatedParams = "ordering=-rating&page_size=20";
+        console.log("FRACTURE Trending:", trending.length);
 
-        const newReleaseParams = `ordering=-released&page_size=20&dates=${formatDate(lastYear)},${formatDate(today)}&exclude_additions=`;
+        /* ====================================================
+           2. TOP RATED
 
-        const [trendingData, topRatedData, newReleaseData] = await Promise.all([
-          fetchGames(trendingParams),
+           EXACT SAME DATASET AS TOP RATED PAGE
+           ==================================================== */
 
-          fetchGames(topRatedParams),
+        await new Promise((resolve) => setTimeout(resolve, 750));
 
-          fetchGames(newReleaseParams),
-        ]);
+        const topRatedData = await fetchGames(
+          `&ordering=-rating&page_size=${FETCH_SIZE}`,
+        );
 
-        const data = {
-          trending: (trendingData.results || []).filter(isSafeGame),
+        const topRated = takeGames(topRatedData?.results);
 
-          topRated: (topRatedData.results || []).filter(isSafeGame),
+        console.log("FRACTURE Top Rated:", topRated.length);
 
-          newReleases: (newReleaseData.results || []).filter(
-            (game) =>
-              game.background_image && game.released && isSafeGame(game),
-          ),
+        /* ====================================================
+           3. NEW RELEASES
+
+           EXACT SAME DATASET AS NEW RELEASES PAGE
+
+           - released ordering
+           - games from the last 1 year
+           ==================================================== */
+
+        await new Promise((resolve) => setTimeout(resolve, 750));
+
+        const oneYearAgo = new Date();
+
+        oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+        const newReleaseData = await fetchGames(
+          `&ordering=-released&page_size=${FETCH_SIZE}&dates=${
+            oneYearAgo.toISOString().split("T")[0]
+          },${today.toISOString().split("T")[0]}`,
+        );
+
+        const newReleases = takeGames(newReleaseData?.results);
+
+        console.log("FRACTURE New Releases:", newReleases.length);
+
+        /* ====================================================
+           FINAL
+           ==================================================== */
+
+        const result = {
+          trending,
+          topRated,
+          newReleases,
         };
 
-        // Store completed result
-        carouselCache = data;
+        console.log("FRACTURE Home carousels:", {
+          trending: trending.length,
+          topRated: topRated.length,
+          newReleases: newReleases.length,
+        });
 
-        return data;
+        carouselCache = result;
+
+        return result;
       } catch (error) {
         console.error("Carousel loading failed:", error);
+
         setError("We couldn't load the featured carousels. Please try again.");
 
         return {
           trending: [],
-
           topRated: [],
-
           newReleases: [],
         };
       } finally {
@@ -100,28 +185,39 @@ export default function useHomeCarousels() {
     applyData(data);
   }
 
+  /* ==========================================================
+     RETRY
+     ========================================================== */
+
   function retry() {
+    carouselCache = null;
+
     setError("");
+    setLoading(true);
+
     loadCarousels();
   }
 
+  /* ==========================================================
+     APPLY
+     ========================================================== */
+
   function applyData(data) {
-    setTrending(data.trending);
-
-    setTopRated(data.topRated);
-
-    setNewReleases(data.newReleases);
+    setTrending(data?.trending || []);
+    setTopRated(data?.topRated || []);
+    setNewReleases(data?.newReleases || []);
 
     setLoading(false);
   }
 
+  /* ==========================================================
+     RETURN
+     ========================================================== */
+
   return {
     trending,
-
     topRated,
-
     newReleases,
-
     loading,
     error,
     retry,

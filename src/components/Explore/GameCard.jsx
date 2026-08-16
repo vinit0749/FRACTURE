@@ -1,5 +1,13 @@
 import { Link } from "react-router-dom";
-import { Heart, Bookmark, Play, Lock, HeartOff, Library, Trash2, TriangleAlert } from "lucide-react";
+import {
+  Heart,
+  Bookmark,
+  Play,
+  Lock,
+  HeartOff,
+  Library,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "../../hooks/useToast";
@@ -41,17 +49,12 @@ function formatDate(date) {
 }
 
 function getImage(game) {
-  return game.background_image || "https://placehold.co/600x400?text=No+Image";
-}
-
-function getMetacriticColor(score) {
-  if (!score) return "#737389";
-
-  if (score >= 90) return "#2EE59D";
-
-  if (score >= 75) return "#FFC72C";
-
-  return "#ff7b4d";
+  return (
+    game.background_image ||
+    game.cover_image ||
+    game.image ||
+    "https://placehold.co/600x400?text=No+Image"
+  );
 }
 
 function getLibraryStatus(status) {
@@ -242,8 +245,6 @@ function GameCard({
     onLibraryChange?.();
   }
 
-  const metaColor = getMetacriticColor(game.metacritic);
-
   return (
     <Link to={`/game/${game.id}`} className="game-card cinematic-card">
       <div className="card-image">
@@ -376,16 +377,6 @@ function GameCard({
 
       <div className="card-bottom">
         <div className="release">📅 {formatDate(game.released)}</div>
-
-        <div
-          className="meta-badge"
-          style={{
-            color: metaColor,
-            borderColor: `${metaColor}55`,
-          }}
-        >
-          {game.metacritic ?? "N/A"}
-        </div>
       </div>
     </Link>
   );

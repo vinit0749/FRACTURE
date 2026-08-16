@@ -15,13 +15,13 @@ import { generalApiLimiter } from "../middleware/rateLimit.js";
 const router = express.Router();
 
 // ==================================
-// Rate limit public RAWG API proxy
+// Rate limit public game API
 // ==================================
 
 router.use(generalApiLimiter);
 
 // ==================================
-// Allowed RAWG game query parameters
+// Allowed game query parameters
 // ==================================
 
 const ALLOWED_GAME_PARAMS = new Set([

@@ -41,7 +41,8 @@ function HomePage() {
 
   const [platform, setPlatform] = useState("");
 
-  const [section, setSection] = useState("explore");
+  // Home Explore section = POPULAR
+  const [section, setSection] = useState("popular");
 
   useEffect(() => {
     const query = searchParams.get("search")?.trim() || "";
@@ -58,7 +59,6 @@ function HomePage() {
       setTimeout(() => {
         exploreRef.current?.scrollIntoView({
           behavior: "smooth",
-
           block: "start",
         });
       }, 100);
@@ -81,7 +81,8 @@ function HomePage() {
 
       setPlatform("");
 
-      setSection("explore");
+      // Home Explore section = POPULAR
+      setSection("popular");
     }
 
     window.addEventListener("resetHome", resetHome);
@@ -97,7 +98,6 @@ function HomePage() {
     setTimeout(() => {
       exploreRef.current?.scrollIntoView({
         behavior: "auto",
-
         block: "start",
       });
     }, 100);
@@ -136,17 +136,19 @@ function HomePage() {
 
     setPage(1);
 
+    // Keep Home Explore as Popular
+    setSection("popular");
+
     setTimeout(() => {
       exploreRef.current?.scrollIntoView({
         behavior: "smooth",
-
         block: "start",
       });
     }, 0);
   }
 
   const showHomeContent =
-    section === "explore" &&
+    section === "popular" &&
     page === 1 &&
     search === "" &&
     sort === "-added" &&

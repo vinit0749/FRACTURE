@@ -17,7 +17,9 @@ function createLimiter(options = {}) {
   });
 }
 
-export const generalApiLimiter = createLimiter();
+export const generalApiLimiter = createLimiter({
+  limit: 300,
+});
 
 export const usernameCheckLimiter = createLimiter({
   limit: 30,

@@ -175,8 +175,19 @@ export function AuthProvider({ children }) {
 
     const result = await linkWithPopup(auth.currentUser, githubProvider);
 
-    // Update React state with the refreshed Firebase user
-    setUser(result.user);
+    const firebaseUser = result.user;
+
+    // Re-sync the updated Firebase user with MongoDB.
+    // This preserves FRACTURE-specific profile data such as
+    // username and custom Cloudinary profile pictures.
+    const syncedUser = await syncCloudUser(firebaseUser);
+
+    setUser((prev) => ({
+      ...firebaseUser,
+      displayName: syncedUser?.displayName ?? prev?.displayName ?? "",
+      photoURL: syncedUser?.photoURL ?? prev?.photoURL ?? "",
+      username: syncedUser?.username ?? prev?.username ?? "",
+    }));
 
     return result;
   };
@@ -186,12 +197,20 @@ export function AuthProvider({ children }) {
       throw new Error("You must be signed in to disconnect GitHub.");
     }
 
-    const updatedUser = await unlink(auth.currentUser, "github.com");
+    const firebaseUser = await unlink(auth.currentUser, "github.com");
 
-    // Update React state with the refreshed Firebase user
-    setUser(updatedUser);
+    // Re-sync after unlinking so the MongoDB profile data
+    // remains in React state immediately.
+    const syncedUser = await syncCloudUser(firebaseUser);
 
-    return updatedUser;
+    setUser((prev) => ({
+      ...firebaseUser,
+      displayName: syncedUser?.displayName ?? prev?.displayName ?? "",
+      photoURL: syncedUser?.photoURL ?? prev?.photoURL ?? "",
+      username: syncedUser?.username ?? prev?.username ?? "",
+    }));
+
+    return firebaseUser;
   };
 
   // ================================

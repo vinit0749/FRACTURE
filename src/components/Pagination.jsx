@@ -1,11 +1,23 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 function Pagination({ page, totalPages, search, setPage }) {
-  if (search) return null;
+  if (search || totalPages <= 1) return null;
 
   const pages = [];
 
-  // Previous button
+  // ============================================================
+  // DYNAMIC DISPLAY LIMIT
+  //
+  // Start by showing up to page 100.
+  // Once the user goes beyond 100, expand dynamically.
+  // ============================================================
+
+  const visibleTotalPages = Math.min(totalPages, Math.max(100, page));
+
+  // ============================================================
+  // PREVIOUS
+  // ============================================================
+
   pages.push(
     <button
       key="prev"
@@ -17,22 +29,31 @@ function Pagination({ page, totalPages, search, setPage }) {
     </button>,
   );
 
-  // Visible range
+  // ============================================================
+  // VISIBLE RANGE
+  // ============================================================
+
   let startPage = Math.max(1, page - 2);
-  let endPage = Math.min(totalPages, startPage + 4);
+  let endPage = Math.min(visibleTotalPages, startPage + 4);
 
   if (endPage - startPage < 4) {
     startPage = Math.max(1, endPage - 4);
   }
 
-  // First page
+  // ============================================================
+  // FIRST PAGE
+  // ============================================================
+
   if (startPage > 1) {
     pages.push(
-      <button key="first" className="page-btn" onClick={() => setPage(1)}>
+      <button
+        key="first"
+        className={`page-btn ${page === 1 ? "active" : ""}`}
+        onClick={() => setPage(1)}
+      >
         1
       </button>,
     );
-    ``;
 
     if (startPage > 2) {
       pages.push(
@@ -43,7 +64,10 @@ function Pagination({ page, totalPages, search, setPage }) {
     }
   }
 
-  // Middle pages
+  // ============================================================
+  // MIDDLE PAGES
+  // ============================================================
+
   for (let i = startPage; i <= endPage; i++) {
     pages.push(
       <button
@@ -63,34 +87,45 @@ function Pagination({ page, totalPages, search, setPage }) {
     );
   }
 
-  // Last page
-  if (endPage < totalPages) {
-    if (endPage < totalPages - 1) {
-      pages.push(
-        <span key="end-dots" className="page-dots">
-          ...
-        </span>,
-      );
-    }
+  // ============================================================
+  // DYNAMIC END
+  //
+  // If there are more pages than currently exposed,
+  // show dots + the current known boundary.
+  // ============================================================
+
+  if (visibleTotalPages < totalPages) {
+    pages.push(
+      <span key="end-dots" className="page-dots">
+        ...
+      </span>,
+    );
 
     pages.push(
       <button
-        key="last"
+        key="dynamic-end"
         className="page-btn"
-        onClick={() => setPage(totalPages)}
+        onClick={() => setPage(visibleTotalPages)}
       >
-        {totalPages}
+        {visibleTotalPages}
       </button>,
     );
   }
 
-  // Next button
+  // ============================================================
+  // NEXT
+  // ============================================================
+
   pages.push(
     <button
       key="next"
       className="page-btn"
-      disabled={page === totalPages}
-      onClick={() => setPage(Math.min(page + 1, totalPages))}
+      disabled={page >= totalPages}
+      onClick={() => {
+        if (page < totalPages) {
+          setPage(page + 1);
+        }
+      }}
     >
       <ChevronRight size={18} />
     </button>,

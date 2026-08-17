@@ -1,4 +1,4 @@
-import rateLimit, { ipKeyGenerator } from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 
 const defaultOptions = {
   standardHeaders: "draft-8",
@@ -53,12 +53,22 @@ export const profileUploadLimiter = createLimiter({
   },
 });
 
+// ================================
+// FORTUNA
+// ================================
+
 export const fortunaChatLimiter = createLimiter({
-  limit: 20,
+  limit: 60,
   message: {
     message: "Too many FORTUNA requests. Please try again later.",
   },
-  keyGenerator: (req) => req.user?.uid || ipKeyGenerator(req),
+});
+
+export const fortunaTitleLimiter = createLimiter({
+  limit: 10,
+  message: {
+    message: "Too many FORTUNA title requests. Please try again later.",
+  },
 });
 
 export const fortunaDiscoveryLimiter = createLimiter({
@@ -66,7 +76,6 @@ export const fortunaDiscoveryLimiter = createLimiter({
   message: {
     message: "Too many FORTUNA discovery requests. Please try again later.",
   },
-  keyGenerator: (req) => req.user?.uid || ipKeyGenerator(req),
 });
 
 export const fortunaHistoryLimiter = createLimiter({
@@ -74,5 +83,4 @@ export const fortunaHistoryLimiter = createLimiter({
   message: {
     message: "Too many FORTUNA history requests. Please try again later.",
   },
-  keyGenerator: (req) => req.user?.uid || ipKeyGenerator(req),
 });

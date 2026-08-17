@@ -1,7 +1,12 @@
 import auth from "../firebase/auth.js";
 
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const rawApiUrl = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+)
+  .trim()
+  .replace(/\/+$/, "");
+
+const BASE_URL = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 
 // ==============================================
 // FORTUNA AUTH TOKEN
@@ -16,7 +21,7 @@ async function getFortunaAuthToken() {
   const user = auth.currentUser;
 
   if (!user) {
-    throw new Error("You must be signed in to access FORTUNA history.");
+    throw new Error("You must be signed in to use FORTUNA.");
   }
 
   return user.getIdToken();

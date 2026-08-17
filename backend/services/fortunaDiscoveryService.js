@@ -13,7 +13,7 @@ import { getGames } from "./fracture.js";
 // - Generate personalized reasons
 // - Avoid previously shown games
 // - Respect current preferences and exclusions
-// - Retrieve the selected games from RAWG
+// - Retrieve the selected games from IGDB
 //
 // FDS does NOT:
 // - Maintain conversation state
@@ -40,7 +40,7 @@ import { getGames } from "./fracture.js";
 //       ↓
 // Gemini selects best game titles
 //       ↓
-// RAWG retrieves those games
+// IGDB retrieves those games
 //       ↓
 // Final discovery results
 //
@@ -82,9 +82,9 @@ Your job is to select the best real games for the user's CURRENT taste.
 You do NOT decide whether discovery should happen.
 You do NOT ask questions.
 You do NOT continue the conversation.
-You do NOT search RAWG.
+You do NOT search IGDB.
 
-The application will retrieve your selected titles from RAWG afterward.
+The application will retrieve your selected titles from IGDB afterward.
 
 ==================================================
 CORE PRINCIPLES
@@ -116,9 +116,13 @@ CORE PRINCIPLES
 
 13. Return between 1 and 4 recommendations.
 
-14. Rank recommendations from strongest match to weakest match.
+14. FORTUNA can provide a maximum of 4 game recommendations per discovery.
 
-15. Each recommendation reason must be specific and concise.
+15. If the user asks for more than 4 games, such as 5, 6, 10, etc., return ONLY 4 recommendations. Never attempt to return more than 4.
+
+16. Rank recommendations from strongest match to weakest match.
+
+17. Each recommendation reason must be specific and concise.
 
 ==================================================
 MATCHING PRIORITY
@@ -735,7 +739,9 @@ Rules:
 - Never repeat previously shown games.
 - Recommend only real released standalone games.
 - Prefer strong matches over popularity.
-- Return 1 to 4 recommendations.
+- Return 1 to 4 recommendations maximum.
+- If the user requested more than 4, return exactly 4 when 4 strong matches are available.
+- Never return more than 4 recommendations.
 - Return only the required JSON object.
 `;
 
@@ -778,10 +784,10 @@ Rules:
 }
 
 // ==============================================
-// FIND GAME IN RAWG
+// FIND GAME IN IGDB
 // ==============================================
 
-async function searchRawgGame(title) {
+async function searchIGDBGame(title) {
   const params = new URLSearchParams();
 
   params.set("search", title);
@@ -797,7 +803,9 @@ async function searchRawgGame(title) {
 
   const normalizedRequestedTitle = normalizeTitle(title);
 
-  // Exact title match first.
+  // ============================================
+  // EXACT TITLE MATCH FIRST
+  // ============================================
 
   const exactMatch = games.find(
     (game) => normalizeTitle(game.name) === normalizedRequestedTitle,
@@ -807,7 +815,9 @@ async function searchRawgGame(title) {
     return exactMatch;
   }
 
-  // Then allow confident partial matches.
+  // ============================================
+  // CONFIDENT PARTIAL MATCH
+  // ============================================
 
   const containsMatch = games.find((game) => {
     const normalizedGameTitle = normalizeTitle(game.name);
@@ -822,13 +832,13 @@ async function searchRawgGame(title) {
     return containsMatch;
   }
 
-  // Never blindly accept RAWG's first result.
+  // Never blindly accept IGDB's first result.
 
   return null;
 }
 
 // ==============================================
-// RETRIEVE AI-SELECTED GAMES FROM RAWG
+// RETRIEVE AI-SELECTED GAMES FROM IGDB
 // ==============================================
 
 async function retrieveRecommendedGames(recommendations) {
@@ -838,11 +848,11 @@ async function retrieveRecommendedGames(recommendations) {
 
   const settledResults = await Promise.allSettled(
     recommendations.map(async (recommendation) => {
-      const game = await searchRawgGame(recommendation.title);
+      const game = await searchIGDBGame(recommendation.title);
 
       if (!game) {
         throw new Error(
-          `RAWG could not confidently retrieve recommendation: ${recommendation.title}`,
+          `IGDB could not confidently retrieve recommendation: ${recommendation.title}`,
         );
       }
 
@@ -865,12 +875,11 @@ async function retrieveRecommendedGames(recommendations) {
 
     if (result.status === "fulfilled") {
       results.push(result.value);
-
       return;
     }
 
     console.warn(
-      `RAWG retrieval failed for "${recommendation.title}":`,
+      `IGDB retrieval failed for "${recommendation.title}":`,
       result.reason,
     );
   });
@@ -928,14 +937,14 @@ export async function discoverGamesFromIntent(
   // STEP 2
   // ============================================
   //
-  // RAWG retrieves the exact selected titles.
+  // IGDB retrieves the exact selected titles.
   //
   // ============================================
 
   const games = await retrieveRecommendedGames(fortunaRecommendations);
 
   // ============================================
-  // NO RAWG MATCHES
+  // NO IGDB MATCHES
   // ============================================
 
   if (games.length === 0) {

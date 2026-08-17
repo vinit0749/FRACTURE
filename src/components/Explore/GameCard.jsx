@@ -50,9 +50,9 @@ function formatDate(date) {
 
 function getImage(game) {
   return (
-    game.background_image ||
     game.cover_image ||
     game.image ||
+    game.background_image ||
     "https://placehold.co/600x400?text=No+Image"
   );
 }

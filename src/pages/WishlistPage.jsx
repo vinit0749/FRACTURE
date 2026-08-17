@@ -8,7 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { getWishlist, saveWishlist } from "../utils/storage";
 import { saveCloudWishlist } from "../utils/cloudStorage";
 
-import { Heart, Library } from "lucide-react";
+import { Heart } from "lucide-react";
 
 import "../styles/wishlist.css";
 

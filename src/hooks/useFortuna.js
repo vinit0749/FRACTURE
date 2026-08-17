@@ -14,6 +14,145 @@ import {
 } from "../api/fortuna.js";
 
 // ==============================================
+// COMPACT GAME FOR PERSISTENCE
+// ==============================================
+//
+// Keep the full IGDB game object in the UI,
+// but only save the fields GameCard needs.
+//
+// This prevents MongoDB/API payloads from becoming
+// huge after multiple discovery rounds.
+//
+
+function compactGame(game) {
+  if (!game || typeof game !== "object") {
+    return null;
+  }
+
+  const compact = {
+    id: game.id,
+    name:
+      typeof game.name === "string"
+        ? game.name
+        : typeof game.title === "string"
+          ? game.title
+          : "",
+    title:
+      typeof game.title === "string"
+        ? game.title
+        : typeof game.name === "string"
+          ? game.name
+          : "",
+    rating:
+      typeof game.rating === "number"
+        ? game.rating
+        : typeof game.igdbRating === "number"
+          ? game.igdbRating
+          : 0,
+    first_release_date:
+      typeof game.first_release_date === "number"
+        ? game.first_release_date
+        : null,
+    cover:
+      game.cover && typeof game.cover === "object"
+        ? {
+            id: game.cover.id,
+            url: typeof game.cover.url === "string" ? game.cover.url : "",
+          }
+        : null,
+    genres: Array.isArray(game.genres)
+      ? game.genres
+          .filter((genre) => genre && typeof genre === "object")
+          .slice(0, 6)
+          .map((genre) => ({
+            id: genre.id,
+            name: typeof genre.name === "string" ? genre.name : "",
+          }))
+      : [],
+  };
+
+  return compact;
+}
+
+// ==============================================
+// COMPACT RECOMMENDATION FOR PERSISTENCE
+// ==============================================
+
+function compactRecommendation(recommendation) {
+  if (!recommendation || typeof recommendation !== "object") {
+    return null;
+  }
+
+  return {
+    title:
+      typeof recommendation.title === "string"
+        ? recommendation.title
+        : typeof recommendation.name === "string"
+          ? recommendation.name
+          : "",
+    reason:
+      typeof recommendation.reason === "string" ? recommendation.reason : "",
+  };
+}
+
+// ==============================================
+// COMPACT TIMELINE FOR PERSISTENCE
+// ==============================================
+//
+// The live timeline can contain full IGDB game objects.
+// Never send those full objects back to the backend.
+//
+
+function compactTimeline(timeline = []) {
+  if (!Array.isArray(timeline)) {
+    return [];
+  }
+
+  return timeline.map((item) => {
+    if (!item || typeof item !== "object") {
+      return item;
+    }
+
+    // Normal chat messages are already tiny.
+    if (item.role === "user" || item.role === "model") {
+      return {
+        role: item.role,
+        content: typeof item.content === "string" ? item.content : "",
+      };
+    }
+
+    // Compact discovery blocks.
+    if (item.type === "discovery") {
+      return {
+        type: "discovery",
+
+        id: typeof item.id === "string" ? item.id : `discovery-${Date.now()}`,
+
+        recommendations: Array.isArray(item.recommendations)
+          ? item.recommendations
+              .map(compactRecommendation)
+              .filter(Boolean)
+              .slice(0, 6)
+          : [],
+
+        games: Array.isArray(item.games)
+          ? item.games.map(compactGame).filter(Boolean).slice(0, 6)
+          : [],
+
+        intent:
+          item.intent &&
+          typeof item.intent === "object" &&
+          !Array.isArray(item.intent)
+            ? item.intent
+            : {},
+      };
+    }
+
+    return item;
+  });
+}
+
+// ==============================================
 // EXTRACT PREVIOUSLY SHOWN GAMES
 // ==============================================
 
@@ -42,15 +181,9 @@ function extractPreviousRecommendations(timeline = []) {
               ? game.title.trim()
               : "";
 
-        const reason =
-          typeof game.fortunaReason === "string"
-            ? game.fortunaReason.trim()
-            : "";
-
         if (title) {
           previousRecommendations.push({
             title,
-            reason,
           });
         }
       }
@@ -69,17 +202,9 @@ function extractPreviousRecommendations(timeline = []) {
               ? recommendation.name.trim()
               : "";
 
-        const reason =
-          typeof recommendation.reason === "string"
-            ? recommendation.reason.trim()
-            : typeof recommendation.fortunaReason === "string"
-              ? recommendation.fortunaReason.trim()
-              : "";
-
         if (title) {
           previousRecommendations.push({
             title,
-            reason,
           });
         }
       }
@@ -88,17 +213,19 @@ function extractPreviousRecommendations(timeline = []) {
 
   const seen = new Set();
 
-  return previousRecommendations.filter((recommendation) => {
-    const key = recommendation.title.trim().toLowerCase();
+  return previousRecommendations
+    .filter((recommendation) => {
+      const key = recommendation.title.trim().toLowerCase();
 
-    if (!key || seen.has(key)) {
-      return false;
-    }
+      if (!key || seen.has(key)) {
+        return false;
+      }
 
-    seen.add(key);
+      seen.add(key);
 
-    return true;
-  });
+      return true;
+    })
+    .slice(-12);
 }
 
 // ==============================================
@@ -177,10 +304,6 @@ export function useFortuna() {
   // ============================================
 
   async function persistConversation({ nextTimeline, nextIntent, title }) {
-    // ==========================================
-    // GUEST USERS
-    // ==========================================
-
     if (authLoading || !isAuthenticated || !user) {
       return null;
     }
@@ -198,6 +321,18 @@ export function useFortuna() {
     }
 
     // ==========================================
+    // COMPACT BEFORE SENDING
+    // ==========================================
+    //
+    // This is the important 413 fix.
+    //
+    // The UI keeps the complete discovery objects,
+    // but the backend only receives the compact form.
+    //
+
+    const timelineForPersistence = compactTimeline(nextTimeline);
+
+    // ==========================================
     // CREATE NEW CONVERSATION
     // ==========================================
 
@@ -208,7 +343,7 @@ export function useFortuna() {
             ? title.trim()
             : "New Discovery",
 
-        timeline: nextTimeline,
+        timeline: timelineForPersistence,
 
         intent: nextIntent,
       });
@@ -218,10 +353,6 @@ export function useFortuna() {
       }
 
       setConversationId(conversation._id);
-
-      // ========================================
-      // UPDATE SIDEBAR HISTORY
-      // ========================================
 
       setConversations((previous) => {
         const exists = previous.some(
@@ -246,7 +377,9 @@ export function useFortuna() {
 
     const conversation = await updateFortunaConversation(conversationId, {
       ...(title !== undefined ? { title } : {}),
-      timeline: nextTimeline,
+
+      timeline: timelineForPersistence,
+
       intent: nextIntent,
     });
 
@@ -452,7 +585,8 @@ export function useFortuna() {
       .map((item) => ({
         role: item.role,
         content: item.content.trim(),
-      }));
+      }))
+      .slice(-24);
 
     // ==========================================
     // COLLECT PREVIOUS RECOMMENDATIONS
@@ -531,27 +665,6 @@ export function useFortuna() {
       // DETERMINE WHETHER TITLE SHOULD
       // BE GENERATED
       // ========================================
-      //
-      // The title is now generated by
-      // FORTUNA / Gemini.
-      //
-      // We generate it once there is enough
-      // conversation context.
-      //
-      // For a new conversation:
-      //
-      // Message 1:
-      // Create "New Discovery"
-      //
-      // Message 2:
-      // Update conversation normally
-      //
-      // Message 3:
-      // Generate a meaningful Gemini title
-      //
-      // After that:
-      // Keep the existing title.
-      // ========================================
 
       const userMessageCount = conversationWithReply.filter(
         (item) =>
@@ -563,7 +676,12 @@ export function useFortuna() {
 
       let generatedTitle;
 
-      if (userMessageCount === 3 && isAuthenticated && user) {
+      if (
+        (userMessageCount === 3 ||
+          (discoveryAction === "discover" && userMessageCount < 3)) &&
+        isAuthenticated &&
+        user
+      ) {
         generatedTitle = await generateFortunaTitle(
           conversationWithReply,
           newIntent,
@@ -582,7 +700,6 @@ export function useFortuna() {
 
       await persistConversation({
         nextTimeline: conversationWithReply,
-
         nextIntent: newIntent,
 
         ...(conversationTitle
@@ -646,7 +763,7 @@ export function useFortuna() {
 
       const discoveryResponse = await discoverFortunaGames(
         newIntent,
-        conversationWithReply,
+        chatHistory,
         previousRecommendations,
       );
 
@@ -689,6 +806,9 @@ export function useFortuna() {
 
         recommendations: fortunaRecommendations,
 
+        // IMPORTANT:
+        // Keep full games in React state so the card
+        // has everything it needs immediately.
         games: discoveredGames,
 
         intent: newIntent,
@@ -705,10 +825,13 @@ export function useFortuna() {
       // ========================================
       // PERSIST DISCOVERY RESULT
       // ========================================
+      //
+      // persistConversation() automatically compacts
+      // the discovery block before sending it.
+      //
 
       await persistConversation({
         nextTimeline: finalTimeline,
-
         nextIntent: newIntent,
       });
     } catch (err) {
@@ -764,17 +887,14 @@ export function useFortuna() {
   // ============================================
 
   return {
-    // Current conversation
     timeline,
     conversationId,
     intent,
 
-    // Authentication
     user,
     isAuthenticated,
     authLoading,
 
-    // History
     conversations,
     isHistoryLoading,
     historyError,
@@ -783,21 +903,16 @@ export function useFortuna() {
     loadConversation,
     removeConversation,
 
-    // Input
     input,
     setInput,
 
-    // Loading
     loading: isLoading,
     isLoading,
 
-    // Discovery
     discoveryAttempted,
 
-    // Errors
     error,
 
-    // Actions
     sendMessage,
     resetFortuna,
   };

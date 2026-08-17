@@ -7,12 +7,13 @@ import {
 } from "../services/fortunaService.js";
 import { discoverGamesFromIntent } from "../services/fortunaDiscoveryService.js";
 
-import FortunaConversation from "../models/fortunaConversation.js";
+import FortunaConversation from "../models/FortunaConversation.js";
 import authenticateToken from "../middleware/auth.js";
 import {
   fortunaChatLimiter,
   fortunaDiscoveryLimiter,
   fortunaHistoryLimiter,
+  fortunaTitleLimiter,
 } from "../middleware/rateLimit.js";
 
 const router = express.Router();
@@ -29,143 +30,85 @@ function isPlainObject(value) {
 // ==============================================
 // FORTUNA CHAT
 // ==============================================
-//
-// FORTUNA Service handles:
-//
-// - Understanding the user's message
-// - Maintaining accumulated intent
-// - Natural conversation
-// - Deciding whether discovery should happen
-// - Deciding whether preferences were refined
-//
-// discoveryAction returned by FORTUNA:
-//
-// - "continue" → keep chatting
-// - "refine"   → preferences changed/refined
-// - "discover" → discovery should run
-//
-// IMPORTANT:
-//
-// This route does NOT inspect the user's message
-// to determine whether discovery should happen.
-//
-// FORTUNA / Gemini is the decision-maker.
-//
-// ==============================================
 
-router.post(
-  "/chat",
-  authenticateToken,
-  fortunaChatLimiter,
-  async (req, res) => {
-    try {
-      const { message, history = [], intent = {} } = req.body;
+router.post("/chat", authenticateToken, fortunaChatLimiter, async (req, res) => {
+  try {
+    const { message, history = [], intent = {} } = req.body;
 
-      // ============================================
-      // VALIDATE MESSAGE
-      // ============================================
+    // ============================================
+    // VALIDATE MESSAGE
+    // ============================================
 
-      if (typeof message !== "string" || !message.trim()) {
-        return res.status(400).json({
-          message: "A valid message is required.",
-        });
-      }
-
-      if (message.trim().length > MAX_CHAT_MESSAGE_LENGTH) {
-        return res.status(400).json({
-          message: "Your message is too long.",
-        });
-      }
-
-      // ============================================
-      // VALIDATE HISTORY
-      // ============================================
-
-      if (!Array.isArray(history)) {
-        return res.status(400).json({
-          message: "Conversation history must be an array.",
-        });
-      }
-
-      if (history.length > MAX_HISTORY_LENGTH) {
-        return res.status(400).json({
-          message: "Conversation history is too long.",
-        });
-      }
-
-      // ============================================
-      // VALIDATE INTENT
-      // ============================================
-
-      if (!isPlainObject(intent)) {
-        return res.status(400).json({
-          message: "FORTUNA intent must be an object.",
-        });
-      }
-
-      // ============================================
-      // ASK FORTUNA
-      // ============================================
-
-      const fortunaResponse = await askFortuna(message, history, intent);
-
-      // ============================================
-      // RETURN FORTUNA RESPONSE
-      // ============================================
-
-      return res.json({
-        reply: fortunaResponse.reply,
-
-        discoveryAction: fortunaResponse.discoveryAction,
-
-        intent: fortunaResponse.intent,
-      });
-    } catch (error) {
-      console.error("FORTUNA chat route error:", error);
-
-      return res.status(500).json({
-        message: "The AI service could not process your request right now.",
+    if (typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({
+        message: "A valid message is required.",
       });
     }
-  },
-);
+
+    if (message.trim().length > MAX_CHAT_MESSAGE_LENGTH) {
+      return res.status(400).json({
+        message: "Your message is too long.",
+      });
+    }
+
+    // ============================================
+    // VALIDATE HISTORY
+    // ============================================
+
+    if (!Array.isArray(history)) {
+      return res.status(400).json({
+        message: "Conversation history must be an array.",
+      });
+    }
+
+    if (history.length > MAX_HISTORY_LENGTH) {
+      return res.status(400).json({
+        message: "Conversation history is too long.",
+      });
+    }
+
+    // ============================================
+    // VALIDATE INTENT
+    // ============================================
+
+    if (!isPlainObject(intent)) {
+      return res.status(400).json({
+        message: "FORTUNA intent must be an object.",
+      });
+    }
+
+    // ============================================
+    // ASK FORTUNA
+    // ============================================
+
+    const fortunaResponse = await askFortuna(message, history, intent);
+
+    // ============================================
+    // RETURN FORTUNA RESPONSE
+    // ============================================
+
+    return res.json({
+      reply: fortunaResponse.reply,
+      discoveryAction: fortunaResponse.discoveryAction,
+      intent: fortunaResponse.intent,
+    });
+  } catch (error) {
+    console.error("FORTUNA chat route error:", error);
+
+    return res.status(500).json({
+      message: "The AI service could not process your request right now.",
+    });
+  }
+});
 
 // ==============================================
 // GENERATE FORTUNA CONVERSATION TITLE
-// ==============================================
-//
-// This endpoint generates a contextual title using:
-//
-// 1. The FULL conversation history
-// 2. The accumulated FORTUNA intent
-//
-// The title is NOT generated from only:
-// - The 3rd user message
-// - The latest user message
-// - A hardcoded frontend rule
-//
-// Example:
-//
-// User:
-// "I want an open-world game."
-// "Something with fantasy would be nice."
-// "I also want good exploration."
-//
-// History + Intent
-//        ↓
-// Fortuna / Gemini
-//        ↓
-// "Open-World Fantasy Exploration"
-//
-// The AI decides what the conversation is
-// actually about based on the complete context.
-//
 // ==============================================
 
 router.post(
   "/title",
   authenticateToken,
-  fortunaChatLimiter,
+  fortunaTitleLimiter,
   async (req, res) => {
     try {
       const { history = [], intent = {} } = req.body;
@@ -232,89 +175,73 @@ router.post(
 // ==============================================
 // FORTUNA DISCOVERY
 // ==============================================
-//
-// This route executes the discovery pipeline.
-//
-// IMPORTANT:
-//
-// This route does NOT decide whether discovery
-// should happen.
-//
-// FORTUNA Service already made that decision.
-//
-// The frontend calls this route only after:
-//
-// discoveryAction === "discover"
-//
-// ==============================================
 
 router.post(
   "/discover",
   authenticateToken,
   fortunaDiscoveryLimiter,
   async (req, res) => {
-    try {
-      const { intent, history = [], previousRecommendations = [] } = req.body;
+  try {
+    const { intent, history = [], previousRecommendations = [] } = req.body;
 
-      // ============================================
-      // VALIDATE INTENT
-      // ============================================
+    // ============================================
+    // VALIDATE INTENT
+    // ============================================
 
-      if (!isPlainObject(intent)) {
-        return res.status(400).json({
-          message: "A valid FORTUNA discovery intent is required.",
-        });
-      }
-
-      // ============================================
-      // VALIDATE HISTORY
-      // ============================================
-
-      if (!Array.isArray(history)) {
-        return res.status(400).json({
-          message: "FORTUNA conversation history must be an array.",
-        });
-      }
-
-      // ============================================
-      // VALIDATE PREVIOUS RECOMMENDATIONS
-      // ============================================
-
-      if (!Array.isArray(previousRecommendations)) {
-        return res.status(400).json({
-          message: "Previous recommendations must be an array.",
-        });
-      }
-
-      if (previousRecommendations.length > MAX_PREVIOUS_RECOMMENDATIONS) {
-        return res.status(400).json({
-          message: "Previous recommendations are too large.",
-        });
-      }
-
-      // ============================================
-      // RUN DISCOVERY
-      // ============================================
-
-      const discovery = await discoverGamesFromIntent(intent, history, {
-        explicitDiscovery: true,
-        previousRecommendations,
-      });
-
-      // ============================================
-      // RETURN DISCOVERY
-      // ============================================
-
-      return res.json(discovery);
-    } catch (error) {
-      console.error("FORTUNA discovery route error:", error);
-
-      return res.status(500).json({
-        message: "FORTUNA could not discover games right now.",
+    if (!isPlainObject(intent)) {
+      return res.status(400).json({
+        message: "A valid FORTUNA discovery intent is required.",
       });
     }
-  },
-);
+
+    // ============================================
+    // VALIDATE HISTORY
+    // ============================================
+
+    if (!Array.isArray(history)) {
+      return res.status(400).json({
+        message: "FORTUNA conversation history must be an array.",
+      });
+    }
+
+    // ============================================
+    // VALIDATE PREVIOUS RECOMMENDATIONS
+    // ============================================
+
+    if (!Array.isArray(previousRecommendations)) {
+      return res.status(400).json({
+        message: "Previous recommendations must be an array.",
+      });
+    }
+
+    if (previousRecommendations.length > MAX_PREVIOUS_RECOMMENDATIONS) {
+      return res.status(400).json({
+        message: "Previous recommendations are too large.",
+      });
+    }
+
+    // ============================================
+    // RUN DISCOVERY
+    // ============================================
+
+    const discovery = await discoverGamesFromIntent(intent, history, {
+      explicitDiscovery: true,
+      previousRecommendations,
+    });
+
+    // ============================================
+    // RETURN DISCOVERY
+    // ============================================
+
+    return res.json(discovery);
+  } catch (error) {
+    console.error("FORTUNA discovery route error:", error);
+
+    return res.status(500).json({
+      message: "FORTUNA could not discover games right now.",
+    });
+  }
+});
 
 // ==============================================
 // FORTUNA HISTORY
@@ -329,14 +256,6 @@ router.post(
 
 // ==============================================
 // GET FORTUNA HISTORY
-// ==============================================
-//
-// Returns the user's conversations ordered from
-// most recently updated to oldest.
-//
-// Does NOT return the full timeline.
-// This keeps the history list lightweight.
-//
 // ==============================================
 
 router.get(

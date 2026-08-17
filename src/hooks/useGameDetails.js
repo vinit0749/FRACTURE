@@ -35,8 +35,14 @@ export default function useGameDetails(id) {
       // ==========================================
 
       const [shots, trailerData] = await Promise.all([
-        fetchGameScreenshots(id),
-        fetchGameTrailer(gameData.name),
+        fetchGameScreenshots(id).catch((err) => {
+          console.warn("Failed to fetch screenshots:", err);
+          return { results: [] };
+        }),
+        fetchGameTrailer(gameData.name).catch((err) => {
+          console.warn("Failed to fetch YouTube trailer:", err);
+          return null;
+        }),
       ]);
 
       setScreenshots(shots?.results || []);

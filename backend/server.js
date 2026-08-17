@@ -17,12 +17,20 @@ app.set("trust proxy", 1);
 
 const configuredOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 
-const allowedOrigins = configuredOrigins.length
-  ? configuredOrigins
-  : ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"];
+const defaultOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:3000",
+];
+
+const allowedOrigins = new Set(
+  (configuredOrigins.length ? configuredOrigins : defaultOrigins).map(
+    (origin) => origin.toLowerCase(),
+  ),
+);
 
 // ================================
 // Security Headers (Helmet)
@@ -61,7 +69,14 @@ app.use(
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      const normalizedOrigin = origin.trim().replace(/\/+$/, "").toLowerCase();
+
+      if (allowedOrigins.has(normalizedOrigin)) {
         callback(null, true);
         return;
       }
@@ -74,7 +89,7 @@ app.use(
   }),
 );
 
-app.use(express.json({ limit: "100kb" }));
+app.use(express.json({ limit: "2mb" }));
 
 // ================================
 // Routes
@@ -97,18 +112,30 @@ app.get("/", (req, res) => {
 
 // ================================
 // MongoDB Connection
-// ================================
+async function connectDB(retries = 5, delay = 3000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await mongoose.connect(process.env.MONGODB_URI);
+      console.log("MongoDB connected successfully.");
 
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("MongoDB connected successfully.");
+      app.listen(PORT, () => {
+        console.log(`FRACTURE backend running on port ${PORT}`);
+      });
+      return;
+    } catch (error) {
+      console.error(
+        `MongoDB connection attempt ${attempt}/${retries} failed:`,
+        error.message,
+      );
 
-    app.listen(PORT, () => {
-      console.log(`FRACTURE backend running on port ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error("MongoDB connection failed:", error);
-    process.exit(1);
-  });
+      if (attempt === retries) {
+        console.error("All MongoDB connection attempts failed. Exiting...");
+        process.exit(1);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+}
+
+connectDB();

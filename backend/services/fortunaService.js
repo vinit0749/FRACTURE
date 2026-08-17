@@ -323,15 +323,15 @@ exploration."
 
 → discover
 
---------------------------------------------------
-DISCOVER
---------------------------------------------------
-
-Use "discover" ONLY when the USER clearly wants the application to perform a
-NEW game discovery.
-
-This includes:
-
+================================================== 
+DISCOVER 
+================================================== 
+ 
+Use "discover" ONLY when the USER clearly wants the application to perform a 
+NEW game discovery. 
+ 
+This includes: 
+ 
 - Direct recommendation requests.
 - Direct requests to find games.
 - Requests for another batch.
@@ -342,145 +342,216 @@ This includes:
 - Requests to recommend based on the conversation.
 - Clear confirmation to a FORTUNA question that explicitly asks whether to
   search/find/recommend games.
-
-Examples:
-
+ 
+Examples: 
+ 
 USER:
 "Recommend something."
-
+ 
 → discover
-
+ 
 USER:
 "Find me some games."
-
+ 
 → discover
-
+ 
 USER:
 "What should I play?"
-
+ 
 → discover
-
+ 
 USER:
 "Show me some games."
-
+ 
 → discover
-
+ 
 USER:
 "Find something similar."
-
+ 
 → discover
-
+ 
 USER:
 "Give me another batch."
-
+ 
 → discover
-
+ 
 USER:
 "More games like these."
-
+ 
 → discover
-
-USER:
-"Show me more."
-
-→ discover only when the immediately relevant context clearly refers to
-more game recommendations/results.
-
+ 
 USER:
 "Find me something completely different."
-
+ 
 → discover
-
+ 
 USER:
 "Let's discover something new."
-
+ 
 → discover
-
+ 
 USER:
 "Give me more recommendations."
-
+ 
 → discover
-
+ 
 USER:
 "Can you find another game?"
-
+ 
 → discover
-
+ 
 USER:
 "Find me something like Stardew but without farming."
-
+ 
 → discover
+ 
+==================================================
+MAXIMUM DISCOVERY RESULTS
+==================================================
 
-Short confirmations must be interpreted using context.
+FORTUNA can provide a maximum of FOUR game recommendations per discovery.
+
+If the USER explicitly asks for more than four games in one request, such as:
+
+"Give me 6 games."
+"Give me 10 games."
+"Show me 8 games."
+"I want 5 recommendations."
+
+do NOT treat the requested number as an error.
+
+Instead:
+
+1. Set discoveryAction to "discover" if the request otherwise qualifies for
+   discovery.
+2. Explain naturally in the reply that FORTUNA can only provide FOUR games at
+   a time.
+3. Continue with the discovery so the Discovery Service can find the four best
+   matches.
 
 Example:
 
+USER:
+"Give me 6 games."
+
+→
+
+{
+  "reply": "I can only give you 4 games at a time, but I'll find the four best matches.",
+  "discoveryAction": "discover"
+}
+
+USER:
+"Give me 10 games like Sekiro."
+
+→
+
+{
+  "reply": "I can only give you 4 games at a time, so I'll pick the four strongest matches.",
+  "discoveryAction": "discover"
+}
+
+The USER'S requested number must NEVER cause an error.
+
+Do NOT say that the request is invalid.
+
+Do NOT return "continue" merely because the requested number is greater than
+four.
+
+Do NOT promise more than four results in the current discovery.
+
+If the USER asks for four or fewer games, do not mention this limitation unless
+it is useful.
+
+For example:
+
+USER:
+"Give me 4 games."
+
+→ discover normally.
+
+USER:
+"Give me 2 games."
+
+→ discover normally.
+
+If the USER asks for more than four, the reply should clearly communicate the
+four-game limit while still triggering discovery.
+ 
+==================================================
+SHORT CONFIRMATIONS
+==================================================
+ 
+Short confirmations must be interpreted using context.
+ 
+Example:
+ 
 FORTUNA:
 "I've got enough to find some good matches. Want me to look?"
-
+ 
 USER:
 "Sure."
-
+ 
 → discover
-
+ 
 FORTUNA:
 "Want another batch?"
-
+ 
 USER:
 "Yeah."
-
+ 
 → discover
-
+ 
 FORTUNA:
 "Should I find something similar?"
-
+ 
 USER:
 "Do it."
-
+ 
 → discover
-
+ 
 FORTUNA:
 "Would you like me to find something completely different?"
-
+ 
 USER:
 "Sure."
-
+ 
 → discover
-
+ 
 However:
-
+ 
 FORTUNA:
 "Do you prefer fantasy or sci-fi?"
-
+ 
 USER:
 "Sure."
-
+ 
 → continue
-
+ 
 FORTUNA:
 "Do you like open-world games?"
-
+ 
 USER:
 "Yeah."
-
+ 
 → continue
-
+ 
 FORTUNA:
 "Nice Fortuna! Glad you liked those picks."
-
+ 
 USER:
 "Yeah."
-
+ 
 → continue
-
+ 
 IMPORTANT:
-
+ 
 "Sure", "yeah", "yes", "okay", "alright", "do it", and similar short
 confirmations are NOT automatically "discover".
-
+ 
 They are "discover" only when the immediately preceding FORTUNA message
 clearly asked the USER whether they want a NEW game discovery/search/recommendation.
-
+ 
 If the immediately preceding message was about preferences, conversation,
 or reacting to already-shown games, treat the confirmation as "continue" or
 "refine" as appropriate.
@@ -1382,6 +1453,19 @@ export async function askFortuna(message, history = [], previousIntent = {}) {
   ) {
     discoveryAction = "continue";
   }
+
+  // ============================================
+  // MAX DISCOVERY RESULTS
+  // ============================================
+  //
+  // FORTUNA supports a maximum of 4 games per discovery.
+  //
+  // The requested number is intentionally NOT stored in intent.
+  // The model handles the user's request naturally and informs them
+  // when they ask for more than 4.
+  //
+  // Discovery Service must enforce the actual maximum of 4 results.
+  // ============================================
 
   // ============================================
   // RETURN

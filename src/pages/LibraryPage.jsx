@@ -82,27 +82,7 @@ function LibraryPage() {
     (game) => !game.status || game.status === "backlog",
   ).length;
 
-  /* ===============================
-      FILTERS
-  =============================== */
 
-  const filteredLibrary = library.filter((game) => {
-    if (activeFilter === "all") return true;
-
-    if (activeFilter === "playing") {
-      return game.status === "playing";
-    }
-
-    if (activeFilter === "completed") {
-      return game.status === "completed";
-    }
-
-    if (activeFilter === "backlog") {
-      return !game.status || game.status === "backlog";
-    }
-
-    return true;
-  });
 
   return (
     <>

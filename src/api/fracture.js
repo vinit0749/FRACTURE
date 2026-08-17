@@ -1,5 +1,10 @@
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const rawApiUrl = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+)
+  .trim()
+  .replace(/\/+$/, "");
+
+const BASE_URL = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 
 import { getAuth } from "firebase/auth";
 
@@ -96,7 +101,10 @@ async function cachedFetch(url) {
 // ==============================================
 
 export async function fetchGames(params = "") {
-  return cachedFetch(`${BASE_URL}/games${params ? `?${params}` : ""}`);
+  const cleanParams =
+    typeof params === "string" ? params.replace(/^[?&]+/, "").trim() : "";
+
+  return cachedFetch(`${BASE_URL}/games${cleanParams ? `?${cleanParams}` : ""}`);
 }
 
 // ==============================================
@@ -161,7 +169,10 @@ export async function fetchGameTrailer(gameName) {
 // ==============================================
 
 export async function fetchSimilarGames(params = "") {
-  return cachedFetch(`${BASE_URL}/games${params ? `?${params}` : ""}`);
+  const cleanParams =
+    typeof params === "string" ? params.replace(/^[?&]+/, "").trim() : "";
+
+  return cachedFetch(`${BASE_URL}/games${cleanParams ? `?${cleanParams}` : ""}`);
 }
 
 // ==================================================

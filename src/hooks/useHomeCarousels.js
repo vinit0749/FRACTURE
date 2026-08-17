@@ -78,8 +78,6 @@ export default function useHomeCarousels() {
 
     carouselPromise = (async () => {
       try {
-        console.log("FRACTURE Home: loading carousels");
-
         /* ====================================================
            1. TRENDING
 
@@ -103,8 +101,6 @@ export default function useHomeCarousels() {
 
         const trending = takeGames(trendingData?.results);
 
-        console.log("FRACTURE Trending:", trending.length);
-
         /* ====================================================
            2. TOP RATED
 
@@ -118,8 +114,6 @@ export default function useHomeCarousels() {
         );
 
         const topRated = takeGames(topRatedData?.results);
-
-        console.log("FRACTURE Top Rated:", topRated.length);
 
         /* ====================================================
            3. NEW RELEASES
@@ -144,8 +138,6 @@ export default function useHomeCarousels() {
 
         const newReleases = takeGames(newReleaseData?.results);
 
-        console.log("FRACTURE New Releases:", newReleases.length);
-
         /* ====================================================
            FINAL
            ==================================================== */
@@ -155,12 +147,6 @@ export default function useHomeCarousels() {
           topRated,
           newReleases,
         };
-
-        console.log("FRACTURE Home carousels:", {
-          trending: trending.length,
-          topRated: topRated.length,
-          newReleases: newReleases.length,
-        });
 
         carouselCache = result;
 

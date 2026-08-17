@@ -54,8 +54,6 @@ export function AuthProvider({ children }) {
             }));
           }
 
-          console.log("User synced with MongoDB successfully.");
-
           // ================================
           // LOAD CLOUD DATA
           // ================================
@@ -87,8 +85,6 @@ export function AuthProvider({ children }) {
           window.dispatchEvent(new Event("wishlistUpdated"));
 
           window.dispatchEvent(new Event("libraryUpdated"));
-
-          console.log("Wishlist and Library loaded from MongoDB successfully.");
         } catch (error) {
           console.error(
             "Failed to sync or load user data from MongoDB:",
@@ -160,8 +156,6 @@ export function AuthProvider({ children }) {
       photoURL: updatedUser?.user?.photoURL ?? "",
       username: updatedUser?.user?.username ?? currentUser.username,
     });
-
-    console.log("Profile updated successfully.");
   };
 
   // ================================
@@ -235,15 +229,11 @@ export function AuthProvider({ children }) {
 
       window.dispatchEvent(new Event("libraryUpdated"));
 
-      console.log("Local Wishlist and Library cleared.");
-
       // ================================
       // SIGN OUT FROM FIREBASE
       // ================================
 
       await signOut(auth);
-
-      console.log("User signed out successfully.");
     } catch (error) {
       console.error("Logout failed:", error);
 
@@ -288,8 +278,6 @@ export function AuthProvider({ children }) {
         );
       }
 
-      console.log("User re-authenticated successfully.");
-
       // ================================
       // DELETE ACCOUNT FROM BACKEND
       // ================================
@@ -317,8 +305,6 @@ export function AuthProvider({ children }) {
       // ================================
 
       await signOut(auth);
-
-      console.log("Account deleted successfully.");
     } catch (error) {
       console.error("Account deletion failed:", error);
 

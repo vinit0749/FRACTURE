@@ -22,23 +22,9 @@ const MONTH = 1000 * 60 * 60 * 24 * 30;
 const HERO_HISTORY_KEY = "fracture_hero_history";
 const MAX_HERO_HISTORY = 10;
 
-/*
-  Rating-sorted pages are used because they provide
-  strong Hero-quality candidates.
-
-  We randomize the page to keep Hero variety.
-*/
 const MIN_RANDOM_PAGE = 1;
 const MAX_RANDOM_PAGE = 20;
 
-/*
-  IMPORTANT:
-
-  Never allow one unlucky API page to kill the Hero.
-
-  If a random page has no usable candidates, we try
-  additional pages before failing.
-*/
 const MAX_HERO_ATTEMPTS = 5;
 
 /* ============================================================
@@ -125,12 +111,6 @@ function isValidGame(game) {
   return true;
 }
 
-/*
-  Slightly more permissive fallback.
-
-  This allows the Hero to survive unusual API records
-  with incomplete metadata.
-*/
 function isFallbackGame(game) {
   if (!game) return false;
 
@@ -216,12 +196,6 @@ function shuffle(array) {
   return result;
 }
 
-/*
-  Generate unique random pages.
-
-  This prevents retries from accidentally requesting
-  the exact same page repeatedly.
-*/
 function getRandomPages(count) {
   const pages = new Set();
 
@@ -401,45 +375,22 @@ function selectHeroCandidate(games) {
     return null;
   }
 
-  /* ==========================================================
-     RECENT HISTORY
-     ========================================================== */
-
   const history = getHeroHistory();
 
   let availableGames = uniqueGames.filter((game) => !history.includes(game.id));
 
-  /*
-    If the page contains too many recently displayed games,
-    don't fail just because of history.
-  */
   if (availableGames.length < 5) {
     availableGames = uniqueGames;
   }
 
-  /* ==========================================================
-     NORMAL HERO POOL
-     ========================================================== */
-
   const validGames = availableGames.filter(isValidGame);
-
-  console.log(
-    "FRACTURE Hero candidates:",
-    validGames.length,
-    "/",
-    availableGames.length,
-  );
 
   if (validGames.length > 0) {
     const pools = {
       HIGHLY_RATED: rankCategory(validGames, isHighlyRated, scoreHighlyRated),
-
       POPULAR: rankCategory(validGames, isPopular, scorePopular),
-
       UNDERRATED: rankCategory(validGames, isUnderrated, scoreUnderrated),
-
       NEW: rankCategory(validGames, isNewRelease, scoreNewRelease),
-
       TRENDING: rankCategory(validGames, isTrending, scoreTrending),
     };
 
@@ -455,10 +406,6 @@ function selectHeroCandidate(games) {
       (category) => pools[category].length > 0,
     );
 
-    /* ========================================================
-       CATEGORY FALLBACK
-       ======================================================== */
-
     if (!availableCategories.length) {
       const fallback = chooseFromPool(validGames.slice(0, 10));
 
@@ -469,10 +416,6 @@ function selectHeroCandidate(games) {
         };
       }
     }
-
-    /* ========================================================
-       RANDOM CATEGORY
-       ======================================================== */
 
     if (availableCategories.length > 0) {
       const totalWeight = availableCategories.reduce(
@@ -503,10 +446,6 @@ function selectHeroCandidate(games) {
       }
     }
 
-    /* ========================================================
-       ABSOLUTE NORMAL-POOL FALLBACK
-       ======================================================== */
-
     const fallback = chooseFromPool(validGames);
 
     if (fallback) {
@@ -517,18 +456,12 @@ function selectHeroCandidate(games) {
     }
   }
 
-  /* ==========================================================
-     EMERGENCY FALLBACK
-     ========================================================== */
-
   const fallbackGames = availableGames.filter(isFallbackGame);
 
   if (fallbackGames.length > 0) {
     const game = chooseFromPool(fallbackGames);
 
     if (game) {
-      console.warn("FRACTURE Hero used emergency fallback:", game.name);
-
       return {
         game,
         category: "FEATURED",
@@ -543,32 +476,6 @@ function selectHeroCandidate(games) {
    FIND HERO CANDIDATE
    ============================================================ */
 
-/*
-  This is the important fix.
-
-  Previously:
-
-      random page
-          ↓
-      no usable games
-          ↓
-      Hero fails
-
-  Now:
-
-      random page
-          ↓
-      no usable games
-          ↓
-      try another page
-          ↓
-      try another page
-          ↓
-      usable candidate
-          ↓
-      continue Hero loading
-*/
-
 async function findHeroCandidate() {
   const pages = getRandomPages(MAX_HERO_ATTEMPTS);
 
@@ -578,27 +485,17 @@ async function findHeroCandidate() {
     const page = pages[attempt];
 
     try {
-      console.log(
-        `FRACTURE Hero: trying rating page ${page} (${attempt + 1}/${pages.length})`,
-      );
-
       const data = await fetchGames(
         `&ordering=-rating&page_size=40&page=${page}`,
       );
 
       const games = Array.isArray(data?.results) ? data.results : [];
 
-      console.log("FRACTURE Hero pool:", games.length, "games | page:", page);
-
       const selected = selectHeroCandidate(games);
 
       if (selected) {
-        console.log("FRACTURE Hero candidate found on page:", page);
-
         return selected;
       }
-
-      console.warn(`FRACTURE Hero: page ${page} had no usable candidates.`);
     } catch (error) {
       lastError = error;
 
@@ -674,13 +571,6 @@ export default function useHero() {
 
     heroPromise = (async () => {
       try {
-        /* ====================================================
-           FIND CANDIDATE
-
-           Multiple API pages are attempted instead of relying
-           on one random page.
-        ==================================================== */
-
         const selected = await findHeroCandidate();
 
         if (!selected) {
@@ -688,21 +578,6 @@ export default function useHero() {
             "Hero API returned no usable games after multiple attempts.",
           );
         }
-
-        console.log(
-          "FRACTURE Hero selected:",
-          selected.game.name,
-          "|",
-          selected.category,
-          "| rating:",
-          selected.game.rating,
-          "| ratings:",
-          selected.game.ratings_count,
-        );
-
-        /* ====================================================
-           FULL DETAILS
-        ==================================================== */
 
         const details = await fetchGameDetails(selected.game.id);
 
@@ -712,7 +587,7 @@ export default function useHero() {
 
         /* ====================================================
            SCREENSHOTS
-        ==================================================== */
+           ==================================================== */
 
         let screenshots = [];
 
@@ -729,7 +604,6 @@ export default function useHero() {
         } catch (screenshotError) {
           /*
             Screenshots are enhancement only.
-
             The Hero remains valid without them.
           */
 
@@ -741,7 +615,7 @@ export default function useHero() {
 
         /* ====================================================
            HERO IMAGES
-        ==================================================== */
+           ==================================================== */
 
         const images = [details.background_image, ...screenshots].filter(
           Boolean,
@@ -749,19 +623,17 @@ export default function useHero() {
 
         /* ====================================================
            SAVE HISTORY
-        ==================================================== */
+           ==================================================== */
 
         saveHeroHistory(details.id);
 
         /* ====================================================
            CACHE
-        ==================================================== */
+           ==================================================== */
 
         heroCache = {
           featuredGame: details,
-
           heroImages: [...new Set(images)],
-
           heroMeta: getHeroMetadata(details, selected.category),
         };
 
@@ -788,12 +660,6 @@ export default function useHero() {
     setError("");
     setLoading(true);
 
-    /*
-      Remove the current Hero.
-
-      History stays intact so retry continues to favor
-      different games.
-    */
     heroCache = null;
 
     loadFeaturedGame().then((data) => {

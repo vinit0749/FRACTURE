@@ -662,6 +662,23 @@ export function useFortuna() {
       setIntent(newIntent);
 
       // ========================================
+      // DETERMINE DISCOVERY ACTION
+      // ========================================
+      //
+      // IMPORTANT:
+      // This must happen BEFORE title generation
+      // because title generation uses discoveryAction.
+      //
+
+      const validDiscoveryActions = ["continue", "refine", "discover"];
+
+      const discoveryAction = validDiscoveryActions.includes(
+        fortunaResponse.discoveryAction,
+      )
+        ? fortunaResponse.discoveryAction
+        : "continue";
+
+      // ========================================
       // DETERMINE WHETHER TITLE SHOULD
       // BE GENERATED
       // ========================================
@@ -708,18 +725,6 @@ export function useFortuna() {
             }
           : {}),
       });
-
-      // ========================================
-      // DETERMINE DISCOVERY ACTION
-      // ========================================
-
-      const validDiscoveryActions = ["continue", "refine", "discover"];
-
-      const discoveryAction = validDiscoveryActions.includes(
-        fortunaResponse.discoveryAction,
-      )
-        ? fortunaResponse.discoveryAction
-        : "continue";
 
       // ========================================
       // CONTINUE

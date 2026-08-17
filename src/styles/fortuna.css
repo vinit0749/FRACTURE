@@ -1862,9 +1862,9 @@
   ---------------------------------------------------------- */
 
   .fortuna-menu-button {
-    position: fixed;
+    position: absolute;
 
-    top: 70px;
+    top: 15px;
     left: 12px;
 
     width: 32px;
@@ -2223,7 +2223,7 @@
     Fortuna drawer on very small screens.
   */
   .fortuna-menu-button {
-    top: 70px;
+    top: 15px;
     left: 10px;
   }
 
@@ -2334,7 +2334,7 @@
   }
 
   .fortuna-menu-button {
-    top: 70px;
+    top: 15px;
     left: 8px;
   }
 

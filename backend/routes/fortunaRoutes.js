@@ -31,7 +31,7 @@ function isPlainObject(value) {
 // FORTUNA CHAT
 // ==============================================
 
-router.post("/chat", authenticateToken, fortunaChatLimiter, async (req, res) => {
+router.post("/chat", fortunaChatLimiter, async (req, res) => {
   try {
     const { message, history = [], intent = {} } = req.body;
 
@@ -176,11 +176,7 @@ router.post(
 // FORTUNA DISCOVERY
 // ==============================================
 
-router.post(
-  "/discover",
-  authenticateToken,
-  fortunaDiscoveryLimiter,
-  async (req, res) => {
+router.post("/discover", fortunaDiscoveryLimiter, async (req, res) => {
   try {
     const { intent, history = [], previousRecommendations = [] } = req.body;
 

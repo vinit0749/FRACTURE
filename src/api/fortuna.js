@@ -9,19 +9,39 @@ const rawApiUrl = (
 const BASE_URL = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 
 // ==============================================
-// FORTUNA AUTH TOKEN
+// OPTIONAL FORTUNA AUTH TOKEN
 // ==============================================
 //
-// History endpoints require Firebase authentication.
+// AI discovery can be used by guests.
 //
-// Returns the current user's Firebase ID token.
-// ==============================================
+// If the user is signed in, include their Firebase
+// ID token so the backend can identify them.
+//
+// If the user is a guest, simply return null.
+//
 
-async function getFortunaAuthToken() {
+async function getOptionalFortunaAuthToken() {
   const user = auth.currentUser;
 
   if (!user) {
-    throw new Error("You must be signed in to use FORTUNA.");
+    return null;
+  }
+
+  return user.getIdToken();
+}
+
+// ==============================================
+// REQUIRED FORTUNA AUTH TOKEN
+// ==============================================
+//
+// History endpoints require authentication.
+//
+
+async function getRequiredFortunaAuthToken() {
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("You must be signed in to access FORTUNA history.");
   }
 
   return user.getIdToken();
@@ -67,14 +87,14 @@ export async function sendFortunaMessage(message, history = [], intent = null) {
     throw new Error("FORTUNA intent must be an object or null.");
   }
 
-  const token = await getFortunaAuthToken();
+  const token = await getOptionalFortunaAuthToken();
 
   const response = await fetch(`${BASE_URL}/fortuna/chat`, {
     method: "POST",
 
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
 
     body: JSON.stringify({
@@ -179,7 +199,7 @@ export async function generateFortunaTitle(history = [], intent = {}) {
     throw new Error("FORTUNA intent must be an object.");
   }
 
-  const token = await getFortunaAuthToken();
+  const token = await getRequiredFortunaAuthToken();
 
   const response = await fetch(`${BASE_URL}/fortuna/title`, {
     method: "POST",
@@ -271,14 +291,14 @@ export async function discoverFortunaGames(
     throw new Error("FORTUNA previous recommendations must be an array.");
   }
 
-  const token = await getFortunaAuthToken();
+  const token = await getOptionalFortunaAuthToken();
 
   const response = await fetch(`${BASE_URL}/fortuna/discover`, {
     method: "POST",
 
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
 
     body: JSON.stringify({
@@ -351,7 +371,7 @@ export async function createFortunaConversation({
     throw new Error("FORTUNA conversation intent must be an object.");
   }
 
-  const token = await getFortunaAuthToken();
+  const token = await getRequiredFortunaAuthToken();
 
   const response = await fetch(`${BASE_URL}/fortuna/history`, {
     method: "POST",
@@ -430,7 +450,7 @@ export async function updateFortunaConversation(
     throw new Error("FORTUNA conversation intent must be an object.");
   }
 
-  const token = await getFortunaAuthToken();
+  const token = await getRequiredFortunaAuthToken();
 
   const updateData = {};
 
@@ -501,7 +521,7 @@ export async function updateFortunaConversation(
 // ==============================================
 
 export async function getFortunaConversations() {
-  const token = await getFortunaAuthToken();
+  const token = await getRequiredFortunaAuthToken();
 
   const response = await fetch(`${BASE_URL}/fortuna/history`, {
     method: "GET",
@@ -549,7 +569,7 @@ export async function getFortunaConversation(conversationId) {
     throw new Error("A valid FORTUNA conversation ID is required.");
   }
 
-  const token = await getFortunaAuthToken();
+  const token = await getRequiredFortunaAuthToken();
 
   const response = await fetch(
     `${BASE_URL}/fortuna/history/${conversationId}`,
@@ -601,7 +621,7 @@ export async function deleteFortunaConversation(conversationId) {
     throw new Error("A valid FORTUNA conversation ID is required.");
   }
 
-  const token = await getFortunaAuthToken();
+  const token = await getRequiredFortunaAuthToken();
 
   const response = await fetch(
     `${BASE_URL}/fortuna/history/${conversationId}`,

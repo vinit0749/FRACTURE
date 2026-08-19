@@ -81,6 +81,17 @@ app.use(
         return;
       }
 
+      if (process.env.VERCEL || process.env.VERCEL_URL) {
+        if (
+          normalizedOrigin.endsWith(".vercel.app") ||
+          (process.env.VERCEL_URL &&
+            normalizedOrigin.includes(process.env.VERCEL_URL.toLowerCase()))
+        ) {
+          callback(null, true);
+          return;
+        }
+      }
+
       callback(null, false);
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -90,6 +101,21 @@ app.use(
 );
 
 app.use(express.json({ limit: "2mb" }));
+
+// ================================
+// MongoDB Connection Middleware for Vercel Serverless
+// ================================
+
+app.use(async (req, res, next) => {
+  if (process.env.MONGODB_URI && mongoose.connection.readyState === 0) {
+    try {
+      await connectDB(1, 1000);
+    } catch (err) {
+      console.error("MongoDB connection middleware warning:", err.message);
+    }
+  }
+  next();
+});
 
 // ================================
 // Routes
@@ -103,7 +129,7 @@ app.use("/api/fortuna", fortunaRouter);
 // Health Check
 // ================================
 
-app.get("/", (req, res) => {
+app.get(["/", "/api"], (req, res) => {
   res.json({
     name: "FRACTURE Backend",
     status: "online",
@@ -112,17 +138,21 @@ app.get("/", (req, res) => {
 
 // ================================
 // MongoDB Connection
+// ================================
+
 async function connectDB(retries = 5, delay = 3000) {
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
+  if (!process.env.MONGODB_URI) {
+    console.warn("MONGODB_URI is not defined.");
+    return;
+  }
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await mongoose.connect(process.env.MONGODB_URI);
       console.log("MongoDB connected successfully.");
-
-      if (!process.env.VERCEL) {
-        app.listen(PORT, () => {
-          console.log(`FRACTURE backend running on port ${PORT}`);
-        });
-      }
       return;
     } catch (error) {
       console.error(
@@ -131,15 +161,25 @@ async function connectDB(retries = 5, delay = 3000) {
       );
 
       if (attempt === retries) {
-        console.error("All MongoDB connection attempts failed. Exiting...");
-        process.exit(1);
+        console.error("All MongoDB connection attempts failed.");
+        if (!process.env.VERCEL) {
+          process.exit(1);
+        }
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
-
-      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
 
 export { app };
 
-connectDB();
+if (!process.env.VERCEL) {
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`FRACTURE backend running on port ${PORT}`);
+    });
+  });
+} else {
+  connectDB();
+}

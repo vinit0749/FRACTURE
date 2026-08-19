@@ -1,10 +1,20 @@
 const rawApiUrl = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+  import.meta.env.VITE_API_BASE_URL !== undefined &&
+  import.meta.env.VITE_API_BASE_URL !== ""
+    ? import.meta.env.VITE_API_BASE_URL
+    : import.meta.env.DEV
+    ? "http://localhost:5000/api"
+    : "/api"
 )
   .trim()
   .replace(/\/+$/, "");
 
-const BASE_URL = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
+const BASE_URL =
+  !rawApiUrl || rawApiUrl === "/api"
+    ? "/api"
+    : rawApiUrl.endsWith("/api")
+    ? rawApiUrl
+    : `${rawApiUrl}/api`;
 
 import { getAuth } from "firebase/auth";
 

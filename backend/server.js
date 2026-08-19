@@ -118,9 +118,11 @@ async function connectDB(retries = 5, delay = 3000) {
       await mongoose.connect(process.env.MONGODB_URI);
       console.log("MongoDB connected successfully.");
 
-      app.listen(PORT, () => {
-        console.log(`FRACTURE backend running on port ${PORT}`);
-      });
+      if (!process.env.VERCEL) {
+        app.listen(PORT, () => {
+          console.log(`FRACTURE backend running on port ${PORT}`);
+        });
+      }
       return;
     } catch (error) {
       console.error(
@@ -137,5 +139,7 @@ async function connectDB(retries = 5, delay = 3000) {
     }
   }
 }
+
+export { app };
 
 connectDB();
